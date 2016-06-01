@@ -292,6 +292,14 @@ public class SystemServiceImpl implements SystemService {
              ZipInputStream zipInputStream = new ZipInputStream(fileInputStream)) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
+                // in case entry is directory system backup relates to version 0.0.1
+                if(entry.isDirectory()){
+                    zipInputStream.getNextEntry();
+                    zipInputStream.getNextEntry();
+                    Path dest = Paths.get(tempDirectory.toString(), "awspool-volume-cfg.xml");
+                    Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
+                    break;
+                }
                 Path dest = Paths.get(tempDirectory.toString(), entry.getName());
                 Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
             }
