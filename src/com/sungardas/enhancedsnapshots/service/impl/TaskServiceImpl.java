@@ -114,7 +114,7 @@ public class TaskServiceImpl implements TaskService {
                     messages.put(taskEntry.getVolume(), e.getLocalizedMessage());
                 }
             } else if (TaskEntry.TaskEntryType.RESTORE.getType().equals(taskEntry.getType())) {
-                if (backupRepository.findByVolumeId(taskEntry.getVolume()).isEmpty() || snapshotRepository.findOne(taskEntry.getVolume()) == null) {
+                if (backupRepository.findByVolumeId(taskEntry.getVolume()).isEmpty()) {
                     notificationService.notifyAboutError(new ExceptionDto("Restore task error", "Backup for volume: " + taskEntry.getVolume() + " not found!"));
                     messages.put(taskEntry.getVolume(), "Restore task error");
                 } else {
