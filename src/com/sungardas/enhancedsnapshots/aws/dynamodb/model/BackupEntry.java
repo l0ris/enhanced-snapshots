@@ -9,9 +9,7 @@ import org.springframework.data.annotation.Id;
 @DynamoDBTable(tableName = "BackupList")
 final public class BackupEntry {
 
-    @Id
-    private final BackupEntryId id = new BackupEntryId();
-
+    private String fileName;
     private String timeCreated;
     private String size;
     private String state;
@@ -19,11 +17,11 @@ final public class BackupEntry {
     private String volumeType;
     private String iops;
     private String sizeGiB;
+    private String volumeId;
 
 
-	public BackupEntry() {
 
-    }
+	public BackupEntry() {}
 
 	public BackupEntry(String volumeId, String fileName, String timeCreated, String backupSize, BackupState state,
                        String snapshotId, String volumeType, String iops, String sizeGiB) {
@@ -38,27 +36,27 @@ final public class BackupEntry {
 		setSizeGiB(sizeGiB);
 	}
 
-    @DynamoDBHashKey(attributeName = "volumeId")
-    public String getVolumeId() {
-        return id.getVolumeId();
-    }
-
-    public void setVolumeId(final String volumeId) {
-        id.setVolumeId(volumeId);
-    }
-
-    @DynamoDBRangeKey(attributeName = "fileName")
+    @DynamoDBHashKey()
     public String getFileName() {
-        return id.getFileName();
+        return fileName;
     }
 
-    public void setFileName(final String fileName) {
-        id.setFileName(fileName);
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getVolumeId() {
+        return volumeId;
+    }
+
+    public void setVolumeId(String volumeId) {
+        this.volumeId = volumeId;
     }
 
     public String getTimeCreated() {
         return timeCreated;
     }
+
 
     public void setTimeCreated(final String timeCreated) {
         this.timeCreated = timeCreated;
@@ -110,5 +108,21 @@ final public class BackupEntry {
 
     public void setSizeGiB(final String sizeGiB) {
         this.sizeGiB = sizeGiB;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        BackupEntry that = (BackupEntry) o;
+
+        return fileName != null ? fileName.equals(that.fileName) : that.fileName == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return fileName != null ? fileName.hashCode() : 0;
     }
 }

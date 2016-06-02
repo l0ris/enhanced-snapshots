@@ -1,11 +1,11 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.io.File;
 
 import javax.annotation.PostConstruct;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 
@@ -29,10 +29,14 @@ class CreateAppConfigurationImpl {
     @Autowired
     private AmazonS3 amazonS3;
 
+    @Autowired
+    private AWSCommunicationService awsCommunicationService;
+
     private boolean init = false;
 
     @PostConstruct
     private void init() {
+        awsCommunicationService.restartAWSLogService();
         if (!init) {
             LOG.info("Initialization started");
             init = true;

@@ -1,42 +1,23 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.SDFSException;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +48,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private String sdfsScript;
     private String bucketLocation;
 
+    private static final int VOLUME_ID_INDEX = 0;
+    private static final int TIME_INDEX = 1;
+    private static final int TYPE_INDEX = 2;
+    private static final int IOPS_INDEX = 3;
+    private static final long BYTES_IN_GIB = 1073741824l;
+
 
     @Autowired
     private ResourceLoader resourceLoader;
@@ -75,44 +62,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private AmazonS3 amazonS3;
 
     @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
     private ConfigurationMediator configurationMediator;
-
-    //TODO: maybe we can avoid stopping and starting sdfs while backup if we use sdfscli --cloud-sync-fs command
-    //TODO: in sdfs 3.1.9 this command does not work but according to documentation it should be supported
-    @Override
-    public void backupState(String taskId) {
-        if (taskId != null) {
-            notificationService.notifyAboutTaskProgress(taskId, "Stopping SDFS...", 20);
-        }
-        stopSDFS();
-        String[] paths = {configurationMediator.getSdfsConfigPath()};
-        File tempFile = null;
-        try {
-            if (taskId != null) {
-                notificationService.notifyAboutTaskProgress(taskId, "Compressing SDFS files...", 40);
-            }
-            tempFile = ZipUtils.zip(FilenameUtils.removeExtension(configurationMediator.getSdfsBackupFileName()),
-                    getFileExtension(configurationMediator.getSdfsBackupFileName()), paths);
-        } catch (Throwable e) {
-            startSDFS();
-            if (tempFile != null && tempFile.exists()) {
-                tempFile.delete();
-            }
-            throw new SDFSException("Cant create system backup ", e);
-        }
-        if (taskId != null) {
-            notificationService.notifyAboutTaskProgress(taskId, "Uploading SDFS files to S3...", 60);
-        }
-        uploadToS3(configurationMediator.getSdfsBackupFileName(), tempFile);
-        if (taskId != null) {
-            notificationService.notifyAboutTaskProgress(taskId, "Starting SDFS...", 80);
-        }
-        startSDFS();
-        tempFile.delete();
-    }
 
 
     @Override
@@ -346,139 +296,44 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
 
-    private void uploadToS3(String keyName, File sdfsBackupFile) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(configurationMediator.getS3Bucket(), keyName, sdfsBackupFile);
-        amazonS3.putObject(putObjectRequest);
-    }
-
-    private void downloadFromS3(String keyName, File sdfsBackupFile) throws IOException {
-        GetObjectRequest getObjectRequest = new GetObjectRequest(configurationMediator.getS3Bucket(), keyName);
-        S3Object s3object = amazonS3.getObject(getObjectRequest);
-
-        BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(sdfsBackupFile));
-
-        int count;
-        byte[] buffer = new byte[2048];
-        S3ObjectInputStream s3in = s3object.getObjectContent();
-        while ((count = s3in.read(buffer)) != -1) {
-            bout.write(buffer, 0, count);
-        }
-        bout.flush();
-        bout.close();
-    }
-
     private File getSdfsScriptFile(String scriptName) throws IOException {
         File sdfsScript = resourceLoader.getResource(scriptName).getFile();
         sdfsScript.setExecutable(true);
         return sdfsScript;
     }
 
-    private String getFileExtension(String fileName) {
-        return "." + FilenameUtils.getExtension(fileName);
+    public List<BackupEntry> getBackupsFromSDFSMountPoint() {
+        File[] files = new File(configurationMediator.getSdfsMountPoint()).listFiles();
+        LOG.info("Found {} files in system backup", files.length);
+        List<BackupEntry> backupEntryList = new ArrayList<>();
+        for (File file : files) {
+            BackupEntry entry = getBackupFromFile(file);
+            if (entry != null) {
+                backupEntryList.add(entry);
+            }
+        }
+        LOG.info("All backups restored.");
+        return backupEntryList;
     }
 
-    static class ZipUtils {
+    private BackupEntry getBackupFromFile(File file) {
+        String fileName = file.getName();
+        String[] props = fileName.split("\\.");
+        if (props.length != 5) {
+            return null;
+        } else {
+            BackupEntry backupEntry = new BackupEntry();
 
-        private static final Logger LOG = LogManager.getLogger(ZipUtils.class);
+            backupEntry.setFileName(fileName);
+            backupEntry.setIops(props[IOPS_INDEX]);
+            backupEntry.setSizeGiB(String.valueOf((int) (file.length() / BYTES_IN_GIB)));
+            backupEntry.setTimeCreated(props[TIME_INDEX]);
+            backupEntry.setVolumeType(props[TYPE_INDEX]);
+            backupEntry.setState(BackupState.COMPLETED.getState());
+            backupEntry.setVolumeId(props[VOLUME_ID_INDEX]);
+            backupEntry.setSize(String.valueOf(file.length()));
 
-        private static FileSystem createZipFileSystem(File file, boolean create) throws IOException {
-            final URI uri = URI.create("jar:file:" + file.toURI().getPath().replaceAll(" ", "%2520"));
-
-            final Map<String, String> env = new HashMap<>();
-            if (create) {
-                env.put("create", "true");
-            }
-            return FileSystems.newFileSystem(uri, env);
-        }
-
-        public static void unzip(File zipFile, String destDirname)
-                throws IOException {
-
-            final Path destDir = Paths.get(destDirname);
-            //if the destination doesn't exist, create it
-            if (Files.notExists(destDir)) {
-                LOG.info(destDir + " does not exist. Creating...");
-                Files.createDirectories(destDir);
-            }
-
-            try (FileSystem zipFileSystem = createZipFileSystem(zipFile, false)) {
-                final Path root = zipFileSystem.getPath("/");
-
-                //walk the zip file tree and copy files to the destination
-                Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file,
-                                                     BasicFileAttributes attrs) throws IOException {
-                        final Path destFile = Paths.get(destDir.toString(),
-                                file.toString());
-                        LOG.info("Extracting file {} to {}\n", file, destFile);
-                        Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult preVisitDirectory(Path dir,
-                                                             BasicFileAttributes attrs) throws IOException {
-                        final Path dirToCreate = Paths.get(destDir.toString(),
-                                dir.toString());
-                        if (Files.notExists(dirToCreate)) {
-                            LOG.info("Creating directory {}\n", dirToCreate);
-                            Files.createDirectory(dirToCreate);
-                        }
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-            }
-        }
-
-        public static File zip(String tempFileName, String tempFileExt, String... filenames) throws IOException {
-            File tempFile = Files.createTempFile(tempFileName, tempFileExt).toFile();
-            tempFile.delete();
-            try (FileSystem zipFileSystem = createZipFileSystem(tempFile, true)) {
-                final Path root = zipFileSystem.getPath("/");
-
-                //iterate over the files we need to add
-                for (String filename : filenames) {
-                    final Path src = Paths.get(filename);
-
-                    //add a file to the zip file system
-                    if (!Files.isDirectory(src)) {
-                        final Path dest = zipFileSystem.getPath(root.toString(),
-                                src.toString());
-                        final Path parent = dest.getParent();
-                        if (Files.notExists(parent)) {
-                            LOG.info("Creating directory {}", parent);
-                            Files.createDirectories(parent);
-                        }
-                        Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
-                    } else {
-                        //for directories, walk the file tree
-                        Files.walkFileTree(src, new SimpleFileVisitor<Path>() {
-                            @Override
-                            public FileVisitResult visitFile(Path file,
-                                                             BasicFileAttributes attrs) throws IOException {
-                                final Path dest = zipFileSystem.getPath(root.toString(),
-                                        file.toString());
-                                Files.copy(file, dest, StandardCopyOption.REPLACE_EXISTING);
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                            @Override
-                            public FileVisitResult preVisitDirectory(Path dir,
-                                                                     BasicFileAttributes attrs) throws IOException {
-                                final Path dirToCreate = zipFileSystem.getPath(root.toString(),
-                                        dir.toString());
-                                if (Files.notExists(dirToCreate)) {
-                                    LOG.info("Creating directory {}\n", dirToCreate);
-                                    Files.createDirectories(dirToCreate);
-                                }
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    }
-                }
-            }
-            return tempFile;
+            return backupEntry;
         }
     }
 }

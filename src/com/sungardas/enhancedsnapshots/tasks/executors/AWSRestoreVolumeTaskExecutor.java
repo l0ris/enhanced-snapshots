@@ -8,7 +8,6 @@ import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntryId;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
@@ -125,8 +124,8 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
 
-            BackupEntry backupentry = backupRepository.findOne(new BackupEntryId(taskEntry.getVolume(), taskEntry.getSourceFileName()));
-            LOG.info("Used backup record: {}", backupentry.toString());
+            BackupEntry backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            LOG.info("Used backup record: {}", backupentry.getFileName());
             Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
             int size = Integer.parseInt(backupentry.getSizeGiB());
             checkThreadInterruption(taskEntry);

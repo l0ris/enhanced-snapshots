@@ -53,7 +53,6 @@ class InitController implements ApplicationContextAware {
             refreshContext();
         } else {
             initConfigurationService.configureAWSLogAgent();
-
         }
     }
 

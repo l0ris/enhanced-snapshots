@@ -10,12 +10,6 @@ import org.springframework.stereotype.Service;
 public class SDFSStateServiceDev extends SDFSStateServiceImpl {
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.LogManager.getLogger(SDFSStateServiceDev.class);
 
-    @Override
-    public void backupState(String taskId) {
-
-    }
-
-
     public void expandSdfsVolume(String newVolumeSize) {
         System.out.println("Volume expanded to " + newVolumeSize);
     }

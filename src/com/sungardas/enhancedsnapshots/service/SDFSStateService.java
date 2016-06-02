@@ -1,9 +1,11 @@
 package com.sungardas.enhancedsnapshots.service;
 
 import com.sun.management.OperatingSystemMXBean;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.util.List;
 
 public interface SDFSStateService {
 
@@ -38,11 +40,6 @@ public interface SDFSStateService {
         return maxLocalCacheInGb;
 
     }
-
-    /**
-     * Backup SDFS metadata to S3
-     */
-    void backupState(String taskId);
 
     /**
      * Return true when S3 bucket contains SDFS backup, false otherwise
@@ -86,5 +83,9 @@ public interface SDFSStateService {
      */
     void cloudSync();
 
-
+    /**
+     * Returns list of real existing backups from SDFS mount point
+     * @return
+     */
+    List<BackupEntry> getBackupsFromSDFSMountPoint();
 }

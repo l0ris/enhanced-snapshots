@@ -36,6 +36,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
@@ -81,6 +82,9 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private ConfigurationRepository configurationRepository;
+
+    @Autowired
+    private BackupRepository backupRepository;
 
     @Autowired
     private ConfigurationMediatorImpl configurationMediator;
@@ -147,6 +151,7 @@ public class SystemServiceImpl implements SystemService {
             restoreFiles(tempDirectory);
             LOG.info("Restore DB");
             restoreDB(tempDirectory);
+            syncBackupsInDBWithExistingOnes();
         } catch (IOException e) {
             LOG.error("System restore failed");
             LOG.error(e);
@@ -204,6 +209,28 @@ public class SystemServiceImpl implements SystemService {
         notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 85);
         storeTable(User.class, tempDirectory);
         notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 90);
+    }
+
+    /**
+     * There can be situations when user removed/added backups after system backup and than decided
+     * to migrate to another instance, in this case backups will not be in consistent state
+     */
+    private void syncBackupsInDBWithExistingOnes() {
+        List<BackupEntry> realBackups = sdfsStateService.getBackupsFromSDFSMountPoint();
+        List<BackupEntry> backupEntries = backupRepository.findAll();
+
+        // removing non existing backups from DB
+        List<BackupEntry> toRemove =  new ArrayList<>();
+        backupEntries.stream().filter(b -> !realBackups.contains(b))
+                .peek(b -> LOG.info("Backup {} of volume {} does not exist any more. Removing related data from DB", b.getFileName(), b.getVolumeId()))
+                .forEach(toRemove::add);
+        backupRepository.delete(toRemove);
+
+        // adding backups which are not stored in DB
+        List<BackupEntry> toAdd =  new ArrayList<>();
+        realBackups.stream().filter(rb -> !backupEntries.contains(rb))
+                .peek(rb -> LOG.info("Adding backup {} info to DB", rb.getFileName())).forEach(toAdd::add);
+        backupRepository.save(toAdd);
     }
 
     private void restoreDB(Path tempDirectory) throws IOException {
@@ -293,6 +320,7 @@ public class SystemServiceImpl implements SystemService {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 // in case entry is directory system backup relates to version 0.0.1
+                // copy /etc/sdfs/awspool-volume-cfg.xml to temp dir
                 if(entry.isDirectory()){
                     zipInputStream.getNextEntry();
                     zipInputStream.getNextEntry();
