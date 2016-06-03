@@ -155,6 +155,16 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${enhancedsnapshots.db.write.capacity}")
     private Long dbWriteCapacity;
 
+    @Value("${enhancedsnapshots.system.reserved.memory}")
+    private int systemReservedRam;
+    @Value("${enhancedsnapshots.sdfs.volume.size.per.1gb.ram}")
+    private int volumeSizePerGbOfRam;
+    @Value("${enhancedsnapshots.sdfs.reserved.ram}")
+    private int sdfsReservedRam;
+    @Value("${enhancedsnapshots.system.reserved.storage}")
+    private int systemReservedStorage;
+
+
     @Autowired
     private AmazonS3 amazonS3;
 
@@ -440,14 +450,14 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        int maxVolumeSize = SDFSStateService.getMaxVolumeSize();
+        int maxVolumeSize = SDFSStateService.getMaxVolumeSize(systemReservedRam, volumeSizePerGbOfRam,  sdfsReservedRam);
         sdfs.setMaxVolumeSize(String.valueOf(maxVolumeSize));
         sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, defaultVolumeSize)));
         sdfs.setMinVolumeSize(minVolumeSize);
         sdfs.setCreated(sdfsAlreadyExists());
         sdfs.setSdfsLocalCacheSize(sdfsLocalCacheSize);
         sdfs.setMinSdfsLocalCacheSize(1);
-        sdfs.setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace());
+        sdfs.setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace(systemReservedStorage));
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
@@ -516,7 +526,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Override
     public void validateVolumeSize(final int volumeSize) {
         int min = Integer.parseInt(minVolumeSize);
-        int max = SDFSStateService.getMaxVolumeSize();
+        int max = SDFSStateService.getMaxVolumeSize(systemReservedRam, volumeSizePerGbOfRam,  sdfsReservedRam);
         if (volumeSize < min || volumeSize > max) {
             throw new ConfigurationException("Invalid volume size");
         }

@@ -9,36 +9,35 @@ import java.util.List;
 
 public interface SDFSStateService {
 
+    // constant value
     long BYTES_IN_GB = 1_073_741_824;
-    int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
-    long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
 
-    // Reserved storage for logs of Tomcat and other services
-    long SYSTEM_RESERVED_STORAGE_IN_BYTES = BYTES_IN_GB / 2;
-    long SDFS_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
 
     /**
      * Returns max sdfs volume size for current system in GB
+     * @param systemReservedRam in bytes
+     * @param volumeSizePerGbOfRam in GB
+     * @param sdfsReservedRam in bytes
      * @return
      */
-    static int getMaxVolumeSize() {
+    static int getMaxVolumeSize(int systemReservedRam, int volumeSizePerGbOfRam,  int sdfsReservedRam) {
         OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         //Total RAM - RAM available for Tomcat - reserved
-        long totalRAM = osBean.getTotalPhysicalMemorySize() - Runtime.getRuntime().maxMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
-        int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM;
+        long totalRAM = osBean.getTotalPhysicalMemorySize() - Runtime.getRuntime().maxMemory() - systemReservedRam - sdfsReservedRam;
+        int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * volumeSizePerGbOfRam;
         return maxVolumeSize;
     }
 
 
     /**
      * Returns count of GB which can be used to increase sdfs local cache
+     * @param systemReservedStorage reserved storage in bytes
      * @return
      */
-    static int getFreeStorageSpace() {
+    static int getFreeStorageSpace(int systemReservedStorage) {
         File file = new File("/");
-        int maxLocalCacheInGb = (int) ((file.getFreeSpace() - SYSTEM_RESERVED_STORAGE_IN_BYTES) / BYTES_IN_GB);
+        int maxLocalCacheInGb = (int) ((file.getFreeSpace() - systemReservedStorage) / BYTES_IN_GB);
         return maxLocalCacheInGb;
-
     }
 
     /**

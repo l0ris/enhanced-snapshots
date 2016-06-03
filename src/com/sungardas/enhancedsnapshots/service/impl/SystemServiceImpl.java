@@ -50,6 +50,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 
 /**
@@ -70,6 +71,14 @@ public class SystemServiceImpl implements SystemService {
 
     private static final String[] VOLUME_TYPE_OPTIONS = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
 
+    @Value("${enhancedsnapshots.system.reserved.memory}")
+    private int systemReservedRam;
+    @Value("${enhancedsnapshots.sdfs.volume.size.per.1gb.ram}")
+    private int volumeSizePerGbOfRam;
+    @Value("${enhancedsnapshots.sdfs.reserved.ram}")
+    private int sdfsReservedRam;
+    @Value("${enhancedsnapshots.system.reserved.storage}")
+    private int systemReservedStorage;
 
     @Autowired
     private IDynamoDBMapper dynamoDBMapper;
@@ -390,10 +399,10 @@ public class SystemServiceImpl implements SystemService {
         configuration.getSdfs().setVolumeSize(currentConfiguration.getSdfsSize());
         // user can only expand volume size
         configuration.getSdfs().setMinVolumeSize(currentConfiguration.getSdfsSize());
-        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize());
+        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize(systemReservedRam, volumeSizePerGbOfRam,  sdfsReservedRam));
 
         configuration.getSdfs().setSdfsLocalCacheSize(currentConfiguration.getSdfsLocalCacheSize());
-        configuration.getSdfs().setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace() + configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
+        configuration.getSdfs().setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace(systemReservedStorage) + configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
         configuration.getSdfs().setMinSdfsLocalCacheSize(configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
 
 
