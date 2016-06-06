@@ -1173,50 +1173,56 @@ div.tr.state-removed {
 
 /* end of forms*/
 
-.loader {
-    position: relative;
-    left: 40%;
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #777777;
-    border-bottom: 16px solid #777777;
-    width: 120px;
-    height: 120px;
-    -webkit-animation: spin 2s linear infinite;
-    animation: spin 2s linear infinite;
-}
-
-@-webkit-keyframes spin {
-    0% {
-        -webkit-transform: rotate(0deg);
-    }
-    100% {
-        -webkit-transform: rotate(360deg);
-    }
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
 /* page specific stylings*/
 .configuration .sdfsVolume .form-control {
     width: 35% !important;
     display: inline;
 }
 
-.settings.form-control {
-    width: auto;
-    display: inline;
+.configuration .bucket .btn-group,
+.configuration .bucket button,
+.configuration .bucket .form-control {
+    width: 400px;
 }
 
-.settings.type-label {
+.configuration .bucket button .caption {
+    max-width: 360px;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden;
+}
+
+.configuration .bucket .form-control {
+    display: inline-block;
+}
+
+.configuration .bucket .glyphicon {
+    margin: 0 10px;
+}
+
+.settings.form-control {
+    width: 100%;
+    display: inline-block;
+}
+
+.settings.field-label {
     padding-top: 7px;
+    padding-left: 0;
+}
+
+.settings.bucket-name {
+    width: 25%;
+    padding: 6px 12px;
+    color: #555;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 }
 
 /* end of view-specific styling*/

@@ -15,4 +15,9 @@ public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
         return describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();
     }
 
+    @Override
+    public void dropS3Bucket(String bucketName) {
+        return;
+    }
+
 }

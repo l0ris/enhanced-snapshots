@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,9 +32,17 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
 import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,9 +63,13 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     private final static int MAX_IOPS_VALUE = 20_000;
 
     @Autowired
-    private AmazonEC2 ec2client;
+    private AmazonS3 amazonS3;
+
     @Autowired
-    private ConfigurationService configurationService;
+    private AmazonEC2 ec2client;
+
+    @Autowired
+    private ConfigurationMediator configurationMediator;
 
 
    @Override
@@ -66,7 +79,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public String getCurrentAvailabilityZone() {
-        return getInstance(configurationService.getConfigurationId()).getPlacement()
+        return getInstance(configurationMediator.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();    }
 
     @Override
@@ -102,7 +115,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
 
     private Volume createVolume(int size, int iiops, VolumeType type) {
-        String availabilityZone = getInstance(configurationService.getConfigurationId()).getPlacement()
+        String availabilityZone = getInstance(configurationMediator.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
@@ -330,6 +343,51 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         return null;
     }
 
+    @Override
+    public void dropS3Bucket(String bucketName) {
+        LOG.info("Removing bucket {}.", bucketName);
+        ObjectListing objectListing = amazonS3.listObjects(bucketName);
+
+        while (true) {
+            for (Iterator<?> iterator = objectListing.getObjectSummaries().iterator(); iterator.hasNext(); ) {
+                S3ObjectSummary objectSummary = (S3ObjectSummary) iterator.next();
+                amazonS3.deleteObject(bucketName, objectSummary.getKey());
+            }
+
+            if (objectListing.isTruncated()) {
+                objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+            } else {
+                break;
+            }
+        }
+        VersionListing list = amazonS3.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+        for (Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
+            S3VersionSummary s = (S3VersionSummary) iterator.next();
+            amazonS3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
+        }
+        amazonS3.deleteBucket(bucketName);
+    }
+
+    @Override
+    public void restartAWSLogService() {
+        Process p;
+        try {
+            p = Runtime.getRuntime().exec("service awslogs restart");
+            p.waitFor();
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.info("awslogs restarted successfully");
+                    break;
+                default:
+                    throw new AWSCommunicationServiceException("Failed to restart awslogs");
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to restart awslogs");
+            throw new AWSCommunicationServiceException("Failed to restart awslogs");
+        }
+
+    }
+
 
     @Override
     public boolean volumeExists(String volumeId) {
@@ -341,11 +399,12 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     private void waitVolumeToDetach(Volume volume) {
         int waitTime = 0;
-        while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < configurationService.getMaxWaitTimeToDetachVolume()) {
-            LOG.debug("Volume {} is attached to {}", volume.getVolumeId(), volume.getAttachments().get(0).getInstanceId());
+        LOG.debug("Volume {} is attached to {}", volume.getVolumeId(), volume.getAttachments().get(0).getInstanceId());
+        LOG.debug("Max wait time for volume detaching: {} seconds", configurationMediator.getMaxWaitTimeToDetachVolume());
+        while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < configurationMediator.getMaxWaitTimeToDetachVolume()) {
             sleepTillNextSync();
             volume = syncVolume(volume);
-            waitTime += configurationService.getMaxWaitTimeToDetachVolume();
+            waitTime += configurationMediator.getMaxWaitTimeToDetachVolume();
         }
         if (syncVolume(volume).getState().equals(AVAILABLE_STATE)) {
             LOG.debug("Volume {} detached.", volume.getVolumeId());
@@ -375,7 +434,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     private void sleepTillNextSync(){
         try {
-            TimeUnit.SECONDS.sleep(configurationService.getWaitTimeBeforeNewSyncWithAWS());
+            TimeUnit.SECONDS.sleep(configurationMediator.getWaitTimeBeforeNewSyncWithAWS());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

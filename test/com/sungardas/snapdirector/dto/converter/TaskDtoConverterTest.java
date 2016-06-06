@@ -1,14 +1,15 @@
 package com.sungardas.snapdirector.dto.converter;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class TaskDtoConverterTest {
 
@@ -65,7 +66,6 @@ public class TaskDtoConverterTest {
             Assert.assertTrue(taskEntry.getSchedulerManual().equals(schedulerManual));
             Assert.assertTrue(taskEntry.getSchedulerName().equals(schedulerName));
             //TODO: find out what if instance ids were different while backup of several volumes ???
-            Assert.assertTrue(taskEntry.getInstanceId().equals(instanceId));
             Assert.assertTrue(taskEntry.getCron().equals(cron));
             Assert.assertTrue(taskEntry.getAvailabilityZone().equals(zone));
             Assert.assertTrue(taskEntry.getEnabled().equals(enabled));

@@ -60,4 +60,11 @@ public interface AWSCommunicationService {
     boolean volumeExists(String volumeId);
 
     Snapshot getSnapshot(String snapshotId);
+
+    void dropS3Bucket(String bucketName);
+
+    //TODO: awslog restarted after each sdfs remount
+    //TODO: need to clarify whether we still need restart it
+    //TODO: in case we need, it should be triggered by SystemService while restarting sdfs, not by SDFSStateService
+    void restartAWSLogService();
 }

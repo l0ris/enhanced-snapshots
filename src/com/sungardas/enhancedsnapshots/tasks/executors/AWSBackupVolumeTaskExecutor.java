@@ -14,11 +14,11 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
 import com.sungardas.enhancedsnapshots.service.SnapshotService;
@@ -49,7 +49,6 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     @Autowired
     private BackupRepository backupRepository;
 
-
     @Autowired
     private SnapshotService snapshotService;
 
@@ -57,7 +56,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     private AWSCommunicationService awsCommunication;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
     @Autowired
     private RetentionService retentionService;
@@ -84,7 +83,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
 
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Preparing temp volume", 5);
 
-            tempVolume = createAndAttachBackupVolume(volumeId, configurationService.getConfigurationId(), taskEntry);
+            tempVolume = createAndAttachBackupVolume(volumeId, configurationMediator.getConfigurationId(), taskEntry);
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e1) {
@@ -106,8 +105,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
 	    if (volumeType.equals("standard")) volumeType = "gp2";
             String backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
 
-            BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS,
-                    configurationService.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
+            BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS, snapshotId, volumeType, iops, sizeGib);
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Copying...", 15);
             boolean backupStatus = false;
@@ -115,12 +113,12 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 String source = attachedDeviceName;
                 LOG.info("Starting copying: " + source + " to:" + backupFileName);
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
-                storageService.javaBinaryCopy(source, configurationService.getSdfsMountPoint() + backupFileName, dto);
+                storageService.javaBinaryCopy(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto);
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
                 LOG.fatal(format("Backup of volume %s failed", volumeId));
                 LOG.fatal(e);
-                File brocken = new File(configurationService.getSdfsMountPoint() + backupFileName);
+                File brocken = new File(configurationMediator.getSdfsMountPoint() + backupFileName);
                 if (brocken.exists()) {
                     if (brocken.delete()) {
                         LOG.info("Broken backup {} was deleted", brocken.getName());
@@ -139,8 +137,8 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
             awsCommunication.deleteVolume(tempVolume);
             checkThreadInterruption(taskEntry);
             if (backupStatus) {
-                long backupSize = storageService.getSize(configurationService.getSdfsMountPoint() + backupFileName);
-                long backupCreationtime = storageService.getBackupCreationTime(configurationService.getSdfsMountPoint() + backupFileName);
+                long backupSize = storageService.getSize(configurationMediator.getSdfsMountPoint() + backupFileName);
+                long backupCreationtime = storageService.getBackupCreationTime(configurationMediator.getSdfsMountPoint() + backupFileName);
                 LOG.info("Backup creation time: {}", backupCreationtime);
                 LOG.info("Backup size: {}", backupSize);
 
@@ -154,9 +152,9 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
                 LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
                 LOG.info("Cleaning up previously created snapshots");
-                LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationService.getConfigurationId());
+                LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationMediator.getConfigurationId());
 
-                String previousSnapshot = snapshotService.getSnapshotId(volumeId, configurationService.getConfigurationId());
+                String previousSnapshot = snapshotService.getSnapshotId(volumeId);
                 if (previousSnapshot != null) {
                     checkThreadInterruption(taskEntry);
                     notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
@@ -164,7 +162,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                     awsCommunication.deleteSnapshot(previousSnapshot);
                 }
 
-                snapshotService.saveSnapshot(volumeId, configurationService.getConfigurationId(), snapshotId);
+                snapshotService.saveSnapshot(volumeId, snapshotId);
 
 
                 taskService.complete(taskEntry);

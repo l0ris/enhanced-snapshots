@@ -1,26 +1,35 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import com.amazonaws.services.ec2.model.VolumeType;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
-import com.sungardas.enhancedsnapshots.dto.*;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import org.apache.commons.io.FilenameUtils;
-import org.junit.*;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.nio.file.Files;
 import java.util.*;
 
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -38,7 +47,7 @@ public class TaskServiceTest {
     @Mock
     private SnapshotRepository snapshotRepository;
     @Mock
-    private ConfigurationService configuration;
+    private ConfigurationMediator configuration;
     @Mock
     private SchedulerService schedulerService;
     @Mock
@@ -57,7 +66,8 @@ public class TaskServiceTest {
         when(configuration.getRestoreVolumeType()).thenReturn(VolumeType.Gp2.toString());
         when(configuration.getMaxQueueSize()).thenReturn(5);
 
-        when(backupRepository.getLast(anyString(), anyString())).thenReturn(new BackupEntry());
+        when(backupRepository.findByVolumeId(anyObject())).thenReturn(Arrays.asList(new BackupEntry()));
+//        when(backupRepository.findOne(anyObject())).thenReturn(new BackupEntry());
         when(snapshotRepository.findOne((anyString()))).thenReturn(new SnapshotEntry());
     }
 

@@ -9,6 +9,7 @@ public class InitConfigurationDto {
     private List<S3> s3 = Collections.EMPTY_LIST;
     private SDFS sdfs;
     private DB db;
+    private String immutableBucketNamePrefix;
 
     public List<S3> getS3() {
         return s3;
@@ -65,6 +66,14 @@ public class InitConfigurationDto {
         }
     }
 
+    public String getImmutableBucketNamePrefix() {
+        return immutableBucketNamePrefix;
+    }
+
+    public void setImmutableBucketNamePrefix(String immutableBucketNamePrefix) {
+        this.immutableBucketNamePrefix = immutableBucketNamePrefix;
+    }
+
     public static class SDFS {
         @JsonProperty("isCreated")
         private boolean created;
@@ -73,6 +82,34 @@ public class InitConfigurationDto {
         private String mountPoint;
         private String minVolumeSize;
         private String maxVolumeSize;
+        private int sdfsLocalCacheSize;
+        private int maxSdfsLocalCacheSize;
+        private int minSdfsLocalCacheSize;
+
+        public int getSdfsLocalCacheSize() {
+            return sdfsLocalCacheSize;
+        }
+
+        public void setSdfsLocalCacheSize(int sdfsLocalCacheSize) {
+            this.sdfsLocalCacheSize = sdfsLocalCacheSize;
+        }
+
+        public int getMaxSdfsLocalCacheSize() {
+            return maxSdfsLocalCacheSize;
+        }
+
+        public void setMaxSdfsLocalCacheSize(int maxSdfsLocalCacheSize) {
+            this.maxSdfsLocalCacheSize = maxSdfsLocalCacheSize;
+        }
+
+        public int getMinSdfsLocalCacheSize() {
+            return minSdfsLocalCacheSize;
+        }
+
+        public void setMinSdfsLocalCacheSize(int minSdfsLocalCacheSize) {
+            this.minSdfsLocalCacheSize = minSdfsLocalCacheSize;
+        }
+
 
         public boolean isCreated() {
             return created;

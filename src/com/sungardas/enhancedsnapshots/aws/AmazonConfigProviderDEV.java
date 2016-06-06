@@ -6,12 +6,15 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
+
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +25,10 @@ import org.springframework.context.annotation.Profile;
 
 @Configuration
 @Profile("dev")
-@EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository")
+@EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository", dynamoDBMapperConfigRef = "dynamoDBMapperConfig")
 public class AmazonConfigProviderDEV {
+
+
     @Value("${amazon.aws.accesskey}")
     private String amazonAWSAccessKey;
 
@@ -82,10 +87,33 @@ public class AmazonConfigProviderDEV {
         return proxyFactoryBean;
     }
 
+    @Bean
+    public DynamoDBMapperConfig dynamoDBMapperConfig() {
+        DynamoDBMapperConfig.Builder builder = new DynamoDBMapperConfig.Builder();
+        builder.withTableNameOverride(DynamoDBMapperConfig.TableNameOverride
+                .withTableNamePrefix(AmazonConfigProvider.getDynamoDbPrefix("DEV")));
+        return builder.build();
+    }
+
+    @Bean
+    public ProxyFactoryBean amazonDynamoDbMapperProxy() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+
+        proxyFactoryBean.setTarget(dynamoDBMapper());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+
+        return proxyFactoryBean;
+    }
+
+    private DynamoDBMapper dynamoDBMapper() {
+        return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
+    }
+
+
     @Bean(name = "dynamoDB")
     public AmazonDynamoDB amazonDynamoDB() {
         AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
-	amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
+        amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonDynamoDB;
     }
 

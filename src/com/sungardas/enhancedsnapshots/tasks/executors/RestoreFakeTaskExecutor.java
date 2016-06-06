@@ -1,17 +1,17 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
+import java.util.concurrent.TimeUnit;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.TimeUnit;
 
 @Service ("awsRestoreVolumeTaskExecutor")
 @Profile("dev")
@@ -39,7 +39,6 @@ public class RestoreFakeTaskExecutor implements TaskExecutor {
 
 		String sourceFile = options[0];
 		LOG.info("restore from: {}; restore to az: {}", sourceFile, targetZone);
-		String instanceId = taskEntry.getInstanceId();
 		notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restoring...", 50);
 
 		try {

@@ -2,7 +2,7 @@ package com.sungardas.enhancedsnapshots.service;
 
 public interface SnapshotService {
 
-    String getSnapshotId(String volumeId, String instancreId);
+    String getSnapshotId(String volumeId);
 
-    void saveSnapshot(String volumeId, String instanceId, String snapshotId);
+    void saveSnapshot(String volumeId, String snapshotId);
 }

@@ -1,53 +1,31 @@
 <div class="container">
     <div class="row centered-form configuration">
-        <div class="col-xs-12" ng-class="{'col-sm-8 col-md-6 col-sm-offset-2 col-md-offset-3': isAWS, 'col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2': !isAWS}">
+        <div class="col-xs-12 col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h2 class="panel-title">Settings</h2>
                 </div>
                 <div class="panel-body">
 
-                    <form ng-show="isAWS && isValidInstance" class="form-horizontal">
-                        <div class="form-group">
-                            <label class="col-sm-4 control-label">AWS Public Key:</label>
-                            <div class="col-sm-6">
-                                <input type="text" class="form-control" ng-model="awsPublicKey" required autofocus>
-                            </div>
-                        </div>
+                    <div class="form-horizontal" ng-show="settings && isValidInstance">
 
-                        <div class="form-group">
-                            <label class="col-sm-4 control-label">AWS Secret Key:</label>
-                            <div class="col-sm-6">
-                                <input type="password" class="form-control" ng-model="awsSecretKey" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group col-sm-10">
-                        <div class="pull-right">
-                            <button type="button" class="btn btn-success" ng-click="sendAWS()">OK</button>
-                            <a ui-sref="login" href class="btn btn-default">Cancel</a>
-                        </div>
-                        </div>
-                    </form>
-
-                    <div class="form-horizontal" ng-hide="isAWS || !isValidInstance">
-                        <div ng-show="isBusy" class="loader"></div>
-                        <form name="configs" ng-hide="isBusy">
+                        <form name="configs">
                             <div class="flex-container card">
                                 <div class="flex-2 flex-center">
                                     <span class="icon glyphicon glyphicon-{{iconClass[selectedBucket.isCreated]}} text-{{statusColorClass[selectedBucket.isCreated]}}"></span>
                                 </div>
 
-                                <div class="flex-5 card-content">
+                                <div class="flex-5 card-content bucket">
                                     <h3>S3 Bucket</h3>
 
                                     <p>{{ selectedBucket.isCreated ? STRINGS.s3.existing : STRINGS.s3.new}}</p>
                                     <p><span class="label label-success">{{settings.s3.bucketName}}</span></p>
-                                    <div class="btn-group" dropdown keyboard-nav>
+                                    <div class="btn-group" dropdown keyboard-nav ng-hide="isCustomBucketName">
                                         <button id="simple-btn-keyboard-nav" type="button"
                                                 class="btn btn-default dropdown-toggle" dropdown-toggle>
-                                            <div>
-                                                {{selectedBucket.bucketName}} &nbsp;<span class="caret"></span>
+                                            <div class="pull-right">&nbsp;<span class="caret"></span></div>
+                                            <div class="text-left caption">
+                                                {{selectedBucket.bucketName}}
                                             </div>
                                         </button>
                                         <ul class="dropdown-menu" role="menu"
@@ -59,8 +37,11 @@
                                             </li>
                                         </ul>
                                     </div>
+                                    <input type="text" ng-model="selectedBucket.bucketName" class="form-control" ng-class="{'ng-invalid': isNameWrong}" ng-show="isCustomBucketName" name="bucketName" required ng-change="validateName()" ng-trim maxlength="63"/>
+                                    <a href ng-click="isCustomBucketName = !isCustomBucketName" title="Rename" ng-hide="selectedBucket.isCreated"><span class="glyphicon glyphicon-{{ isCustomBucketName ? 'ok' : 'pencil'}} text-primary"></span></a>
+                                    <div class="text-danger small" ng-show="configs.bucketName.$error.required">{{STRINGS.s3.empty}}</div>
+                                    <div class="text-danger small" ng-show="isNameWrong && !selectedBucket.isCreated">{{wrongNameMessage}}</div>
                                 </div>
-
                                 <div class="flex-1 flex-center">
                                     <a class="link-white" href="http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html" target="_blank" title="What is S3 Bucket"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
                                 </div>
@@ -118,7 +99,9 @@
 
                             <div class="pull-right">
                                 <button type="button" class="btn btn-success" ng-click="sendSettings()"
-                                        ng-disabled="configs.newVolumeSize.$error.required ||
+                                        ng-disabled="configs.bucketName.$error.required ||
+                                        isNameWrong && !selectedBucket.isCreated ||
+                                        configs.newVolumeSize.$error.required ||
                                         configs.newVolumeSize.$error.min ||
                                         configs.newVolumeSize.$error.max ||
                                         configs.newVolumeSize.$error.number">Setup

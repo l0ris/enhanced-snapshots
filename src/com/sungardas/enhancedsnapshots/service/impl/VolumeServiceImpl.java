@@ -1,25 +1,30 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.VolumeDto;
 import com.sungardas.enhancedsnapshots.dto.converter.VolumeDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.VolumeService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.*;
 
 
 @Service
@@ -36,7 +41,7 @@ public class VolumeServiceImpl implements VolumeService {
     @Autowired
     private SchedulerService schedulerService;
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
     private Set<VolumeDto> cache;
 
     @PostConstruct
@@ -57,7 +62,7 @@ public class VolumeServiceImpl implements VolumeService {
     @Override
     public Set<VolumeDto> getVolumes() {
         LOG.debug("Getting volume list ...");
-        amazonEC2.setRegion(Region.getRegion(Regions.fromName(configurationService.getRegion())));
+        amazonEC2.setRegion(Region.getRegion(Regions.fromName(configurationMediator.getRegion())));
         return getVolumes(amazonEC2);
     }
 
@@ -114,7 +119,7 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     private Set<VolumeDto> getHistoryVolumes() {
-        return convert(backupRepository.findAll(configurationService.getConfigurationId()));
+        return convert(backupRepository.findAll());
     }
 
     private Set<VolumeDto> convert(Iterable<BackupEntry> entries) {

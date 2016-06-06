@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.util.json.Jackson;
-import org.json.JSONObject;
 
 
 @DynamoDBTable(tableName = "Tasks")
@@ -38,9 +37,6 @@ public class TaskEntry {
     @DynamoDBAttribute(attributeName = "schedulerTime")
     private String schedulerTime;
 
-    @DynamoDBAttribute(attributeName = "instanceId")
-    private String instanceId;
-
     @DynamoDBAttribute(attributeName = "options")
     private String options;
 
@@ -67,52 +63,6 @@ public class TaskEntry {
 
     @DynamoDBAttribute
     private int restoreVolumeIopsPerGb;
-
-    public TaskEntry() {
-        super();
-    }
-
-    @Deprecated
-    public TaskEntry(String priority, String status, String type, String volume,
-                     String schedulerManual, String schedulerName, String schedulerTime, String instanceId) {
-        this(priority, instanceId, status, type, volume, schedulerManual, schedulerName, schedulerTime, instanceId, null);
-    }
-
-    @Deprecated
-    public TaskEntry(String priority, String worker, String status, String type, String volume,
-                     String schedulerManual, String schedulerName, String schedulerTime, String instanceId,
-                     String options) {
-        this.priority = Integer.parseInt(priority);
-        this.worker = worker;
-        this.status = status;
-        this.type = type;
-        this.volume = volume;
-        this.schedulerManual = schedulerManual;
-        this.schedulerName = schedulerName;
-        this.schedulerTime = schedulerTime;
-        this.instanceId = instanceId;
-        this.options = options;
-    }
-
-    public TaskEntry(JSONObject jsonTask) {
-        this();
-
-        try {
-            this.setPriority(jsonTask.getInt("priority"));
-        } catch (RuntimeException emptyPriority) {
-            this.setPriority(0);
-        }
-        setStatus(jsonTask.getString("status"));
-        setType(jsonTask.getString("type"));
-        setVolume(jsonTask.optString("volume"));
-        setSchedulerManual(jsonTask.getBoolean("schedulerManual"));
-        setSchedulerName(jsonTask.optString("schedulerName"));
-        setSchedulerTime(jsonTask.optString("schedulerTime"));
-        setId(jsonTask.getString("id"));
-        setWorker(jsonTask.getString("worker"));
-        setInstanceId(jsonTask.getString("instanceId"));
-        setOptions(jsonTask.optString("options"));
-    }
 
     public String getId() {
         return id;
@@ -189,14 +139,6 @@ public class TaskEntry {
 
     public void setSchedulerTime(String schedulerTime) {
         this.schedulerTime = schedulerTime;
-    }
-
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
     }
 
     public String getOptions() {

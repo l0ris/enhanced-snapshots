@@ -1,5 +1,7 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
+import java.util.concurrent.TimeUnit;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -10,14 +12,12 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedExc
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
@@ -54,8 +54,8 @@ public class BackupFakeTaskExecutor implements TaskExecutor {
         String volumeId = taskEntry.getVolume();
         String filename = volumeId + "." + timestamp + ".backup";
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Checking volume", 60);
-        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId(),
-        		"snap-00100110","gp2","3000", "10");
+        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED,
+                "snap-00100110","gp2","3000", "10");
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
         backupRepository.save(backup);
 

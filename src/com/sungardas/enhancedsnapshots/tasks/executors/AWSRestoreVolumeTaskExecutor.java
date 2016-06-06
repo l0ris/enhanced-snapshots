@@ -11,11 +11,11 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SnapshotService;
 import com.sungardas.enhancedsnapshots.service.StorageService;
@@ -48,7 +48,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
     private StorageService storageService;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
     @Autowired
     private NotificationService notificationService;
@@ -99,8 +99,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         String targetZone = taskEntry.getAvailabilityZone();
 
         String volumeId = taskEntry.getVolume();
-        String snapshotId = snapshotService.getSnapshotId(volumeId, configurationService.getConfigurationId());
-        BackupEntry backupEntry = backupRepository.getLast(volumeId, configurationService.getConfigurationId());
+        String snapshotId = snapshotService.getSnapshotId(volumeId);
         // check that snapshot exists
         if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
             LOG.error("Failed to find snapshot for volume {} ", volumeId);
@@ -112,7 +111,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
 
         Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone, VolumeType.fromValue(taskEntry.getRestoreVolumeType()),
                 taskEntry.getRestoreVolumeIopsPerGb());
-        awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getVolumeId());
+        awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + taskEntry.getVolume());
         awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
     }
 
@@ -125,9 +124,9 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
 
-            BackupEntry backupentry = backupRepository.getByBackupFileName(taskEntry.getSourceFileName());
-            LOG.info("Used backup record: {}", backupentry.toString());
-            Instance instance = awsCommunication.getInstance(taskEntry.getInstanceId());
+            BackupEntry backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            LOG.info("Used backup record: {}", backupentry.getFileName());
+            Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
             int size = Integer.parseInt(backupentry.getSizeGiB());
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume...", 15);
@@ -163,7 +162,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             LOG.info("Volume was attached as device: " + attachedDeviceName);
             try {
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 25, 80, Long.parseLong(backupentry.getSizeGiB()));
-                storageService.javaBinaryCopy(configurationService.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
+                storageService.javaBinaryCopy(configurationMediator.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
             } catch (IOException | InterruptedException e) {
                 LOG.fatal("Restore of volume {} failed", tempVolume);
                 taskEntry.setStatus("error");

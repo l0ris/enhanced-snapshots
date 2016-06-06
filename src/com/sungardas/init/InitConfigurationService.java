@@ -1,18 +1,13 @@
 package com.sungardas.init;
 
-import javax.validation.constraints.NotNull;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 
 interface InitConfigurationService {
-    void setCredentialsIfValid(@NotNull CredentialsDto credentials);
 
     void removeProperties();
-
-    boolean areCredentialsValid();
-
-    boolean credentialsAreProvided();
 
     InitConfigurationDto getInitConfigurationDto();
 
@@ -28,11 +23,18 @@ interface InitConfigurationService {
 
     void setUser(User user);
 
-    void setInitConfigurationDto(InitConfigurationDto initConfigurationDto);
-
     void createDBAndStoreSettings(final InitController.ConfigDto config);
 
     void syncSettingsInDbAndConfigFile();
 
-    void validateVolumeSize(String volumeSize);
+    void validateVolumeSize(int volumeSize);
+
+    BucketNameValidationDTO validateBucketName(String bucketName);
+
+    /**
+     * Create bucket in current region in case it does not exist
+     * throws IllegalArgumentException in case invalid bucketName was provided
+     * @param bucketName
+     */
+    void createBucket(String bucketName);
 }
