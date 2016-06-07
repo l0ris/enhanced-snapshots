@@ -38,6 +38,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
@@ -52,6 +53,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.PropertySource;
+import org.springframework.web.context.support.XmlWebApplicationContext;
 
 /**
  * Implementation for {@link SystemService}
@@ -107,6 +110,11 @@ public class SystemServiceImpl implements SystemService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Configuration currentConfiguration;
+
+    @Autowired
+    private XmlWebApplicationContext applicationContext;
+
+
 
     @PostConstruct
     private void init() {
@@ -450,6 +458,22 @@ public class SystemServiceImpl implements SystemService {
         configurationMediator.setCurrentConfiguration(currentConfiguration);
     }
 
+    @Override
+    public void systemUninstall(boolean removeS3Bucket) {
+        LOG.info("Uninstaling system. S3 bucket will be removed: {}", removeS3Bucket);
+        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
+        applicationContext.getAutowireCapableBeanFactory().destroyBean(WorkersDispatcher.class);
+        new Thread() {
+            @Override
+            public void run() {
+                applicationContext.getEnvironment().getPropertySources().addLast(
+                        new DestroyContextPropertySource(removeS3Bucket));
+                LOG.info("Context refresh started");
+                applicationContext.refresh();
+            }
+        }.start();
+    }
+
     /**
      * Returns the latest official version of application
      * Current version taken from {@link SystemServiceImpl::INFO_URL}
@@ -494,5 +518,23 @@ public class SystemServiceImpl implements SystemService {
     private void copyToDirectory(Path src, Path dest) throws IOException {
         Path srcFileName = src.getFileName();
         Files.copy(src, Paths.get(dest.toString(), srcFileName.toString()), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    // Passing removeS3Bucket property to context
+    private static class DestroyContextPropertySource extends PropertySource<String> {
+        private boolean removeS3Bucket;
+
+        public DestroyContextPropertySource(boolean removeS3Bucket) {
+            super("custom");
+            this.removeS3Bucket = removeS3Bucket;
+        }
+
+        @Override
+        public String getProperty(String name) {
+            if (name.equals("removeS3Bucket")) {
+                return Boolean.toString(removeS3Bucket);
+            }
+            return null;
+        }
     }
 }
