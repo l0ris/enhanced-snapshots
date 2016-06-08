@@ -5,12 +5,16 @@ angular.module('web')
         $scope.state = 'ask';
 
         $scope.delete = function () {
-            System.delete($scope.instanceId).then(function () {
+            var deletionData = {
+                instanceId: $scope.instanceId,
+                removeS3Bucket: $scope.removeS3Bucket
+            };
+
+            System.delete(deletionData).then(function () {
                 $scope.state = "done";
             }, function(e){
                 $scope.delError = e;
                 $scope.state = "failed";
             });
-
         }
     });
