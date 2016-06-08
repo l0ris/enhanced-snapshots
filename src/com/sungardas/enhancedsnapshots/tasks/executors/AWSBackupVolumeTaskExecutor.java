@@ -18,12 +18,7 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.RetentionService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.service.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,10 +62,18 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     @Autowired
     private TaskService taskService;
 
+    @Autowired
+    private VolumeService volumeService;
+
     public void execute(TaskEntry taskEntry) {
         String volumeId = taskEntry.getVolume();
         Volume tempVolume = null;
         try {
+            if(!volumeService.volumeExists(taskEntry.getVolume())){
+                LOG.info("Volume [{}] does not exist. Removing backup task [{}]");
+                taskRepository.delete(taskEntry);
+                return;
+            }
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting backup task", 0);
 
