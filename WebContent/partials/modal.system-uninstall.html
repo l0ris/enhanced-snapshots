@@ -6,18 +6,18 @@
 
     <div ng-show="state === 'ask'">
         <h3>You are going to terminate this instance and release all the resources.</h3>
-        <h4>Would you like to keep S3 Bucket?</h4>
-        <button type="button" class="btn"
-                ng-class="{'btn-danger': removeS3Bucket, 'btn-default': !removeS3Bucket}"
-                ng-init="removeS3Bucket = false"
-                ng-model="removeS3Bucket"
-                ng-click="removeS3Bucket = !removeS3Bucket">
-            <span class="glyphicon glyphicon-{{removeS3Bucket ? 'check': 'unchecked'}}"></span> Delete bucket
-        </button>
-        <p class="text-danger" ng-show="removeS3Bucket">
-            Warning! If you delete S3 Bucket you lose all the data that it contains
-        </p>
-
+        <div class="form-inline">
+            <p class="form-control-static">Please choose whether S3 Bucket should be removed:</p>
+            <select class="form-control" ng-options="opt.name for opt in deletionOptions" ng-model="removeS3Bucket">
+                <option></option>
+            </select>
+        </div>
+        <div ng-show="removeS3Bucket.value === true" class="text-danger">
+            <span class="glyphicon glyphicon-exclamation-sign"></span>
+            <strong>
+                Warning! If you delete S3 Bucket you lose all the data that it contains
+            </strong>
+        </div>
         <hr/>
         <h3>Please enter your instance ID:</h3>
         <input type="text" ng-model="instanceId"/>
@@ -32,7 +32,7 @@
     </div>
 
     <div class="text-right">
-        <button class="btn btn-success" ng-show="state === 'ask'" ng-click="delete()">Uninstall</button>
+        <button class="btn btn-success" ng-show="state === 'ask'" ng-click="delete()" ng-disabled="removeS3Bucket == undefined">Uninstall</button>
         <button class="btn btn-default" ng-hide="state === 'ask'" ng-click="$close()"><span
                 class="glyphicon glyphicon-ok"></span>&nbsp; Done
         </button>
