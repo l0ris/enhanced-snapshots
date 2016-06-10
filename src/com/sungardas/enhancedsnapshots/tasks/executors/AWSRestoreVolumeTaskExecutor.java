@@ -99,7 +99,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         String targetZone = taskEntry.getAvailabilityZone();
 
         String volumeId = taskEntry.getVolume();
-        String snapshotId = snapshotService.getSnapshotId(volumeId);
+        String snapshotId = snapshotService.getSnapshotIdByVolumeId(volumeId);
         // check that snapshot exists
         if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
             LOG.error("Failed to find snapshot for volume {} ", volumeId);

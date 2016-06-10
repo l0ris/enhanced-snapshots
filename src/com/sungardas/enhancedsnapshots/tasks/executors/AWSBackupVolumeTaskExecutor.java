@@ -143,7 +143,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info("Backup size: {}", backupSize);
 
                 checkThreadInterruption(taskEntry);
-                LOG.info("Put backup entry to the Backup List: {}", backup.toString());
+                LOG.info("Put backup entry to the Backup List: {}", backup.getFileName());
                 notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Backup complete", 90);
                 backup.setState(BackupState.COMPLETED.getState());
                 backup.setSize(String.valueOf(backupSize));
@@ -154,12 +154,12 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info("Cleaning up previously created snapshots");
                 LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationMediator.getConfigurationId());
 
-                String previousSnapshot = snapshotService.getSnapshotId(volumeId);
+                String previousSnapshot = snapshotService.getSnapshotIdByVolumeId(volumeId);
                 if (previousSnapshot != null) {
                     checkThreadInterruption(taskEntry);
                     notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
                     LOG.info("Deleting previous snapshot {}", previousSnapshot);
-                    awsCommunication.deleteSnapshot(previousSnapshot);
+                    snapshotService.deleteSnapshot(previousSnapshot);
                 }
 
                 snapshotService.saveSnapshot(volumeId, snapshotId);
