@@ -5,10 +5,10 @@ angular.module('web')
         $scope.state = 'ask';
 
         $scope.deletionOptions = [{
-            name: "Delete S3 bucket",
+            name: "Yes",
             value: true
         }, {
-            name: "Keep S3 bucket",
+            name: "No",
             value: false
         }];
 

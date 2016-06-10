@@ -7,7 +7,7 @@
     <div ng-show="state === 'ask'">
         <h3>You are going to terminate this instance and release all the resources.</h3>
         <div class="form-inline">
-            <p class="form-control-static">Please choose whether S3 Bucket should be removed:</p>
+            <p class="form-control-static">Would you like to remove S3 Bucket?</p>
             <select class="form-control" ng-options="opt.name for opt in deletionOptions" ng-model="removeS3Bucket">
                 <option></option>
             </select>
@@ -15,7 +15,7 @@
         <div ng-show="removeS3Bucket.value === true" class="text-danger">
             <span class="glyphicon glyphicon-exclamation-sign"></span>
             <strong>
-                Warning! If you delete S3 Bucket you lose all the data that it contains
+                Warning! If you delete S3 bucket you will lose all backups data
             </strong>
         </div>
         <hr/>
