@@ -13,14 +13,21 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
 public class RemoveAppConfiguration {
 
+    private static final Logger LOG = LogManager.getLogger(RemoveAppConfiguration.class);
+
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
+
+    @Value("${removeS3Bucket}")
+    private boolean removeS3Bucket;
 
     @Autowired
     @Qualifier("amazonDynamoDB")
@@ -43,12 +50,17 @@ public class RemoveAppConfiguration {
     private void init() {
         configurationId = EC2MetadataUtils.getInstanceId();
         dynamoDB = new DynamoDB(db);
-        dropConfiguration();
+        dropConfiguration(removeS3Bucket);
     }
 
-    private void dropConfiguration() {
-        awsCommunicationService.dropS3Bucket(getConfiguration().getS3Bucket());
+    private void dropConfiguration(boolean withS3Bucket) {
+        if (withS3Bucket) {
+            LOG.info("Dropping S3 bucket");
+            awsCommunicationService.dropS3Bucket(getConfiguration().getS3Bucket());
+        }
+        LOG.info("Dropping DB data");
         dropDbData();
+        LOG.info("Terminating instance");
         terminateInstance();
     }
 

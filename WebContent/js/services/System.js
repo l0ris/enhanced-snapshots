@@ -28,9 +28,9 @@ angular.module('web')
             return deferred.promise;
         };
 
-        var _delete = function (instanceId) {
+        var _delete = function (deletionData) {
             var deferred = $q.defer();
-            $http.post(url + '/delete', {instanceId: instanceId}).then(function (result) {
+            $http.post(url + '/delete', deletionData).then(function (result) {
                 deferred.resolve(result.data);
             }, function (e) {
                 deferred.reject(e);
@@ -45,8 +45,8 @@ angular.module('web')
             send: function (volumeSettings) {
                 return _send(volumeSettings)
             },
-            delete: function (instanceId) {
-                return _delete(instanceId);
+            delete: function (deletionData) {
+                return _delete(deletionData);
             }
         }
     });
