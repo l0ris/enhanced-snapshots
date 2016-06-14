@@ -13,7 +13,6 @@ import javax.annotation.PostConstruct;
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
-import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
@@ -43,14 +42,9 @@ public class SpringSchedulerService implements SchedulerService {
     private TaskScheduler scheduler;
 
     @Autowired
-    private ConfigurationMediator configurationMediator;
-
-    @Autowired
     private TaskRepository taskRepository;
 
     private Map<String, ScheduledFuture> jobs = new HashMap<>();
-
-    private String instanceId;
 
     @Autowired
     private VolumeService volumeService;
@@ -64,7 +58,6 @@ public class SpringSchedulerService implements SchedulerService {
     @PostConstruct
     private void init() {
         try {
-            instanceId = configurationMediator.getConfigurationId();
             List<TaskEntry> tasks = taskRepository.findByRegular(Boolean.TRUE.toString());
             for (TaskEntry taskEntry : tasks) {
                 try {
@@ -123,6 +116,13 @@ public class SpringSchedulerService implements SchedulerService {
 
         @Override
         public void run() {
+            if (!volumeService.volumeExists(taskEntry.getVolume())) {
+                LOG.info("Volume {} does not exist any more. Removing scheduler [{}] [] for backups.",
+                        taskEntry.getVolume(), taskEntry.getSchedulerName(), taskEntry.getCron());
+                taskRepository.delete(taskEntry.getId());
+                removeTask(taskEntry.getId());
+                return;
+            }
             if (taskService.isQueueFull()) {
                 notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
             } else {
