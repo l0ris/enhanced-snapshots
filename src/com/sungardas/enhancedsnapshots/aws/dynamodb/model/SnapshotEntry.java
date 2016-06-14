@@ -7,12 +7,11 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 @DynamoDBTable(tableName = "Snapshots")
 public class SnapshotEntry {
 
-    @DynamoDBAttribute
+    @DynamoDBHashKey
     private String snapshotId;
 
-    @DynamoDBHashKey
+    @DynamoDBAttribute
     private String volumeId;
-
 
     public SnapshotEntry() {
     }
@@ -37,4 +36,5 @@ public class SnapshotEntry {
     public void setVolumeId(String volumeId) {
         this.volumeId = volumeId;
     }
+
 }
