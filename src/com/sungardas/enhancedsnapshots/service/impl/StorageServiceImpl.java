@@ -1,13 +1,14 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
@@ -32,7 +33,6 @@ import static java.lang.String.format;
 @DependsOn("SystemService")
 @Profile("prod")
 public class StorageServiceImpl implements StorageService {
-    public static final int BYTES_IN_MEGABYTE = 1000000;
 
     public static final Logger LOG = LogManager.getLogger(StorageServiceImpl.class);
 
@@ -63,39 +63,37 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public void javaBinaryCopy(String source, String destination, CopyingTaskProgressDto dto) throws IOException {
-        FileInputStream fis = null;
-        FileOutputStream fos = null;
-
         try {
-            fis = new FileInputStream(source);
-            fos = new FileOutputStream(destination);
-
-            byte[] buffer = new byte[BYTES_IN_MEGABYTE];
-            int noOfBytes;
-
-            long total = 0;
-
             LOG.info("Copying from {} to {} started", source, destination);
-
-            while ((noOfBytes = fis.read(buffer)) != -1) {
+            File dest = new File(destination);
+            ProcessBuilder builder = new ProcessBuilder("cp", source, destination);
+            builder.redirectErrorStream(true);
+            Process process = builder.start();
+            while (!process.waitFor(5, TimeUnit.SECONDS)) {
                 if (Thread.interrupted()) {
+                    process.destroy();
                     throw new EnhancedSnapshotsInterruptedException("Task interrupted");
                 }
-                fos.write(buffer, 0, noOfBytes);
-                total += noOfBytes;
-                dto.setCopyingProgress(total);
+                dto.setCopyingProgress(dest.length());
                 notificationService.notifyAboutTaskProgress(dto);
             }
-
-            LOG.info("Copying from {} to {} finished: {}", source, destination, total);
-        } finally {
-            if (fis != null) {
-                fis.close();
+            switch (process.exitValue()) {
+                case 0:
+                    LOG.info("Copying from {} to {} finished: {}", source, destination, dest.length());
+                    break;
+                default: {
+                    LOG.error("Failed to copy data from {} to {} ", source, destination);
+                    BufferedReader input = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    StringBuilder errorMessage = new StringBuilder();
+                    for (String line; (line = input.readLine()) != null; ) {
+                        errorMessage.append(line);
+                    }
+                    LOG.error(errorMessage.toString());
+                    throw new EnhancedSnapshotsInterruptedException(errorMessage.toString());
+                }
             }
-            if (fos != null) {
-                fos.close();
-            }
-
+        } catch (InterruptedException e) {
+            throw new EnhancedSnapshotsInterruptedException(e);
         }
     }
 
