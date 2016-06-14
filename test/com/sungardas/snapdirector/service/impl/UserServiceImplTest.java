@@ -1,5 +1,8 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.Roles;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
@@ -8,6 +11,7 @@ import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.OperationNotAllowedException;
 import com.sungardas.enhancedsnapshots.exception.UniqueConstraintViolationException;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,10 +20,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceImplTest {
@@ -195,7 +198,7 @@ public class UserServiceImplTest {
         when(userRepository.exists(adminEmail)).thenReturn(true);
         List<User> admins = new ArrayList<>();
         admins.add(UserDtoConverter.convert(createAdminDto(adminEmail)));
-        when(userRepository.findByRoleAndInstanceId(Roles.ADMIN.getName(), null)).thenReturn(admins);
+        when(userRepository.findByRole(Roles.ADMIN.getName())).thenReturn(admins);
 
         userService.removeUser(adminEmail, adminEmail);
     }
@@ -208,7 +211,7 @@ public class UserServiceImplTest {
         when(userRepository.exists(adminEmail)).thenReturn(true);
         List<User> admins = new ArrayList<>();
         admins.add(UserDtoConverter.convert(createAdminDto(adminEmail)));
-        when(userRepository.findByRoleAndInstanceId(Roles.ADMIN.getName(), null)).thenReturn(admins);
+        when(userRepository.findByRole(Roles.ADMIN.getName())).thenReturn(admins);
 
         UserDto adminDto = createAdminDto(adminEmail);
         adminDto.setAdmin(false);

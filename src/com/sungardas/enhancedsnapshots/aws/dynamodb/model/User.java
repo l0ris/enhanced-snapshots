@@ -28,9 +28,6 @@ public class User {
     @DynamoDBAttribute
     private String lastName;
 
-    @DynamoDBAttribute
-    private String instanceId;
-
     public User() {
         super();
     }
@@ -41,7 +38,6 @@ public class User {
         this.role = role;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.instanceId = instanceId;
     }
 
     public String getId() {
@@ -92,28 +88,34 @@ public class User {
         this.lastName = lastName;
     }
 
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
-    }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-        User user = (User) o;
+        final User user = (User) o;
 
-        if (id != null ? !id.equals(user.id) : user.id != null) return false;
-        if (email != null ? !email.equals(user.email) : user.email != null) return false;
-        if (password != null ? !password.equals(user.password) : user.password != null) return false;
-        if (role != null ? !role.equals(user.role) : user.role != null) return false;
-        if (firstName != null ? !firstName.equals(user.firstName) : user.firstName != null) return false;
-        if (lastName != null ? !lastName.equals(user.lastName) : user.lastName != null) return false;
-        return !(instanceId != null ? !instanceId.equals(user.instanceId) : user.instanceId != null);
+        if (id != null ? !id.equals(user.id) : user.id != null) {
+            return false;
+        }
+        if (email != null ? !email.equals(user.email) : user.email != null) {
+            return false;
+        }
+        if (password != null ? !password.equals(user.password) : user.password != null) {
+            return false;
+        }
+        if (role != null ? !role.equals(user.role) : user.role != null) {
+            return false;
+        }
+        if (firstName != null ? !firstName.equals(user.firstName) : user.firstName != null) {
+            return false;
+        }
+        return !(lastName != null ? !lastName.equals(user.lastName) : user.lastName != null);
 
     }
 
@@ -125,20 +127,6 @@ public class User {
         result = 31 * result + (role != null ? role.hashCode() : 0);
         result = 31 * result + (firstName != null ? firstName.hashCode() : 0);
         result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
-        result = 31 * result + (instanceId != null ? instanceId.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id='" + id + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", role='" + role + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", instanceId='" + instanceId + '\'' +
-                '}';
     }
 }

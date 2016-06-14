@@ -2,6 +2,9 @@
 
 ![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10324458/c19466ca-6c57-11e5-8318-a2eb1cd9e99b.png)
 
+[![Version][github-image]][github-url]
+[![Build Status][travis-image]][travis-url]
+
 *Table of contents*
 * [Product Description](#product-description)
 * [Key Features](#key-features)
@@ -193,10 +196,11 @@ See the [LICENSE.md](LICENSE.md) file for license rights and limitations (Apache
 
 Use of the provided AMIs is covered by a separate [End User License Agreement](https://s3-us-west-2.amazonaws.com/sgaslogo/EULA_Enhanced+Snapshots+for+AWS+2015-10-27.docx).
 
-## [![Sungard Availability Services | Labs][labs-logo]][labs-github-url]
+## Sungard Availability Services | Labs
+[![Sungard Availability Services | Labs][labs-image]][labs-github-url]
 
-This project is maintained by the Labs group at [Sungard Availability
-Services](http://sungardas.com)
+This project is maintained by the Labs team at [Sungard Availability
+Services][sgas-url]
 
 GitHub: [https://sungardas.github.io](https://sungardas.github.io)
 
@@ -204,6 +208,10 @@ Blog:
 [http://blog.sungardas.com/CTOLabs/](http://blog.sungardas.com/CTOLabs/)
 
 
+[sgas-url]: https://sungardas.com
 [labs-github-url]: https://sungardas.github.io
-[labs-logo]: https://raw.githubusercontent.com/SungardAS/repo-assets/master/images/logos/sungardas-labs-logo-small.png
-
+[labs-image]: https://raw.githubusercontent.com/SungardAS/repo-assets/master/images/logos/sungardas-labs-logo-small.png
+[travis-image]: https://travis-ci.org/SungardAS/enhanced-snapshots.svg?branch=master
+[travis-url]: https://travis-ci.org/SungardAS/enhanced-snapshot
+[github-image]: https://badge.fury.io/gh/sungardas%2Fenhanced-snapshots.svg
+[github-url]: https://badge.fury.io/gh/sungardas%2Fenhanced-snapshots

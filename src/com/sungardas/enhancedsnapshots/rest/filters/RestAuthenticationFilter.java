@@ -1,8 +1,23 @@
 package com.sungardas.enhancedsnapshots.rest.filters;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
 import com.sungardas.enhancedsnapshots.rest.utils.JsonFromStream;
 import com.sungardas.enhancedsnapshots.rest.utils.MultiReadHttpServletRequest;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,16 +25,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.sungardas.enhancedsnapshots.rest.utils.Constants.*;
+import static com.sungardas.enhancedsnapshots.rest.utils.Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME;
+import static com.sungardas.enhancedsnapshots.rest.utils.Constants.JSON_AUTHENTIFICATION_EMAIL;
+import static com.sungardas.enhancedsnapshots.rest.utils.Constants.JSON_AUTHENTIFICATION_PASSWORD;
 
 @Service
 public class RestAuthenticationFilter implements com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter {
@@ -52,7 +60,7 @@ public class RestAuthenticationFilter implements com.sungardas.enhancedsnapshots
                         JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
                         String email = authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL).toLowerCase();
                         String password = authCredentials.getString(JSON_AUTHENTIFICATION_PASSWORD);
-                        allowed = !userRepository.findByEmailAndPasswordAndInstanceId(email, DigestUtils.sha512Hex(password), instanceId).isEmpty();
+                        allowed = !userRepository.findByEmailAndPassword(email, DigestUtils.sha512Hex(password)).isEmpty();
                         if (allowed) {
                             allowedSessions.put(session.getId(), email);
                             LOG.info("Add session to allowed list: [{}] [{}]", session.getId(), email);

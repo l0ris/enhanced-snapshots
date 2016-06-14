@@ -1,9 +1,15 @@
 package com.sungardas.enhancedsnapshots.rest;
 
+import java.util.Map;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.rest.utils.Constants;
 import com.sungardas.enhancedsnapshots.service.UserService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
 
 
 @RestController

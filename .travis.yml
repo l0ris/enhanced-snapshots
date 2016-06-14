@@ -4,12 +4,12 @@
 language: java
 
 jdk:
-  - openjdk7
-
+  - oraclejdk8
+  
 branches:
   only:
   - master
-  - java
+  - develop
 
 sudo: required
 

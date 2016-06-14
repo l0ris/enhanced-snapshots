@@ -1,21 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import com.amazonaws.services.ec2.model.Volume;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
-import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
-import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.exception.SDFSException;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,10 +9,27 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import javax.annotation.PostConstruct;
+
+import com.amazonaws.services.ec2.model.Volume;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
+import com.sungardas.enhancedsnapshots.exception.SDFSException;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.StorageService;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
 import static java.lang.String.format;
 
 @Service
-@DependsOn("CreateAppConfiguration")
+@DependsOn("SystemService")
 @Profile("prod")
 public class StorageServiceImpl implements StorageService {
     public static final int BYTES_IN_MEGABYTE = 1000000;
@@ -38,15 +39,14 @@ public class StorageServiceImpl implements StorageService {
     private String mountPoint;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
     @Autowired
     private NotificationService notificationService;
 
     @PostConstruct
     public void init() {
-        WorkerConfiguration configuration = configurationService.getWorkerConfiguration();
-        this.mountPoint = configuration.getSdfsMountPoint();
+        this.mountPoint = configurationMediator.getSdfsMountPoint();
     }
 
     @Override

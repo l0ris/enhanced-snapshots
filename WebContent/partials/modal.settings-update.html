@@ -1,0 +1,30 @@
+<div class="modal-header bg-danger">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-cog"></span>&nbsp; System Settings Update</h3>
+</div>
+
+<div class="modal-body">
+    <div ng-show="state === 'ask'">
+        <h4>Would you like to update your System Settings?</h4>
+    </div>
+
+    <div ng-show="state === 'done'">
+        <h3>Your System Settings has been updated successfully!</h3>
+    </div>
+
+    <div ng-show="state === 'failed'">
+        <h3>Sorry, system is not responding. Please try again later.</h3>
+    </div>
+
+    <div ng-show="state === 'busy'">
+        <h3>Settings Update is not possible while you have a task in progress. Please repeat once running task is finished</h3>
+    </div>
+
+    <div class="text-right">
+        <button class="btn btn-success" ng-show="state === 'ask'" ng-click="updateSettings()">Update</button>
+        <button class="btn btn-default" ng-hide="state === 'ask'" ng-click="$close()"><span
+                class="glyphicon glyphicon-ok"></span>&nbsp; Done
+        </button>
+        <button class="btn btn-default" ng-show="state === 'ask'" ng-click="$dismiss()">Close</button>
+        <button class="btn btn-default" ng-show="state === 'busy'" ng-click="$dismiss()">Ok</button>
+    </div>
+</div>

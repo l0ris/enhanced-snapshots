@@ -8,12 +8,14 @@
 
     <context:component-scan base-package="com.sungardas.enhancedsnapshots.aws"/>
 
-    <context:property-placeholder location="classpath:/enhancedsnapshots.properties,file:${canalina.home}/conf/enhancedsnapshots.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
+    <context:property-placeholder location="classpath:/defaultEnhancedSnapshots.properties,file:${catalina.home}/conf/EnhancedSnapshots.properties" ignore-resource-not-found="true"/>
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 
     <beans profile="prod">
         <bean class="com.sungardas.destroy.RemoveAppConfiguration"/>
+        <bean class="com.sungardas.enhancedsnapshots.service.impl.AWSCommunicationServiceImpl"/>
+        <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
     <beans profile="dev">
         <bean class="com.sungardas.destroy.RemoveAppConfigurationDEV"/>

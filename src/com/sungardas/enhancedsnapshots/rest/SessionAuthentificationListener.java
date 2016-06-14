@@ -1,13 +1,13 @@
 package com.sungardas.enhancedsnapshots.rest;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.Map;
 
 import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
-import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import static com.sungardas.enhancedsnapshots.rest.utils.Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME;
 

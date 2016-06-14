@@ -7,11 +7,21 @@ public class SystemConfiguration {
     private SDFS sdfs;
     private Long lastBackup;
     private EC2Instance ec2Instance;
+    private SystemProperties systemProperties;
     private String currentVersion;
     private String latestVersion;
 
+
     public String getCurrentVersion() {
         return currentVersion;
+    }
+
+    public SystemProperties getSystemProperties() {
+        return systemProperties;
+    }
+
+    public void setSystemProperties(SystemProperties systemProperties) {
+        this.systemProperties = systemProperties;
     }
 
     public void setCurrentVersion(final String currentVersion) {
@@ -72,9 +82,58 @@ public class SystemConfiguration {
     }
 
     public static class SDFS {
-        private String volumeName;
-        private String volumeSize;
+
         private String mountPoint;
+        private String volumeName;
+
+        private int volumeSize;
+        private int minVolumeSize;
+        private int maxVolumeSize;
+
+        private int sdfsLocalCacheSize;
+        private int maxSdfsLocalCacheSize;
+        private int minSdfsLocalCacheSize;
+
+
+        public int getSdfsLocalCacheSize() {
+            return sdfsLocalCacheSize;
+        }
+
+        public void setSdfsLocalCacheSize(int sdfsLocalCacheSize) {
+            this.sdfsLocalCacheSize = sdfsLocalCacheSize;
+        }
+
+        public int getMaxSdfsLocalCacheSize() {
+            return maxSdfsLocalCacheSize;
+        }
+
+        public void setMaxSdfsLocalCacheSize(int maxSdfsLocalCacheSize) {
+            this.maxSdfsLocalCacheSize = maxSdfsLocalCacheSize;
+        }
+
+        public int getMinSdfsLocalCacheSize() {
+            return minSdfsLocalCacheSize;
+        }
+
+        public void setMinSdfsLocalCacheSize(int minSdfsLocalCacheSize) {
+            this.minSdfsLocalCacheSize = minSdfsLocalCacheSize;
+        }
+
+        public int getMinVolumeSize() {
+            return minVolumeSize;
+        }
+
+        public void setMinVolumeSize(int minVolumeSize) {
+            this.minVolumeSize = minVolumeSize;
+        }
+
+        public int getMaxVolumeSize() {
+            return maxVolumeSize;
+        }
+
+        public void setMaxVolumeSize(int maxVolumeSize) {
+            this.maxVolumeSize = maxVolumeSize;
+        }
 
         public String getVolumeName() {
             return volumeName;
@@ -84,11 +143,11 @@ public class SystemConfiguration {
             this.volumeName = volumeName;
         }
 
-        public String getVolumeSize() {
+        public int getVolumeSize() {
             return volumeSize;
         }
 
-        public void setVolumeSize(String volumeSize) {
+        public void setVolumeSize(int volumeSize) {
             this.volumeSize = volumeSize;
         }
 
@@ -113,4 +172,79 @@ public class SystemConfiguration {
         }
     }
 
+    public static class SystemProperties {
+
+        private String tempVolumeType;
+        private int tempVolumeIopsPerGb;
+        private String restoreVolumeType;
+        private int restoreVolumeIopsPerGb;
+        private String[] volumeTypeOptions;
+        private int amazonRetryCount;
+        private int amazonRetrySleep;
+        private int maxQueueSize;
+
+        public int getAmazonRetryCount() {
+            return amazonRetryCount;
+        }
+
+        public void setAmazonRetryCount(int amazonRetryCount) {
+            this.amazonRetryCount = amazonRetryCount;
+        }
+
+        public int getAmazonRetrySleep() {
+            return amazonRetrySleep;
+        }
+
+        public void setAmazonRetrySleep(int amazonRetrySleep) {
+            this.amazonRetrySleep = amazonRetrySleep;
+        }
+
+        public int getMaxQueueSize() {
+            return maxQueueSize;
+        }
+
+        public void setMaxQueueSize(int maxQueueSize) {
+            this.maxQueueSize = maxQueueSize;
+        }
+
+        public String getTempVolumeType() {
+            return tempVolumeType;
+        }
+
+        public void setTempVolumeType(String tempVolumeType) {
+            this.tempVolumeType = tempVolumeType;
+        }
+
+        public int getTempVolumeIopsPerGb() {
+            return tempVolumeIopsPerGb;
+        }
+
+        public void setTempVolumeIopsPerGb(int tempVolumeIopsPerGb) {
+            this.tempVolumeIopsPerGb = tempVolumeIopsPerGb;
+        }
+
+        public String getRestoreVolumeType() {
+            return restoreVolumeType;
+        }
+
+        public void setRestoreVolumeType(String restoreVolumeType) {
+            this.restoreVolumeType = restoreVolumeType;
+        }
+
+        public int getRestoreVolumeIopsPerGb() {
+            return restoreVolumeIopsPerGb;
+        }
+
+        public void setRestoreVolumeIopsPerGb(int restoreVolumeIopsPerGb) {
+            this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
+        }
+
+        public String[] getVolumeTypeOptions() {
+            return volumeTypeOptions;
+        }
+
+        public void setVolumeTypeOptions(String[] volumeTypeOptions) {
+            this.volumeTypeOptions = volumeTypeOptions;
+        }
+    }
 }

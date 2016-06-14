@@ -1,26 +1,19 @@
 package com.sungardas.enhancedsnapshots.service.impl;
-import com.amazonaws.AmazonClientException;
+
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
 @Profile("dev")
-public class SDFSStateServiceDev implements SDFSStateService {
+public class SDFSStateServiceDev extends SDFSStateServiceImpl {
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.LogManager.getLogger(SDFSStateServiceDev.class);
 
-    @Override
-    public void backupState() throws AmazonClientException {
+    public void expandSdfsVolume(String newVolumeSize) {
+        System.out.println("Volume expanded to " + newVolumeSize);
     }
-
-    @Override
-    public void backupState(String taskId) {
-
-    }
-
-    @Override
-    public void restoreState() throws AmazonClientException {
-    }
+    
 
     @Override
     public boolean containsSdfsMetadata(String sBucket) {
@@ -34,13 +27,28 @@ public class SDFSStateServiceDev implements SDFSStateService {
     }
 
     @Override
-    public void shutdownSDFS(String size, String bucketName) {
+    public void reconfigureAndRestartSDFS() {
 
     }
 
     @Override
-    public void startupSDFS(String size, String bucketName,  Boolean isRestore) {
+    public void restoreSDFS() {
 
+    }
+
+    @Override
+    public void startSDFS() {
+
+    }
+
+    @Override
+    public void stopSDFS() {
+
+    }
+
+    @Override
+    public boolean sdfsIsAvailable() {
+        return true;
     }
 
 }

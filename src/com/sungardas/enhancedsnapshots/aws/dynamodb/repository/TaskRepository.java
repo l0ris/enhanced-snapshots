@@ -1,28 +1,27 @@
 package com.sungardas.enhancedsnapshots.aws.dynamodb.repository;
 
+import java.util.List;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+
 import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
 import org.socialsignin.spring.data.dynamodb.repository.EnableScanCount;
 import org.springframework.data.repository.CrudRepository;
 
-import java.util.List;
-
 @EnableScan
 @EnableScanCount
 public interface TaskRepository extends CrudRepository<TaskEntry, String> {
-    List<TaskEntry> findByStatusAndInstanceIdAndRegular(String status, String instanceId, String regular);
+    List<TaskEntry> findByStatusAndRegular(String status, String regular);
 
-    List<TaskEntry> findByRegularAndVolumeAndInstanceId(String regular, String volumeId, String instanceId);
+    List<TaskEntry> findByRegularAndVolume(String regular, String volumeId);
 
-    List<TaskEntry> findByRegularAndInstanceId(String regular, String instanceId);
+    List<TaskEntry> findByRegularAndEnabled(String regular, String enabled);
 
-    List<TaskEntry> findByRegularAndInstanceIdAndEnabled(String regular, String instanceId, String enabled);
+    List<TaskEntry> findByVolumeAndTypeAndOptions(String volumeId, String type, String options);
 
-    List<TaskEntry> findByVolumeAndTypeAndInstanceIdAndOptions(String volumeId, String type, String instanceId, String options);
+    List<TaskEntry> findByExpirationDateLessThanEqual(String expirationDate);
 
-    List<TaskEntry> findByInstanceId(String instanceId);
+    List<TaskEntry> findByRegular(String regular);
 
-    List<TaskEntry> findByExpirationDateLessThanEqualAndInstanceId(String expirationDate, String instanceId);
-
-    Long countByRegularAndInstanceIdAndTypeAndStatus(String regular, String instanceId, String type, String status);
+    Long countByRegularAndTypeAndStatus(String regular, String type, String status);
 }

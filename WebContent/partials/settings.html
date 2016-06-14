@@ -2,7 +2,8 @@
     <div class="container">
         <div class="sub-nav pull-right">
             <div class="user">
-                <a ui-sref="login" title="logout">{{getUserName()}}&nbsp;<span class="glyphicon glyphicon-off text-danger"></span></a>
+                <a ui-sref="login" title="logout">{{getUserName()}}&nbsp;<span
+                        class="glyphicon glyphicon-off text-danger"></span></a>
             </div>
             <div class="page-btns">
 
@@ -17,12 +18,13 @@
 <div class="table-header-placeholder"></div>
 
 
-<div class="container app">
+<div class="container app" ng-show="progressState !== 'loading'">
 
     <div class="card">
         <div class="flex-container">
             <div class="flex-5 card-content flex-center">
-                <h3>Your system was stored <strong>{{ settings.lastBackup ? "last time at " + (settings.lastBackup | date: 'yyyy-MM-dd HH:mm:ss') : "never before"}}</strong></h3>
+                <h3>Your system was stored <strong>{{ settings.lastBackup ? "last time at " + (settings.lastBackup |
+                    date: 'yyyy-MM-dd HH:mm:ss') : "never before"}}</strong></h3>
             </div>
 
             <div class="flex-1 flex-center">
@@ -35,31 +37,200 @@
     <div class="card">
         <div class="flex-container">
             <div class="flex-5 card-content flex-center">
+
                 <div class="full-width">
                     <h3>EC2 Instance</h3>
                     <div class="col-sm-5 text-right">Instance ID:</div>
                     <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceID || 'unknown'}}</div>
                 </div>
-                <hr/>
+
+                    <hr/>
+
                 <div class="full-width">
                     <h3>S3</h3>
                     <div class="col-sm-5 text-right">Bucket:</div>
                     <div class="col-sm-7 text-left">{{settings.s3.bucketName || 'unknown'}}</div>
                 </div>
-                <hr/>
+                    <hr/>
+
                 <div class="full-width">
-                    <h3>SDFS</h3>
-                    <div class="col-sm-5 text-right">Volume Name:</div>
-                    <div class="col-sm-7 text-left">{{settings.sdfs.volumeName || 'unknown'}}</div>
-                    <div class="col-sm-5 text-right">Volume Size:</div>
-                    <div class="col-sm-7 text-left">{{settings.sdfs.volumeSize || 'unknown'}}</div>
-                    <div class="col-sm-5 text-right">Mount Point:</div>
-                    <div class="col-sm-7 text-left">{{settings.sdfs.mountPoint || 'unknown'}}</div>
+                    <form name="sdfs">
+                        <h3>SDFS</h3>
+                        <div class="col-sm-12">
+                            <div class="col-sm-5 text-right">Volume Name:</div>
+                            <div class="col-sm-7 text-left">{{settings.sdfs.volumeName || 'unknown'}}</div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="settings field-label col-sm-5 text-right">Volume Size:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       ng-model="settings.sdfs.volumeSize"
+                                       name="volumeSize"
+                                       min="{{settings.sdfs.minVolumeSize}}"
+                                       max="{{settings.sdfs.maxVolumeSize}}"
+                                       required>
+                            </div>
+                            <span class="settings field-label col-sm-5 text-left">GB</span>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <div class="col-sm-5 text-right">Mount Point:</div>
+                            <div class="col-sm-7 text-left">{{settings.sdfs.mountPoint || 'unknown'}}</div>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <div class="settings field-label col-sm-5 text-right">Local Cache Size:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       ng-model="settings.sdfs.sdfsLocalCacheSize"
+                                       name="sdfsLocalCacheSize"
+                                       min="{{settings.sdfs.minSdfsLocalCacheSize}}"
+                                       max="{{settings.sdfs.maxSdfsLocalCacheSize}}"
+                                       required>
+                            </div>
+                            <span class="settings field-label col-sm-5 text-left">GB</span>
+                        </div>
+                        <div class="col-sm-12 text-danger small" ng-show="sdfs.sdfsLocalCacheSize.$error.required"> {{STRINGS.sdfs.sdfsLocalCacheSize.empty}} </div>
+                        <div class="col-sm-12 text-danger small" ng-show="sdfs.volumeSize.$error.required"> {{STRINGS.sdfs.volumeSize.empty}} </div>
+                    </form>
+                </div>
+
+                    <hr/>
+
+                <div class="full-width">
+                    <form name="volumeTypes" >
+                        <h3>Volume Type</h3>
+                        <div class="form-group row">
+                            <div></div>
+                            <div class="settings field-label col-sm-5 text-right">Temporary Volume Type:</div>
+                            <div class="col-sm-2 text-left">
+                                <select ng-options="option for option in settings.systemProperties.volumeTypeOptions"
+                                        ng-model="settings.systemProperties.tempVolumeType"
+                                        class="form-control">
+                                </select>
+                            </div>
+                            <div class="col-sm-5 text-left" ng-show="settings.systemProperties.tempVolumeType === 'io1'">
+                                iops per Gb
+                                <input type="number"
+                                       name="tVolumeSize"
+                                       ng-model="settings.systemProperties.tempVolumeIopsPerGb"
+                                       class="settings bucket-name form-control"
+                                       min="1"
+                                       max="30"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="settings field-label col-sm-5 text-right">Restore Volume Type:</div>
+                            <div class="col-sm-2 text-left">
+                                <select ng-options="option for option in settings.systemProperties.volumeTypeOptions"
+                                        ng-model="settings.systemProperties.restoreVolumeType"
+                                        class="form-control">
+                                </select>
+                            </div>
+                            <div class="col-sm-5 text-left" ng-show="settings.systemProperties.restoreVolumeType === 'io1'">
+                                iops per Gb
+                                <input type="number"
+                                       name="rVolumeSize"
+                                       class="settings bucket-name form-control"
+                                       ng-model="settings.systemProperties.restoreVolumeIopsPerGb"
+                                       min="1"
+                                       max="30"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-offset-5 col-sm-7 text-left">
+                            <div>
+                                <span class="text-danger small"
+                                       ng-show="volumeTypes.rVolumeSize.$error.required || volumeTypes.tVolumeSize.$error.required">
+                                    {{STRINGS.volumeType.empty}}
+                                </span>
+                            </div>
+
+                            <div>
+                                <small class="text-danger"
+                                       ng-show="volumeTypes.rVolumeSize.$error.min || volumeTypes.tVolumeSize.$error.min ||
+                                          volumeTypes.tVolumeSize.$error.max || volumeTypes.rVolumeSize.$error.max">
+                                    {{STRINGS.volumeType.range}}
+                                </small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <hr/>
+
+                <div class="full-width">
+                    <form name="otherSettings">
+                        <h3>Other settings</h3>
+                        <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">Maximum Task Queue Size:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control col-sm-2 text-left"
+                                       type="number"
+                                       min="0"
+                                       ng-model="settings.systemProperties.maxQueueSize"
+                                       name="maxQueueSize"
+                                       required>
+                            </div>
+                            <div class="col-sm-5"></div>
+                        </div>
+                        <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">Amazon Retry Count:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control col-sm-2 text-left"
+                                       type="number"
+                                       ng-model="settings.systemProperties.amazonRetryCount"
+                                       min="0"
+                                       name="amazonRetryCount"
+                                       required>
+                            </div>
+                            <div class="col-sm-5"></div>
+                        </div>
+                        <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">Amazon Retry Sleep:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       min="0"
+                                       ng-model="settings.systemProperties.amazonRetrySleep"
+                                       name="amazonRetrySleep"
+                                       required>
+                            </div>
+                            <div class="settings field-label col-sm-5 text-left">milliseconds</div>
+                        </div>
+
+                        <div class="col-sm-12 text-danger small"
+                             ng-show="otherSettings.maxQueueSize.$error.required ||
+                             otherSettings.amazonRetryCount.$error.required ||
+                             otherSettings.amazonRetrySleep.$error.required">
+                            {{STRINGS.otherSettings.empty}}
+                        </div>
+                    </form>
+                </div>
+
+                <div class="full-width">
+                    <div class="col-sm-offset-5 col-sm-7 text-left">
+                        <button ng-show="isNewValues()"
+                                class="settings btn btn-info" title="Update Settings"
+                                ng-click="updateSettings()"
+                                ng-disabled="sdfs.volumeSize.$invalid ||
+                                sdfs.sdfsLocalCacheSize.$invalid || volumeTypes.tVolumeSize.$invalid ||
+                                volumeTypes.rVolumeSize.$invalid || otherSettings.maxQueueSize.$invalid ||
+                                otherSettings.amazonRetryCount.$invalid || otherSettings.amazonRetrySleep.$invalid">
+                            Update Settings
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div class="flex-1 flex-center">
-                <a class="btn btn-danger" title="Uninstall system" ng-disabled="!isAdmin" ng-click="uninstall()">Uninstall</a>
+                <button class="btn btn-danger" title="Uninstall system" ng-disabled="!isAdmin"
+                   ng-click="uninstall()">Uninstall</button>
             </div>
 
         </div>

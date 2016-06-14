@@ -1,115 +1,114 @@
 <div class="container">
-    <div class="row centered-form">
-        <div class="col-xs-12" ng-class="{'col-sm-8 col-md-6 col-sm-offset-2 col-md-offset-3': isAWS, 'col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2': !isAWS}">
+    <div class="row centered-form configuration">
+        <div class="col-xs-12 col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h2 class="panel-title">Settings</h2>
                 </div>
                 <div class="panel-body">
 
-                    <form ng-show="isAWS && isValidInstance" class="form-horizontal">
-                        <div class="form-group">
-                            <label class="col-sm-4 control-label">AWS Public Key:</label>
-                            <div class="col-sm-6">
-                                <input type="text" class="form-control" ng-model="awsPublicKey" required autofocus>
-                            </div>
-                        </div>
+                    <div class="form-horizontal" ng-show="settings && isValidInstance">
 
-                        <div class="form-group">
-                            <label class="col-sm-4 control-label">AWS Secret Key:</label>
-                            <div class="col-sm-6">
-                                <input type="password" class="form-control" ng-model="awsSecretKey" required>
-                            </div>
-                        </div>
+                        <form name="configs">
+                            <div class="flex-container card">
+                                <div class="flex-2 flex-center">
+                                    <span class="icon glyphicon glyphicon-{{iconClass[selectedBucket.isCreated]}} text-{{statusColorClass[selectedBucket.isCreated]}}"></span>
+                                </div>
 
-                        <div class="form-group col-sm-10">
-                        <div class="pull-right">
-                            <button type="button" class="btn btn-success" ng-click="sendAWS()">OK</button>
-                            <a ui-sref="login" href class="btn btn-default">Cancel</a>
-                        </div>
-                        </div>
-                    </form>
+                                <div class="flex-5 card-content bucket">
+                                    <h3>S3 Bucket</h3>
 
-                    <div class="form-horizontal" ng-hide="isAWS || !isValidInstance">
-
-                        <div class="flex-container card">
-                            <div class="flex-2 flex-center">
-                                <span class="icon glyphicon glyphicon-{{iconClass[selectedBucket.isCreated]}} text-{{statusColorClass[selectedBucket.isCreated]}}"></span>
-                            </div>
-
-                            <div class="flex-5 card-content">
-                                <h3>S3 Bucket</h3>
-
-                                <p>{{ selectedBucket.isCreated ? STRINGS.s3.existing : STRINGS.s3.new}}</p>
-                                <p><span class="label label-success">{{settings.s3.bucketName}}</span></p>
-                                <div class="btn-group" dropdown keyboard-nav>
-                                    <button id="simple-btn-keyboard-nav" type="button"
-                                            class="btn btn-default dropdown-toggle" dropdown-toggle>
-                                        <div>
-                                            {{selectedBucket.bucketName}} &nbsp;<span class="caret"></span>
-                                        </div>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu"
-                                        aria-labelledby="simple-btn-keyboard-nav">
-                                        <li role="menuitem" ng-repeat="bucket in settings.s3">
-                                            <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}&nbsp; &nbsp; <span class="label label-success" ng-hide="bucket.isCreated">new</span>
-                                            </a>
-                                        </li>
-                                    </ul>
+                                    <p>{{ selectedBucket.isCreated ? STRINGS.s3.existing : STRINGS.s3.new}}</p>
+                                    <p><span class="label label-success">{{settings.s3.bucketName}}</span></p>
+                                    <div class="btn-group" dropdown keyboard-nav ng-hide="isCustomBucketName">
+                                        <button id="simple-btn-keyboard-nav" type="button"
+                                                class="btn btn-default dropdown-toggle" dropdown-toggle>
+                                            <div class="pull-right">&nbsp;<span class="caret"></span></div>
+                                            <div class="text-left caption">
+                                                {{selectedBucket.bucketName}}
+                                            </div>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu"
+                                            aria-labelledby="simple-btn-keyboard-nav">
+                                            <li role="menuitem" ng-repeat="bucket in settings.s3">
+                                                <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}&nbsp; &nbsp;
+                                                    <span class="label label-success" ng-hide="bucket.isCreated">new</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <input type="text" ng-model="selectedBucket.bucketName" class="form-control" ng-class="{'ng-invalid': isNameWrong}" ng-show="isCustomBucketName" name="bucketName" required ng-change="validateName()" ng-trim maxlength="63"/>
+                                    <a href ng-click="isCustomBucketName = !isCustomBucketName" title="Rename" ng-hide="selectedBucket.isCreated"><span class="glyphicon glyphicon-{{ isCustomBucketName ? 'ok' : 'pencil'}} text-primary"></span></a>
+                                    <div class="text-danger small" ng-show="configs.bucketName.$error.required">{{STRINGS.s3.empty}}</div>
+                                    <div class="text-danger small" ng-show="isNameWrong && !selectedBucket.isCreated">{{wrongNameMessage}}</div>
+                                </div>
+                                <div class="flex-1 flex-center">
+                                    <a class="link-white" href="http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html" target="_blank" title="What is S3 Bucket"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
                                 </div>
                             </div>
 
-                            <div class="flex-1 flex-center">
-                                <a class="link-white" href="http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html" target="_blank" title="What is S3 Bucket"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
+                            <div class="flex-container card">
+                                <div class="flex-2 flex-center">
+                                    <span class="icon glyphicon glyphicon-{{iconClass[settings.sdfs.isCreated]}} text-{{statusColorClass[settings.sdfs.isCreated]}}"></span>
+                                </div>
+
+                                <div class="flex-5 card-content form-group">
+                                    <h3>SDFS Settings</h3>
+
+                                    <p>{{ settings.sdfs.isCreated ? STRINGS.sdfs.name.existing : STRINGS.sdfs.name.new}}</p>
+                                    <p>
+                                        <span class="label label-success">{{settings.sdfs.volumeName}} ({{settings.sdfs.volumeSize}})</span>
+                                    </p>
+
+                                    <p>{{ STRINGS.sdfs.point }}</p>
+                                    <p><span class="label label-success">{{settings.sdfs.mountPoint}}</span></p>
+
+                                    <div class="checkbox">
+                                        <label><input type="checkbox" ng-model="isNewVolumeSize"> {{STRINGS.sdfs.size}}</label>
+                                    </div>
+                                    <div ng-show="isNewVolumeSize" class="sdfsVolume">
+                                        <input type="number" ng-model="sdfsNewSize" name="newVolumeSize" class="form-control" min="{{settings.sdfs.minVolumeSize}}" max="{{settings.sdfs.maxVolumeSize}}" ng-required="isNewVolumeSize"> GB
+                                        <p class="text-muted text">Should be within the range of {{settings.sdfs.minVolumeSize}} - {{settings.sdfs.maxVolumeSize}}</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex-1 flex-center">
+                                    <a class="link-white" href="https://github.com/SungardAS/snapdirector/blob/java/README.md" target="_blank" title="What is SDFS"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
+                                </div>
                             </div>
 
-                        </div>
+                            <div class="flex-container card">
+                                <div class="flex-2 flex-center">
+                                    <span class="icon glyphicon glyphicon-{{iconClass[settings.db.isValid]}} text-{{statusColorClass[settings.db.isValid]}}"></span>
+                                </div>
 
-                        <div class="flex-container card">
-                            <div class="flex-2 flex-center">
-                                <span class="icon glyphicon glyphicon-{{iconClass[settings.sdfs.isCreated]}} text-{{statusColorClass[settings.sdfs.isCreated]}}"></span>
+                                <div class="flex-5 card-content">
+                                    <h3>DynamoDB</h3>
+
+                                    <p>{{ settings.db.isValid ? STRINGS.db.isValid.true : STRINGS.db.isValid.false}}</p>
+                                    <strong><p ng-show="!settings.db.hasAdmin">
+                                        <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}
+                                    </p></strong>
+
+                                </div>
+
+                                <div class="flex-1 flex-center">
+                                    <a class="link-white" href="https://aws.amazon.com/dynamodb" target="_blank" title="What is DynamoDB"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
+                                </div>
                             </div>
 
-                            <div class="flex-5 card-content">
-                                <h3>SDFS Settings</h3>
-
-                                <p>{{ settings.sdfs.isCreated ? STRINGS.sdfs.name.existing : STRINGS.sdfs.name.new}}</p>
-                                <p><span class="label label-success">{{settings.sdfs.volumeName}} ({{settings.sdfs.volumeSize}})</span></p>
-                                <p>{{ STRINGS.sdfs.point }}</p>
-                                <p><span class="label label-success">{{settings.sdfs.mountPoint}}</span></p>
-
+                            <div class="pull-right">
+                                <button type="button" class="btn btn-success" ng-click="sendSettings()"
+                                        ng-disabled="configs.bucketName.$error.required ||
+                                        isNameWrong && !selectedBucket.isCreated ||
+                                        configs.newVolumeSize.$error.required ||
+                                        configs.newVolumeSize.$error.min ||
+                                        configs.newVolumeSize.$error.max ||
+                                        configs.newVolumeSize.$error.number">Setup
+                                </button>
+                                <a ui-sref="login" href class="btn btn-default">Cancel</a>
                             </div>
-
-                            <div class="flex-1 flex-center">
-                                <a class="link-white" href="https://github.com/SungardAS/snapdirector/blob/java/README.md" target="_blank" title="What is SDFS"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
-                            </div>
-
-                       </div>
-
-                        <div class="flex-container card">
-                            <div class="flex-2 flex-center">
-                                <span class="icon glyphicon glyphicon-{{iconClass[settings.db.isValid]}} text-{{statusColorClass[settings.db.isValid]}}"></span>
-                            </div>
-
-                            <div class="flex-5 card-content">
-                                <h3>DynamoDB</h3>
-
-                                <p>{{ settings.db.isValid ? STRINGS.db.isValid.true : STRINGS.db.isValid.false}}</p>
-                                <strong><p ng-show="!settings.db.hasAdmin">  <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}</p></strong>
-
-                            </div>
-
-                            <div class="flex-1 flex-center">
-                                <a class="link-white" href="https://aws.amazon.com/dynamodb" target="_blank" title="What is DynamoDB"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
-                            </div>
-
-                        </div>
-
-                        <div class="pull-right">
-                            <button type="button" class="btn btn-success" ng-click="sendSettings()">Setup</button>
-                            <a ui-sref="login" href class="btn btn-default">Cancel</a>
-                        </div>
-
+                        </form>
                     </div>
 
                     <div ng-hide="isValidInstance" class="text-center bg-danger">

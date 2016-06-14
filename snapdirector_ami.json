@@ -14,7 +14,7 @@
       "instance_type": "t2.micro",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
-      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2016.03.29",
+      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2016.04.29",
       "tags": {
         "Name": "Enhanced Snapshots",
         "Description": "Backup, recovery, disaster recovery, snapshot, schedule"

@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.sungardas.enhancedsnapshots.service.CryptoService;
+
 import org.jasypt.util.text.BasicTextEncryptor;
 import org.springframework.stereotype.Service;
 

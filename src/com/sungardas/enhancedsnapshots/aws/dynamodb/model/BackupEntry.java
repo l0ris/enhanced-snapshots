@@ -1,130 +1,128 @@
 package com.sungardas.enhancedsnapshots.aws.dynamodb.model;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.amazonaws.util.json.Jackson;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.springframework.data.annotation.Id;
 
 @DynamoDBTable(tableName = "BackupList")
 final public class BackupEntry {
-	private final Map<String, Object> attributes = new LinkedHashMap<String, Object>();
 
-	public BackupEntry() {
-		super();
-	}
+    private String fileName;
+    private String timeCreated;
+    private String size;
+    private String state;
+    private String snapshotId;
+    private String volumeType;
+    private String iops;
+    private String sizeGiB;
+    private String volumeId;
+
+
+
+	public BackupEntry() {}
 
 	public BackupEntry(String volumeId, String fileName, String timeCreated, String backupSize, BackupState state,
-			String instanceId, String snapshotId, String volumeType,String iops, String sizeGiB) {
-		setVolumeId(volumeId);
+                       String snapshotId, String volumeType, String iops, String sizeGiB) {
+        setVolumeId(volumeId);
 		setFileName(fileName);
 		setTimeCreated(timeCreated);
 		setSize(backupSize);
 		setState(state.getState());
-		setInstanceId(instanceId);
 		setSnapshotId(snapshotId);
 		setVolumeType(volumeType);
 		setIops(iops);
 		setSizeGiB(sizeGiB);
 	}
 
-	@DynamoDBHashKey(attributeName = "volumeId")
-	public String getVolumeId() {
-		return (String) attributes.get("volumeId");
-	}
+    @DynamoDBHashKey()
+    public String getFileName() {
+        return fileName;
+    }
 
-	public void setVolumeId(String volumeId) {
-		attributes.put("volumeId", volumeId);
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
 
-	}
+    public String getVolumeId() {
+        return volumeId;
+    }
 
-	@DynamoDBRangeKey(attributeName = "fileName")
-	public String getFileName() {
-		return (String) attributes.get("fileName");
-	}
+    public void setVolumeId(String volumeId) {
+        this.volumeId = volumeId;
+    }
 
-	public void setFileName(String fileName) {
-		attributes.put("fileName", fileName);
-	}
+    public String getTimeCreated() {
+        return timeCreated;
+    }
 
-	@DynamoDBAttribute(attributeName = "timeCreated")
-	public String getTimeCreated() {
-		return (String) attributes.get("timeCreated");
-	}
 
-	public void setTimeCreated(String timeCreated) {
-		attributes.put("timeCreated", timeCreated);
-	}
+    public void setTimeCreated(final String timeCreated) {
+        this.timeCreated = timeCreated;
+    }
 
-	@DynamoDBAttribute(attributeName = "size")
-	public String getSize() {
-		return (String) attributes.get("size");
-	}
+    public String getSize() {
+        return size;
+    }
 
-	public void setSize(String size) {
-		attributes.put("size", size);
-	}
+    public void setSize(final String size) {
+        this.size = size;
+    }
 
-	@DynamoDBAttribute(attributeName = "state")
-	public String getState() {
-		return (String) attributes.get("state");
-	}
+    public String getState() {
+        return state;
+    }
 
-	public void setState(String state) {
-		attributes.put("state", state);
-	}
+    public void setState(final String state) {
+        this.state = state;
+    }
 
-	@DynamoDBAttribute(attributeName = "instanceId")
-	public String getInstanceId() {
-		return (String) attributes.get("instanceId");
-	}
+    public String getSnapshotId() {
+        return snapshotId;
+    }
 
-	public void setInstanceId(String instanceId) {
-		attributes.put("instanceId", instanceId);
-	}
+    public void setSnapshotId(final String snapshotId) {
+        this.snapshotId = snapshotId;
+    }
 
-	@DynamoDBAttribute(attributeName = "snapshotId")
-	public void setSnapshotId(String snapshotId) {
-		attributes.put("snapshotId", snapshotId);
-	}
+    public String getVolumeType() {
+        return volumeType;
+    }
 
-	public String getSnapshotId() {
-		return (String) attributes.get("snapshotId");
-	}
+    public void setVolumeType(final String volumeType) {
+        this.volumeType = volumeType;
+    }
 
-	@DynamoDBAttribute(attributeName = "volumeType")
-	public void setVolumeType(String volumeType) {
-		attributes.put("volumeType", volumeType);
-	}
+    public String getIops() {
+        return iops;
+    }
 
-	public String getVolumeType() {
-		return (String) attributes.get("volumeType");
-	}
+    public void setIops(final String iops) {
+        this.iops = iops;
+    }
 
-	@DynamoDBAttribute(attributeName = "iops")
-	public void setIops(String iops) {
-		attributes.put("iops", iops);
-	}
+    public String getSizeGiB() {
+        return sizeGiB;
+    }
 
-	public String getIops() {
-		return (String) attributes.get("iops");
-	}
+    public void setSizeGiB(final String sizeGiB) {
+        this.sizeGiB = sizeGiB;
+    }
 
-	@DynamoDBAttribute(attributeName = "sizeGiB")
-	public void setSizeGiB(String sizeGiB) {
-		attributes.put("sizeGiB", sizeGiB);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-	public String getSizeGiB() {
-		return (String) attributes.get("sizeGiB");
-	}
+        BackupEntry that = (BackupEntry) o;
 
-	@Override
-	public String toString() {
-		return Jackson.toJsonString(attributes);
-	}
+        return fileName != null ? fileName.equals(that.fileName) : that.fileName == null;
 
+    }
+
+    @Override
+    public int hashCode() {
+        return fileName != null ? fileName.hashCode() : 0;
+    }
 }

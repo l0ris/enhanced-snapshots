@@ -8,18 +8,21 @@
 
 
     <mvc:annotation-driven />
+    <context:component-scan base-package="com.sungardas.enhancedsnapshots.aws"/>
 
     <context:annotation-config/>
 
-    <context:property-placeholder location="classpath:/enhancedsnapshots.properties,file:${canalina.home}/conf/enhancedsnapshots.properties" ignore-resource-not-found="true"/>
+    <context:property-placeholder location="classpath:/defaultEnhancedSnapshots.properties,file:${catalina.home}/conf/EnhancedSnapshots.properties" ignore-resource-not-found="true"/>
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 
     <beans profile="dev">
-        <bean class="com.sungardas.init.CredentialsServiceDev"/>
+        <bean class="com.sungardas.init.InitConfigurationServiceDev"/>
+        <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
 
     <beans profile="prod">
-        <bean class="com.sungardas.init.CredentialsServiceImpl"/>
+        <bean class="com.sungardas.init.InitConfigurationServiceImpl"/>
+        <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
 </beans>

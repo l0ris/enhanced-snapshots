@@ -1,5 +1,13 @@
 <div class="modal-body">
 
+    <div ng-show="progressState === 'loading'">
+        <h2>Loading...</h2>
+
+        <div>
+            <progressbar class="progress-striped active" max="100" value="100" type="success"></progressbar>
+        </div>
+    </div>
+
     <div ng-show="progressState === 'running'">
         <h2>Please wait while we create the environment for you.</h2>
 
