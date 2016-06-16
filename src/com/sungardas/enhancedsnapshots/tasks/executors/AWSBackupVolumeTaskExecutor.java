@@ -18,12 +18,7 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.RetentionService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.service.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,10 +62,18 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     @Autowired
     private TaskService taskService;
 
+    @Autowired
+    private VolumeService volumeService;
+
     public void execute(TaskEntry taskEntry) {
         String volumeId = taskEntry.getVolume();
         Volume tempVolume = null;
         try {
+            if(!volumeService.volumeExists(taskEntry.getVolume())){
+                LOG.info("Volume [{}] does not exist. Removing backup task [{}]");
+                taskRepository.delete(taskEntry);
+                return;
+            }
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting backup task", 0);
 
@@ -143,7 +146,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info("Backup size: {}", backupSize);
 
                 checkThreadInterruption(taskEntry);
-                LOG.info("Put backup entry to the Backup List: {}", backup.toString());
+                LOG.info("Put backup entry to the Backup List: {}", backup.getFileName());
                 notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Backup complete", 90);
                 backup.setState(BackupState.COMPLETED.getState());
                 backup.setSize(String.valueOf(backupSize));
@@ -154,12 +157,12 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info("Cleaning up previously created snapshots");
                 LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationMediator.getConfigurationId());
 
-                String previousSnapshot = snapshotService.getSnapshotId(volumeId);
+                String previousSnapshot = snapshotService.getSnapshotIdByVolumeId(volumeId);
                 if (previousSnapshot != null) {
                     checkThreadInterruption(taskEntry);
                     notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
                     LOG.info("Deleting previous snapshot {}", previousSnapshot);
-                    awsCommunication.deleteSnapshot(previousSnapshot);
+                    snapshotService.deleteSnapshot(previousSnapshot);
                 }
 
                 snapshotService.saveSnapshot(volumeId, snapshotId);

@@ -30,5 +30,12 @@ public interface SystemService {
      */
     void setSystemConfiguration(SystemConfiguration systemConfiguration);
 
+    /**
+     * Uninstall system. Removes all system infrastructure: DB tables, instance with application
+     *
+     * @param removeS3Bucket in case true S3 bucket will be removed as well
+     */
+    void systemUninstall(boolean removeS3Bucket);
+
     String VOLUME_SIZE_UNIT = "GB";
 }

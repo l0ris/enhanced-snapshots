@@ -7,6 +7,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.SnapshotService;
 import com.sungardas.enhancedsnapshots.service.StorageService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 
@@ -23,7 +24,7 @@ import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskE
 @Profile("prod")
 public class AWSDeleteTaskExecutor implements TaskExecutor {
 
-    private static final Logger LOG = LogManager.getLogger(DeleteFakeTaskExecutor.class);
+    private static final Logger LOG = LogManager.getLogger(AWSDeleteTaskExecutor.class);
 
     @Autowired
     private NotificationService notificationService;
@@ -35,6 +36,8 @@ public class AWSDeleteTaskExecutor implements TaskExecutor {
     private StorageService storageService;
     @Autowired
     private TaskService taskService;
+    @Autowired
+    private SnapshotService snapshotService;
 
     @Override
     public void execute(TaskEntry taskEntry) {
@@ -45,13 +48,12 @@ public class AWSDeleteTaskExecutor implements TaskExecutor {
         taskRepository.save(taskEntry);
 
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Finding source file", 30);
-        BackupEntry backupEntry = new BackupEntry();
-        backupEntry.setVolumeId(taskEntry.getVolume());
-        backupEntry.setFileName(taskEntry.getSourceFileName());
+        BackupEntry backupEntry = backupRepository.findOne(taskEntry.getSourceFileName());
 
         try {
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting file...", 60);
             storageService.deleteFile(backupEntry.getFileName());
+            snapshotService.deleteSnapshot(backupEntry.getSnapshotId());
             backupRepository.delete(backupEntry);
             taskService.complete(taskEntry);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
