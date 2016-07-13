@@ -15,3 +15,4 @@
     - nginx
     - awslogs
     - logrotate
+    - fio

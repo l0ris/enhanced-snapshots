@@ -1,0 +1,5 @@
+---
+- debug: msg="install fio"
+
+- name: install fio
+  yum: name=fio state=latest
