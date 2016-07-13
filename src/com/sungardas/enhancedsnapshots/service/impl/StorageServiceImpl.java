@@ -67,7 +67,6 @@ public class StorageServiceImpl implements StorageService {
             LOG.info("Copying from {} to {} started", source, destination);
             File dest = new File(destination);
             ProcessBuilder builder = new ProcessBuilder("cp", source, destination);
-            builder.redirectErrorStream(true);
             Process process = builder.start();
             while (!process.waitFor(5, TimeUnit.SECONDS)) {
                 if (Thread.interrupted()) {
@@ -83,13 +82,14 @@ public class StorageServiceImpl implements StorageService {
                     break;
                 default: {
                     LOG.error("Failed to copy data from {} to {} ", source, destination);
-                    BufferedReader input = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                    StringBuilder errorMessage = new StringBuilder();
-                    for (String line; (line = input.readLine()) != null; ) {
-                        errorMessage.append(line);
+                    try (BufferedReader input = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                        StringBuilder errorMessage = new StringBuilder();
+                        for (String line; (line = input.readLine()) != null; ) {
+                            errorMessage.append(line);
+                        }
+                        LOG.error(errorMessage.toString());
+                        throw new EnhancedSnapshotsInterruptedException(errorMessage.toString());
                     }
-                    LOG.error(errorMessage.toString());
-                    throw new EnhancedSnapshotsInterruptedException(errorMessage.toString());
                 }
             }
         } catch (InterruptedException e) {
