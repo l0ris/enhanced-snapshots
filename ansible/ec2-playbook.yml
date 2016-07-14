@@ -13,3 +13,4 @@
     - nginx
     - awslogs
     - logrotate
+    - fio
