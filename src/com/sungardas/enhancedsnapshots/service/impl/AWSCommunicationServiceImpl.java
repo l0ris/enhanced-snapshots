@@ -404,7 +404,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < configurationMediator.getMaxWaitTimeToDetachVolume()) {
             sleepTillNextSync();
             volume = syncVolume(volume);
-            waitTime += configurationMediator.getMaxWaitTimeToDetachVolume();
+            waitTime += configurationMediator.getWaitTimeBeforeNewSyncWithAWS();
         }
         if (syncVolume(volume).getState().equals(AVAILABLE_STATE)) {
             LOG.debug("Volume {} detached.", volume.getVolumeId());
