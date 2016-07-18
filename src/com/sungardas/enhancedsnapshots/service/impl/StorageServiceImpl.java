@@ -1,9 +1,6 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +34,8 @@ public class StorageServiceImpl implements StorageService {
     public static final Logger LOG = LogManager.getLogger(StorageServiceImpl.class);
 
     private String mountPoint;
+    public static final int BYTES_IN_MEGABYTE = 1000000;
+    private static final String devNamePrefix = "/dev/xvd";
 
     @Autowired
     private ConfigurationMediator configurationMediator;
@@ -61,14 +60,13 @@ public class StorageServiceImpl implements StorageService {
         }
     }
 
-    @Override
-    public void javaBinaryCopy(String source, String destination, CopyingTaskProgressDto dto) throws IOException {
+    private void copyWithCpCommand(String source, String destination, CopyingTaskProgressDto dto) throws IOException {
         try {
             LOG.info("Copying from {} to {} started", source, destination);
             File dest = new File(destination);
             ProcessBuilder builder = new ProcessBuilder("cp", source, destination);
             Process process = builder.start();
-            while (!process.waitFor(5, TimeUnit.SECONDS)) {
+            while (!process.waitFor(3, TimeUnit.SECONDS)) {
                 if (Thread.interrupted()) {
                     process.destroy();
                     throw new EnhancedSnapshotsInterruptedException("Task interrupted");
@@ -94,6 +92,39 @@ public class StorageServiceImpl implements StorageService {
             }
         } catch (InterruptedException e) {
             throw new EnhancedSnapshotsInterruptedException(e);
+        }
+    }
+
+    @Override
+    public void copyData(String source, String destination, CopyingTaskProgressDto dto) throws IOException {
+        // for restoring we need to use java binary copy approach, so we could determine size of copied data
+        // since otherwise progress bar will always show that 0 mb copied till restore is finished
+        if (destination.startsWith(devNamePrefix)){
+            javaBinaryCopy(source, destination, dto);
+            return;
+        }
+        // copy with native commands shows best performance
+        // so it's better to use this approach for backups
+        copyWithCpCommand(source, destination, dto);
+    }
+
+    private void javaBinaryCopy(String source, String destination, CopyingTaskProgressDto dto) throws IOException {
+        try (FileInputStream fis = new FileInputStream(source);
+             FileOutputStream fos = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[BYTES_IN_MEGABYTE];
+            int noOfBytes;
+            long total = 0;
+            LOG.info("Copying from {} to {} started", source, destination);
+            while ((noOfBytes = fis.read(buffer)) != -1) {
+                if (Thread.interrupted()) {
+                    throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+                }
+                fos.write(buffer, 0, noOfBytes);
+                total += noOfBytes;
+                dto.setCopyingProgress(total);
+                notificationService.notifyAboutTaskProgress(dto);
+            }
+            LOG.info("Copying from {} to {} finished: {}", source, destination, total);
         }
     }
 
@@ -131,7 +162,7 @@ public class StorageServiceImpl implements StorageService {
         if (!volf.exists() || !volf.isFile()) {
             LOG.info(format("Cant find attached source: %s", volume));
 
-            devname = "/dev/xvd" + devname.substring(devname.length() - 1);
+            devname = devNamePrefix + devname.substring(devname.length() - 1);
             LOG.info(format("New source path : %s", devname));
         }
         return devname;

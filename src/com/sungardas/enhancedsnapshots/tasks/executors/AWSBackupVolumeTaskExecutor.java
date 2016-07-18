@@ -123,7 +123,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 String source = attachedDeviceName;
                 LOG.info("Starting copying: " + source + " to:" + backupFileName);
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
-                storageService.javaBinaryCopy(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto);
+                storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto);
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
                 LOG.fatal(format("Backup of volume %s failed", volumeId));
@@ -232,14 +232,27 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     private void killInitializationVolumeProcessIfAlive(Volume volume) {
         String fioProcNamePrefix = "fio --filename=" + storageService.detectFsDevName(volume);
         try {
-            Process process = new ProcessBuilder("pkill", "-f", fioProcNamePrefix).start();
-            process.waitFor();
-            switch (process.exitValue()) {
+            // check fio processes are alive
+            Process checkFioProcessAlive = new ProcessBuilder("pgrep", "-f", fioProcNamePrefix).start();
+            checkFioProcessAlive.waitFor();
+            switch (checkFioProcessAlive.exitValue()) {
                 case 0:
-                    LOG.info("Fio processes for volume {} terminated", volume.getVolumeId());
+                    // fio processes are alive
+                    LOG.info("Fio processes for volume {} are alive", volume.getVolumeId());
+                    Process process = new ProcessBuilder("pkill", "-f", fioProcNamePrefix).start();
+                    process.waitFor();
+                    switch (process.exitValue()) {
+                        case 0:
+                            LOG.info("Fio processes for volume {} terminated", volume.getVolumeId());
+                            break;
+                        default: {
+                            LOG.warn("Failed to terminate fio processes for volume {}", volume.getVolumeId());
+                        }
+                    }
                     break;
                 default: {
-                    LOG.info("Failed to terminate fio processes for volume {}, probably they had finished already", volume.getVolumeId());
+                    // no need to terminate, fio processes are already terminated
+                    LOG.info("Fio processes for volume {} already terminated, no need to stop forcibly", volume.getVolumeId());
                 }
             }
         } catch (IOException | InterruptedException e) {

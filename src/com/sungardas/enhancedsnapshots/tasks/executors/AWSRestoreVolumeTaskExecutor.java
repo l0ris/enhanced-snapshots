@@ -162,7 +162,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             LOG.info("Volume was attached as device: " + attachedDeviceName);
             try {
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 25, 80, Long.parseLong(backupentry.getSizeGiB()));
-                storageService.javaBinaryCopy(configurationMediator.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
+                storageService.copyData(configurationMediator.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
             } catch (IOException | InterruptedException e) {
                 LOG.fatal("Restore of volume {} failed", tempVolume);
                 taskEntry.setStatus("error");
