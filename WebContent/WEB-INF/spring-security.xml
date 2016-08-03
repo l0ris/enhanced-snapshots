@@ -1,0 +1,43 @@
+<b:beans xmlns="http://www.springframework.org/schema/security"
+         xmlns:b="http://www.springframework.org/schema/beans"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+
+    <http pattern="/index.html" security="none"/>
+    <http pattern="/lib/**" security="none"/>
+    <http pattern="/css/**" security="none"/>
+    <http pattern="/js/**" security="none"/>
+    <http pattern="/partials/**" security="none"/>
+
+    <http auto-config="false" use-expressions="true" >
+        <intercept-url pattern="/**" access="hasAnyRole('ROLE_ADMIN', 'ROLE_CONFIGURATOR', 'ROLE_USER')"/>
+        <intercept-url pattern="/login*" access="none"/>
+
+        <form-login login-page="/"
+                    username-parameter="email"
+                    password-parameter="password"
+                    authentication-failure-handler-ref="initFailureHandler"
+                    authentication-success-handler-ref="initSuccessHandler"/>
+        <csrf disabled="true"/>
+        <logout logout-success-url="/"/>
+    </http>
+
+    <b:bean id="initSuccessHandler" class="com.sungardas.enhancedsnapshots.security.AuthSuccessHandler"/>
+    <b:bean id="initFailureHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler"/>
+
+
+    <authentication-manager alias="authenticationManager">
+        <authentication-provider user-service-ref="initUserDetailsService"/>
+    </authentication-manager>
+
+    <b:beans profile="prod">
+        <b:bean id="initUserDetailsService" class="com.sungardas.enhancedsnapshots.security.InitUserDetailsService"></b:bean>
+    </b:beans>
+
+    <b:beans profile="dev">
+        <b:bean id="initUserDetailsService" class="com.sungardas.enhancedsnapshots.security.InitUserDetailsServiceDev"></b:bean>
+    </b:beans>
+</b:beans>
+

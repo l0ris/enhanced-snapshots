@@ -4,13 +4,10 @@ import javax.annotation.PostConstruct;
 
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter;
-import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +17,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
@@ -31,8 +30,6 @@ class InitController implements ApplicationContextAware {
 
     private static final Logger LOG = LogManager.getLogger(InitController.class);
 
-    @Autowired
-    private FilterProxy filterProxy;
 
     @Autowired
     private InitConfigurationService initConfigurationService;
@@ -142,14 +139,17 @@ class InitController implements ApplicationContextAware {
     private void refreshContext() {
         LOG.info("Context refresh process started.");
         CONTEXT_REFRESH_IN_PROCESS = true;
-        applicationContext.setConfigLocation("/WEB-INF/spring-web-config.xml");
+        //for sso - "/WEB-INF/spring-security-saml.xml"
+        String additionalSpringSecurityContext = "/WEB-INF/spring-security-dynamoDB.xml";
+        applicationContext.setConfigLocations("/WEB-INF/spring-web-config.xml", additionalSpringSecurityContext);
         applicationContext.refresh();
 
-        // enabling auth filter
-        RestAuthenticationFilter filter = applicationContext.getBean(RestAuthenticationFilter.class);
-        filter.setUserRepository(applicationContext.getBean(UserRepository.class));
-        filter.setInstanceId(initConfigurationService.getInstanceId());
-        filterProxy.setFilter(filter);
+        // clearing init auth providers
+        ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders().clear();
+
+        // adding main auth provider
+        ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders()
+                .add((AuthenticationProvider) applicationContext.getBean("authProvider"));
 
         LOG.info("Context refreshed successfully.");
         CONTEXT_REFRESH_IN_PROCESS = false;

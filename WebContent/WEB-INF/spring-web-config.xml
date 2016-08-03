@@ -27,7 +27,6 @@
     </beans>
 
     <beans profile="dev">
-        <bean id = "CreateAppConfiguration" class="com.sungardas.enhancedsnapshots.service.impl.CreateAppConfigurationDev"/>
       <bean id="SystemService" class="com.sungardas.enhancedsnapshots.service.impl.SystemServiceDev"/>
     </beans>
 </beans>

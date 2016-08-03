@@ -9,7 +9,7 @@ import org.springframework.data.repository.CrudRepository;
 
 @EnableScan
 public interface UserRepository extends CrudRepository<User, String> {
-    List<User> findByRole(String lastName);
+    List<User> findByRole(String role);
 
     List<User> findByEmailAndPassword(String email, String password);
 

@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
-import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 import com.sungardas.enhancedsnapshots.rest.utils.Constants;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
@@ -25,8 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/system")
 public class SystemController {
-    @Autowired
-    private FilterProxy filterProxy;
 
     @Autowired
     private HttpServletRequest servletRequest;
@@ -56,7 +53,6 @@ public class SystemController {
         if (!configurationMediator.getConfigurationId().equals(removeAppDTO.getInstanceId())) {
             return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
-        filterProxy.setFilter(null);
         systemService.systemUninstall(removeAppDTO.removeS3Bucket);
         return new ResponseEntity<>("", HttpStatus.OK);
     }

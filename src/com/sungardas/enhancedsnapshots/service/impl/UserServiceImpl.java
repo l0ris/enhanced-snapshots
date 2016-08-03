@@ -152,13 +152,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUser(String user, String password) {
-        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPassword(user.toLowerCase(), DigestUtils.sha512Hex(password)));
-        if (list.isEmpty()) {
-            return null;
-        } else {
-            return list.get(0);
-        }
+    public User getUser(String user) {
+        // there should not be several users with one email
+        return userRepository.findByEmail(user.toLowerCase()).get(0);
     }
 
     public boolean isAdmin(String userEmail) {

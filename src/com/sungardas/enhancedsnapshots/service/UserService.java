@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.service;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 
 
@@ -14,7 +15,7 @@ public interface UserService {
 
     void removeUser(String userEmail, String currentUserEmail);
 
-    UserDto getUser(String user, String password);
+    User getUser(String user);
 
     boolean isAdmin(String userEmail);
 }
