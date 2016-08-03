@@ -1,7 +1,6 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 
@@ -18,12 +17,7 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.RetentionService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.service.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,15 +61,26 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     @Autowired
     private TaskService taskService;
 
+    @Autowired
+    private VolumeService volumeService;
+
     public void execute(TaskEntry taskEntry) {
         String volumeId = taskEntry.getVolume();
         Volume tempVolume = null;
         try {
+            // check volume exists
+            if(!volumeService.volumeExists(taskEntry.getVolume())){
+                LOG.info("Volume [{}] does not exist. Removing backup task [{}]");
+                taskRepository.delete(taskEntry);
+                return;
+            }
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting backup task", 0);
 
             LOG.info("Starting backup process for volume {}", volumeId);
             LOG.info("{} task state was changed to 'in progress'", taskEntry.getId());
+
+            // change task status
             taskEntry.setStatus(RUNNING.getStatus());
             taskRepository.save(taskEntry);
 
@@ -83,12 +88,17 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
 
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Preparing temp volume", 5);
 
+            // creating temp volume from original volume
             tempVolume = createAndAttachBackupVolume(volumeId, configurationMediator.getConfigurationId(), taskEntry);
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e1) {
                 e1.printStackTrace();
             }
+            // storage blocks on volumes that were restored from snapshots must be initialized (pulled down from Amazon S3 and written to the volume) before they can be accesed.
+            // This preliminary action takes time and can cause a significant increase in the latency of an I/O operation the first time each block is accessed.
+            // To avoid this performance hit in a production environment all blocks on volumes can be read before volume usage; this process is called initialization (formerly known as pre-warming).
+            initializeVolume(tempVolume);
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Checking volume", 10);
             String attachedDeviceName = storageService.detectFsDevName(tempVolume);
@@ -102,7 +112,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                     .getIops().toString() : "";
             String sizeGib = tempVolume.getSize().toString();
             if (volumeType.equals("")) volumeType = "gp2";
-	    if (volumeType.equals("standard")) volumeType = "gp2";
+            if (volumeType.equals("standard")) volumeType = "gp2";
             String backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
 
             BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS, snapshotId, volumeType, iops, sizeGib);
@@ -113,7 +123,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 String source = attachedDeviceName;
                 LOG.info("Starting copying: " + source + " to:" + backupFileName);
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
-                storageService.javaBinaryCopy(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto);
+                storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto);
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
                 LOG.fatal(format("Backup of volume %s failed", volumeId));
@@ -129,6 +139,8 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
             }
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Detaching temp volume", 80);
+            // kill initialization Process if it's alive, should be killed before volume detaching
+            killInitializationVolumeProcessIfAlive(tempVolume);
             LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
             awsCommunication.detachVolume(tempVolume);
             checkThreadInterruption(taskEntry);
@@ -143,7 +155,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info("Backup size: {}", backupSize);
 
                 checkThreadInterruption(taskEntry);
-                LOG.info("Put backup entry to the Backup List: {}", backup.toString());
+                LOG.info("Put backup entry to the Backup List: {}", backup.getFileName());
                 notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Backup complete", 90);
                 backup.setState(BackupState.COMPLETED.getState());
                 backup.setSize(String.valueOf(backupSize));
@@ -154,17 +166,14 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info("Cleaning up previously created snapshots");
                 LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationMediator.getConfigurationId());
 
-                String previousSnapshot = snapshotService.getSnapshotId(volumeId);
+                String previousSnapshot = snapshotService.getSnapshotIdByVolumeId(volumeId);
                 if (previousSnapshot != null) {
                     checkThreadInterruption(taskEntry);
                     notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
                     LOG.info("Deleting previous snapshot {}", previousSnapshot);
-                    awsCommunication.deleteSnapshot(previousSnapshot);
+                    snapshotService.deleteSnapshot(previousSnapshot);
                 }
-
                 snapshotService.saveSnapshot(volumeId, snapshotId);
-
-
                 taskService.complete(taskEntry);
                 LOG.info("Task completed.");
                 checkThreadInterruption(taskEntry);
@@ -175,6 +184,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 taskEntry.setStatus(ERROR.toString());
                 taskRepository.save(taskEntry);
             }
+
         } catch (Exception e) {
             // TODO: add user notification about task failure
             LOG.error("Backup process for volume {} failed ", volumeId, e);
@@ -182,6 +192,8 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
             taskRepository.save(taskEntry);
 
             // clean up
+            // kill initialization Process if it's alive, should be killed before volume detaching
+            killInitializationVolumeProcessIfAlive(tempVolume);
             if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
                 tempVolume = awsCommunication.syncVolume(tempVolume);
                 if (tempVolume.getAttachments().size() != 0) {
@@ -189,6 +201,62 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 }
                 awsCommunication.deleteVolume(tempVolume);
             }
+
+        }
+    }
+
+    private void initializeVolume(Volume tempVolume) {
+        String fileNameParam = "--filename=" + storageService.detectFsDevName(tempVolume);
+        ProcessBuilder builder = new ProcessBuilder("fio", fileNameParam, "--rw=randread", "--bs=128k", "--iodepth=32", "--ioengine=libaio", "--direct=1", "--name=volume-initialize");
+        try {
+            LOG.info("Starting volume {} initialization", tempVolume.getVolumeId());
+            Process process = builder.start();
+            if (process.isAlive()) {
+                LOG.debug("Volume {} initialization started successfully", tempVolume.getVolumeId());
+            } else {
+                LOG.info("Volume {} initialization failed to start", tempVolume.getVolumeId());
+                try (BufferedReader input = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    StringBuilder errorMessage = new StringBuilder();
+                    for (String line; (line = input.readLine()) != null; ) {
+                        errorMessage.append(line);
+                    }
+                    LOG.warn(errorMessage);
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to initialize volume {}", tempVolume.getVolumeId());
+            LOG.warn(e);
+        }
+    }
+
+    private void killInitializationVolumeProcessIfAlive(Volume volume) {
+        String fioProcNamePrefix = "fio --filename=" + storageService.detectFsDevName(volume);
+        try {
+            // check fio processes are alive
+            Process checkFioProcessAlive = new ProcessBuilder("pgrep", "-f", fioProcNamePrefix).start();
+            checkFioProcessAlive.waitFor();
+            switch (checkFioProcessAlive.exitValue()) {
+                case 0:
+                    // fio processes are alive
+                    LOG.info("Fio processes for volume {} are alive", volume.getVolumeId());
+                    Process process = new ProcessBuilder("pkill", "-f", fioProcNamePrefix).start();
+                    process.waitFor();
+                    switch (process.exitValue()) {
+                        case 0:
+                            LOG.info("Fio processes for volume {} terminated", volume.getVolumeId());
+                            break;
+                        default: {
+                            LOG.warn("Failed to terminate fio processes for volume {}", volume.getVolumeId());
+                        }
+                    }
+                    break;
+                default: {
+                    // no need to terminate, fio processes are already terminated
+                    LOG.info("Fio processes for volume {} already terminated, no need to stop forcibly", volume.getVolumeId());
+                }
+            }
+        } catch (IOException | InterruptedException e) {
+            LOG.warn("Exception while termination of fio processes", e);
         }
     }
 

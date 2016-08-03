@@ -64,7 +64,11 @@
                                     <p><span class="label label-success">{{settings.sdfs.mountPoint}}</span></p>
 
                                     <div class="checkbox">
-                                        <label><input type="checkbox" ng-model="isNewVolumeSize"> {{STRINGS.sdfs.size}}</label>
+                                        <label><input type="checkbox" ng-model="isNewVolumeSize" ng-disabled="selectedBucket.isCreated">
+                                            <span ng-class="{'text-muted': selectedBucket.isCreated}">
+                                                {{STRINGS.sdfs.size}}
+                                            </span>
+                                        </label>
                                     </div>
                                     <div ng-show="isNewVolumeSize" class="sdfsVolume">
                                         <input type="number" ng-model="sdfsNewSize" name="newVolumeSize" class="form-control" min="{{settings.sdfs.minVolumeSize}}" max="{{settings.sdfs.maxVolumeSize}}" ng-required="isNewVolumeSize"> GB

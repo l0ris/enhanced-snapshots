@@ -6,8 +6,8 @@ angular.module('web')
         $scope.STRINGS = {
             s3: {
                 empty: 'Bucket name field cannot be empty',
-                new: 'Will be created new as',
-                existing: 'Will be used existing bucket:'
+                new: 'New bucket will be created as',
+                existing: 'Existing bucket will be used'
             },
             db: {
                 isValid: {
@@ -20,8 +20,8 @@ angular.module('web')
             },
             sdfs: {
                 name: {
-                    new: 'Will be created new volume:',
-                    existing: 'Will be used existing volume:'
+                    new: 'New volume will be created as',
+                    existing: 'Existing volume will be used'
                 },
                 point: 'At mounting point:',
                 size: 'Would you like to update volume size?'

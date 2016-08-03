@@ -99,7 +99,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         String targetZone = taskEntry.getAvailabilityZone();
 
         String volumeId = taskEntry.getVolume();
-        String snapshotId = snapshotService.getSnapshotId(volumeId);
+        String snapshotId = snapshotService.getSnapshotIdByVolumeId(volumeId);
         // check that snapshot exists
         if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
             LOG.error("Failed to find snapshot for volume {} ", volumeId);
@@ -162,7 +162,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             LOG.info("Volume was attached as device: " + attachedDeviceName);
             try {
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 25, 80, Long.parseLong(backupentry.getSizeGiB()));
-                storageService.javaBinaryCopy(configurationMediator.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
+                storageService.copyData(configurationMediator.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
             } catch (IOException | InterruptedException e) {
                 LOG.fatal("Restore of volume {} failed", tempVolume);
                 taskEntry.setStatus("error");

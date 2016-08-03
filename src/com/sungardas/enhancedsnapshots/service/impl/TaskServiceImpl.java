@@ -12,7 +12,6 @@ import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
@@ -44,9 +43,6 @@ public class TaskServiceImpl implements TaskService {
     private BackupRepository backupRepository;
 
     @Autowired
-    private SnapshotRepository snapshotRepository;
-
-    @Autowired
     private ConfigurationMediator configurationMediator;
 
     @Autowired
@@ -70,17 +66,6 @@ public class TaskServiceImpl implements TaskService {
                 taskRepository.delete(list);
             }
         }, "*/5 * * * *");
-
-        // In case of migration from one ES version to another there can be regular tasks
-        // without tempVolumeType and tempVolumeIops properties. Here we are going to set them with default values
-        // TODO: move this code to migration logic when implementing SNAP-338
-        List<TaskEntry> regularTasks = taskRepository.findByRegular(Boolean.TRUE.toString());
-        for (TaskEntry task : regularTasks) {
-            if (task.getTempVolumeType() == null) {
-                task.setTempVolumeType(configurationMediator.getTempVolumeType());
-                task.setTempVolumeIopsPerGb(configurationMediator.getTempVolumeIopsPerGb());
-            }
-        }
     }
 
     @Override
