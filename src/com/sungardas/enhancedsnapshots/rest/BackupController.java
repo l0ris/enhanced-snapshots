@@ -1,15 +1,11 @@
 package com.sungardas.enhancedsnapshots.rest;
 
+import java.security.Principal;
 import java.util.List;
-import java.util.Map;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.DataException;
-import com.sungardas.enhancedsnapshots.rest.utils.Constants;
 import com.sungardas.enhancedsnapshots.service.BackupService;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,14 +30,7 @@ public class BackupController {
     private static final Logger LOG = LogManager.getLogger(BackupController.class);
 
     @Autowired
-    private ServletContext context;
-    @Autowired
-    private HttpServletRequest servletRequest;
-
-    @Autowired
     private BackupService backupService;
-
-
 
 
     @ExceptionHandler(DataException.class)
@@ -73,20 +62,13 @@ public class BackupController {
 
 
     @RequestMapping(value = "/{backupName}", method = RequestMethod.DELETE)
-    public ResponseEntity<String> deleteBackup(@PathVariable String backupName) {
+    public ResponseEntity<String> deleteBackup(Principal principal, @PathVariable String backupName) {
         LOG.debug("Removing backup [{}]", backupName);
         try {
-            backupService.deleteBackup(backupName, getCurrentUserEmail());
+            backupService.deleteBackup(backupName, principal.getName());
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (DataAccessException e) {
             return new ResponseEntity<>("Failed to remove backup.", HttpStatus.NOT_ACCEPTABLE);
         }
     }
-
-    private String getCurrentUserEmail() {
-        String session = servletRequest.getSession().getId();
-        return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
-    }
-
-
 }

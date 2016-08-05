@@ -22,10 +22,12 @@
                     authentication-success-handler-ref="initSuccessHandler"/>
         <csrf disabled="true"/>
         <logout logout-success-url="/"/>
+        <access-denied-handler ref="accessDeniedHandler" />
     </http>
 
     <b:bean id="initSuccessHandler" class="com.sungardas.enhancedsnapshots.security.AuthSuccessHandler"/>
     <b:bean id="initFailureHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler"/>
+    <b:bean id="accessDeniedHandler" class="com.sungardas.enhancedsnapshots.security.SimpleAccessDeniedHandler"/>
 
 
     <authentication-manager alias="authenticationManager">

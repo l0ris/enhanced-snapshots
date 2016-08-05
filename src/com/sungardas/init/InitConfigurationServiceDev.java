@@ -182,7 +182,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         Configuration configuration = getDevConf();
         mapper.save(configuration);
 
-        User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev", "DEV");
+        User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev");
         user.setId("DEV");
         mapper.save(user);
     }

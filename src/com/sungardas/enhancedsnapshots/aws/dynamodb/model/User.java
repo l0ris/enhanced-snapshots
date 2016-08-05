@@ -32,7 +32,7 @@ public class User {
         super();
     }
 
-    public User(String email, String password, String role, String firstName, String lastName, String instanceId) {
+    public User(String email, String password, String role, String firstName, String lastName) {
         this.email = email;
         this.password = password;
         this.role = role;

@@ -75,5 +75,4 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
         Path fileName = destPath.getFileName();
         Files.copy(Paths.get(tempDirectory.toString(), fileName.toString()), destPath, StandardCopyOption.REPLACE_EXISTING);
     }
-
 }

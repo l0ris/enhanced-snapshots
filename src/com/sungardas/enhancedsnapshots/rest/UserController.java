@@ -1,9 +1,11 @@
 package com.sungardas.enhancedsnapshots.rest;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.Collections;
 import java.util.Map;
 
+import javax.annotation.security.RolesAllowed;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
@@ -72,19 +74,19 @@ public class UserController {
 		UserDto user = getUserDtoFromJson(userInfo);
 		// getting password
 		String password = mapper.readValue(userInfo, ObjectNode.class).get("password").asText();
-		userService.createUser(user, password, getCurrentUserEmail());
+		userService.createUser(user, password);
 		return new ResponseEntity<>("", HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.PUT)
-	public ResponseEntity updateUser(@RequestBody String userInfo) throws IOException {
+	public ResponseEntity updateUser(Principal principal, @RequestBody String userInfo) throws IOException {
 		// getting userDto from json
 		UserDto user = getUserDtoFromJson(userInfo);
 
 		// getting password
 		String password = mapper.readValue(userInfo, ObjectNode.class).get("password").asText();
 
-		userService.updateUser(user, password, getCurrentUserEmail());
+		userService.updateUser(user, password, principal.getName());
 		return new ResponseEntity<>("", HttpStatus.OK);
 	}
 
@@ -98,17 +100,10 @@ public class UserController {
 		}
 	}
 
-
 	@RequestMapping(value = "/{userEmail:.+}", method = RequestMethod.DELETE)
 	public ResponseEntity removeUser(@PathVariable("userEmail") String userEmail) {
-		userService.removeUser(userEmail, getCurrentUserEmail());
+		userService.removeUser(userEmail);
 		return new ResponseEntity<>("", HttpStatus.OK);
-	}
-
-
-	private String getCurrentUserEmail() {
-		String session = servletRequest.getSession().getId();
-		return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
 	}
 
 	private UserDto getUserDtoFromJson(String json) throws IOException {
