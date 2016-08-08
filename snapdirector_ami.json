@@ -14,9 +14,9 @@
       "instance_type": "t2.micro",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
-      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2016.04.29",
+      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2016.08.08",
       "tags": {
-        "Name": "Enhanced Snapshots",
+        "Name": "Enhanced Snapshots snap-448",
         "Description": "Backup, recovery, disaster recovery, snapshot, schedule"
       }
     }
@@ -56,7 +56,7 @@
       "type": "shell",
       "inline": [
         "echo 'Starting deployment process...'",
-        "sudo curl -O https://s3.amazonaws.com/com.sungardas.test/enhancedsnapshots_latest.war",
+        "sudo curl -O https://s3.amazonaws.com/es.latest.war/enhancedsnapshots_latest.war",
         "sudo service tomcat8 stop",
         "sudo rm -rf /opt/tomcat-latest/webapps/*",
        "sudo cp enhancedsnapshots_latest.war /opt/tomcat-latest/webapps/ROOT.war",
