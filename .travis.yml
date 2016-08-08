@@ -16,9 +16,8 @@ sudo: required
 
 env:
   global:
-    - secure: "bV3D1DRbjRnrMCSi4bPPxHMWKL3Yf9kOYdP/ORPSEk4+dy9833swA65Am9iYyhFjBmj3uRdFV7MCjF7/jUUSprsgtTK2HMMYNDVgcgGca7xmFWmE3VXN5PEDJOOdUXgYdPhHES293VqhJJIEy2+eb6UsIOEf1un0kctv8cYFVWykxZLAtGH9UbN9slWk4zlEBl7YsoS4AE+nBTTzQE5bGHGPl4NSEyphUOV6IUWeS0+jRyoHM+ew5WoCmzxYhOoKl34PCBdTqpNT3CQIXG4mFGojsqhr9uKyk7fHxrQPWwHkWZfNO8tHBehEbq1zKKgNyTlz38GQqc2TeJ9l/x8XDGopgwzQQ5PdjysmUzOgootPJg3adLYL9qgwONFUuosvipxjQaSDsen1EEcymDLMiSfgExDALFieu8cl/PGWshiFPM+YRinnsYtZV+oRTMVkadciozjqM1Q4JnqCxieYzCnR5Za5PID6gW73WbEYAzzsLHDaZh1DcoH2kYEUlpwEKJhwL/SQPvUwZ5KqkxeJF5uPClu2db/dABLOrc5yZHcSMZ9qmZ+yrBGUvUcTK7P7JyDJUaPIpkWGgnPZE1DJduVRHyYGkwmiLmCXt/ItbhLOLadU4Nx1OZV5bP+iC1UKeUI1tS1/GuVj2A9idHHtDSZCf8wysM+qP5F4zCdQALM="
-    - secure: "jG75XOROaHZJBA4jwuJSS5EWIbEumDV7TXW5PzDjrpZswEl1zrmW07xseYu22I+9ZK8wq5KU+qnRlBMJ1C3k1wYKXGcsQvip7dOsx5aU7JXjvNdQIRK3Z5ZURGpBG6hEXCwBsOzE2Z2dK80qHlquk7qgGR/ivsTnBZw3B8YXYOhaTrAgQmU3RnSt7qFTi/xBS+PvvYPyXEBsZZfRyMWBh0AeYu5+9WkuKbl0jeY/8TghZAWhFh4mzAmadsfuC0i0KQwRsOpDSUhAaSpKo2lVldmZ3AQ8adiOd7quZ7UhSmqfnWIfsXv1zHBLbR5a7iWHu3mIDmU/ZY2Wtrift+16BlgMhqIG6iFj/BEIaJUP1xV+6L0znb9V1Xfwx2feAkX1luJaT1fRb/BMJRagZQDE8sdvHK8T4bu2hi9WN7N2P2d468leF4eaGMWtE3bwqjDngBHBuNPkDfGctlhsA0ig14NnbQY3YTvKEfzdMK1GtHUGDwwlD7Ax61AUUpH2oJLuYMphecOPYxvTTkn6wbQXuBwEjuLw0oIMWjohLhpkyru3sU/qoJ2Nini7OATI3d3TACSlMqYwyw3hQRH+ZN8DprRmZ/o2dzbzfozBATP58a+LuKJa9DgjR7fMuxS8ZFjAhuERhHPnNPZUhlurppv1dAhbEq5vTUfGGfmhffnbxAc="
-    - region=us-east-1 
+    - secure: lVkwzeIUpaICOgjzs23MfQX2dERjHjTyVZRMbyCuM/lkUuWER6XBqgrgkAuAKP0ZFKNIJUSfXFqhvNOn3aNg3KJyzjOMhjZj2edH+c8P2kk9axG3/6l2lnZR+mSv0kveDu+aqX+FZsV97cP+dcw/e8oSxEfRJmK2huLRj7FrBaqrtnT+JNPQpTCenjpoOtDKXr2T2ND56SWhZxWRTnkr5sErIP2gywHxAhbnSfxI+xzCGoL1obxiO7M8KeHc9ZdFBzrvvrJmZfYUQ8m50jZ/2MstgbWZ0swKxoCl827m0gZktfcBbxDzN2eAU+odzmGGOMHkrknGbXSJLsPcN4y5Hkp0LNfZl0QL95sokqd+NEP/DHpF0cduqVoIobmKjDlcgppPy8hP7ojgecs+WgErqZAb8tveEmLUhLycM679WW93JoYTpFguEvDWk94Vd/XOEGYodF+D+He9Enn6lgTIKHNlp1eTNQt2sCG1BmBseKPTF3gwC1sXXTdKnVLvIXalpoOxZDFrC7oTw1R392Shq04Vq4hulWQ7OumsEBVF4ShIhR6LImmoisyNdfC5mvebf4ilRF2gUSdeQprX//6SQHWnxFTzQLu1BsxD0b9OglsrFnuz/6pfUi4Nree4qyL62ol6YyWMZ6KqbaG7Q68hxxrkp8D828xNHm+g21CD3Cg=
+    - secure: ipZCOUqrk6Zb+rqPEoonUP6wqpNg01Y3WcaZoalwaCftNhK6CCVhWEmSkdkKFu1MD+4zBwRUw5zguR0T/TL2tSHqqblenrwI8FogZPNNfhzYPVL35+RYUev116+PliUI6hUrncKsPJ62MLlk1YXOQO9AXKpIx1t7RaOB+QeqeitLSQjV5lIm+18FpaprFX48M2gcb4HjKel42nZThHjycSDwukEvoAGbbXYygoCH9zLCuYjAVVlgjpFHmlkKxlh2QSOzhxNcAwrZqwW3Voi1cstiubZx/huXlmqBpXHh+pC2X/rA9shrD8ByXNbQhsmG8jOrNxcD0ujz/Uxno7Wjaa5FRpWuFI7gSRq56ZO+7C/Z4/ndl+8sfk5Mqvr0++7yVPWDSNOP1QQ5U3dONiBFj++LFFRJBfoarmOvR66F0S+AiZugAsOHvOTEMKJ4hFCAZBe8NwAvQZMrdBpXjw8M2ycXPm/DZ164flJoU0KuA0FnfbiUlyzWC4V1za994EGOJIhvQmumeokkAxSQwlSgiHC2CZBNV9XLixqXogrSkqmET3nmdE8svKQbyLG6Q8ft+o5TvIAnDkhb4VyqbQXv4QpiaNwip0OezTrU9iBujtpADyEGY3w2IPMrrr3qXVMx77GMx90l4DImOyOfT4A9FwMd3+nHBvG4gDtsGvYwsbg=
     - STAGE_STR=DEV
 
 before_install:
@@ -27,6 +26,8 @@ before_install:
 
 install:
   - sudo apt-get install -y nodejs
+  - wget https://releases.hashicorp.com/packer/0.10.1/packer_0.10.1_linux_amd64.zip
+  - unzip packer_0.10.1_linux_amd64.zip
   - cd './WebContent'
   - sudo npm install -g bower
   - bower install --config.interactive=false
@@ -36,14 +37,12 @@ before_script:
 
 script:
   - mvn clean install
+  - ./packer build snapdirector_ami.json
 
 before_deploy:
   - mkdir build_artifacts
   - cp target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_latest.war
   - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.2_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
-  - wget https://releases.hashicorp.com/packer/0.10.1/packer_0.10.1_linux_amd64.zip
-  - unzip packer_0.10.1_linux_amd64.zip
-  - packer build snapdirector_ami.json
 
 deploy:
   provider: s3
