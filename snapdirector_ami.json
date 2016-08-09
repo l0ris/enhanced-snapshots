@@ -1,7 +1,10 @@
 {
     "variables": {
       "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
-      "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}"
+      "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+      "travis_build_number": "{{env `TRAVIS_BUILD_NUMBER`}}",
+      "travis_branch": "{{env `TRAVIS_BRANCH`}}",
+      "travis_tag": "{{env `TRAVIS_TAG`}}"
     },
 
     "builders": [ {
@@ -10,13 +13,13 @@
       "access_key": "{{user `aws_access_key`}}",
       "secret_key": "{{user `aws_secret_key`}}",
       "region": "us-east-1",
-      "source_ami": "ami-60b6c60a",
+      "source_ami": "ami-6869aa05",
       "instance_type": "t2.micro",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
-      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2016.08.08",
+      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-{{user `travis_branch`}}",
       "tags": {
-        "Name": "Enhanced Snapshots snap-448",
+        "Name": "Enhanced Snapshots ",
         "Description": "Backup, recovery, disaster recovery, snapshot, schedule"
       }
     }
@@ -56,10 +59,11 @@
       "type": "shell",
       "inline": [
         "echo 'Starting deployment process...'",
-        "sudo curl -O https://s3.amazonaws.com/es.latest.war/enhancedsnapshots_latest.war",
+        "if [ {{user `travis_branch`}} = 'master' ]; then bucket='com.sungardas.releases'; else bucket='com.sungardas.releases.beta' ; fi",
+        "sudo curl -O https://s3.amazonaws.com/$bucket/travis-builds/enhancedsnapshots_latest.war",
         "sudo service tomcat8 stop",
         "sudo rm -rf /opt/tomcat-latest/webapps/*",
-       "sudo cp enhancedsnapshots_latest.war /opt/tomcat-latest/webapps/ROOT.war",
+        "sudo cp enhancedsnapshots_latest.war /opt/tomcat-latest/webapps/ROOT.war",
         "sudo service tomcat8 start",
         "sudo pip uninstall -y ansible",
         "sudo yum-config-manager --disable epel",

@@ -5,12 +5,12 @@ language: java
 
 jdk:
   - oraclejdk8
-  
+
 branches:
   only:
   - master
   - develop
-  - SNAP-448
+  - /^(beta|release).+$/
 
 sudo: required
 
@@ -37,7 +37,6 @@ before_script:
 
 script:
   - mvn clean install
-  - ./packer build snapdirector_ami.json
 
 before_deploy:
   - mkdir build_artifacts
@@ -45,20 +44,53 @@ before_deploy:
   - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.2_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
 
 deploy:
-  provider: s3
-  bucket: "com.sungardas.releases"
-  endpoint: "s3-us-east-1.amazonaws.com"
-  skip_cleanup: true
-  region: "us-east-1"
-  local_dir: build_artifacts
-  upload-dir: "travis-builds"
-  file: "*.war"
-  access_key_id:
-    secure:
-      f/Ep6w1BuWXbeFlj2QRgUTMt2JpNMQ7DXtZRxhTnfX4UJ8+V8sfvbxphkpV5vgCFfNIbriX3Ht4hf3pXHxyKvmODfm/YvzLGVD+THAreHq43isFNaWGIVR0/pnj3XpwolNspbjkZeSjcMH+DXmpJ23QrIwiVVlyf9YVC2hgKcxAZH0KTRzFgCO3BGLU+PKXKSjbOa9dx1XUpZMovVaFyYT33Ph3ARLvJSE7voshXx3u2QZ7rNAF98mXd3yjIbDF/5aCXDSv9tURNOMY/zxmU4KiPicQ9bVhxOOAwSIagUaueXqX2fX6mYw77+s6ouezgLonYi9VWokr4soYJrHvzcs8RY3+0Qz1QVf5GrSY+TA7RBpnhR10ErIXGZ9acV0C3+1czzkE+kLf73A/rT7C01caIcaaUzWBKfoKRfQiJI2NkQvxmQT801qbuXETXlB/ScfmZmRa2oZuAMuOCR4o608hx4Aa9o1OYtSi01HnabV76TQ19mcHeySmh2eOGJK1dGfTin/sITU+Dj6dW9N6IFV76b3nquU/INKx6y3x6cBiEj4YrB1ySWoE7NPkO85Tmm1OGvONYJDtTzotdQjZoxoVVuilrzTA6iYaf4U6dJm7j6CtLsPH07pasGsqi3VjNpmxB+lOm7H+Cuj4J39qc3tpnrVWM8uzEPkiQaXLv6Kk=
-  secret_access_key:
-    secure:
-      FlKtQzTkLu2CCu7HXuKiAbZxCR15SO00tp2VxTeDUP4z4lsW6a8E8RQSWS8dZTUogMOHz0FgKRD56O6Hw5rywI1nmwF8FvNY9aNQFhPfSYFbxqcuscI1E9uj1UEwhAWyingocQdTgSV5123rzhlqSF5VQ+0ddPj0l2kL2lkeGDZDzcVjDDiW7M0eVOD6NF4LsDCjG1O/7GiI+uk7zzn1s2cQwOdcPM1Y/nD7gUOwz94YXLnNbortdcerZ8eby/4H7bsnDWwQ/8yHh88M/ketzrPF62KkA3NMmtwQZ5BLKPCGHw50Pk890RsG4bOTeixDFxIOcUdmp1TUmyoutDp8g58T+EVJakHROcWz1Brme2OVUldCg+tDMhhCr1IQ7r/+IOyzDsT1z64Y/JgfoJkzz0zm4O6pN5WIeqHupn3H5IFERbz2yIHby1zvzmWO9k8prKZmMRZ+0tPQS3lHc3bbTXswia8vlBMyF36nsYKgp+k6utag9NQ5DG/pQsQtNt2TjD9Ux3FJLzTTCvHPHnd4rygAW9/CMlaxEeUzSYWNGgIgGUXxR9lLFpdbaS9bcExD8ovH6rz4hQU68ilTxx8dGny9IO+Q3Wu8u3EH+/JFOx9ErqKNvCIw7fv9kO0DubW15Oaqz8uD4eOxooEdrMegfE+ZN0YpJmoqqwU2iNZ0RkQ=
-  on:
-    branch: master
+  - provider: s3
+    bucket: "com.sungardas.releases"
+    endpoint: "s3-us-east-1.amazonaws.com"
+    skip_cleanup: true
+    region: "us-east-1"
+    local_dir: build_artifacts
+    upload-dir: "travis-builds"
+    file: "*.war"
+    access_key_id:
+      secure:
+        f/Ep6w1BuWXbeFlj2QRgUTMt2JpNMQ7DXtZRxhTnfX4UJ8+V8sfvbxphkpV5vgCFfNIbriX3Ht4hf3pXHxyKvmODfm/YvzLGVD+THAreHq43isFNaWGIVR0/pnj3XpwolNspbjkZeSjcMH+DXmpJ23QrIwiVVlyf9YVC2hgKcxAZH0KTRzFgCO3BGLU+PKXKSjbOa9dx1XUpZMovVaFyYT33Ph3ARLvJSE7voshXx3u2QZ7rNAF98mXd3yjIbDF/5aCXDSv9tURNOMY/zxmU4KiPicQ9bVhxOOAwSIagUaueXqX2fX6mYw77+s6ouezgLonYi9VWokr4soYJrHvzcs8RY3+0Qz1QVf5GrSY+TA7RBpnhR10ErIXGZ9acV0C3+1czzkE+kLf73A/rT7C01caIcaaUzWBKfoKRfQiJI2NkQvxmQT801qbuXETXlB/ScfmZmRa2oZuAMuOCR4o608hx4Aa9o1OYtSi01HnabV76TQ19mcHeySmh2eOGJK1dGfTin/sITU+Dj6dW9N6IFV76b3nquU/INKx6y3x6cBiEj4YrB1ySWoE7NPkO85Tmm1OGvONYJDtTzotdQjZoxoVVuilrzTA6iYaf4U6dJm7j6CtLsPH07pasGsqi3VjNpmxB+lOm7H+Cuj4J39qc3tpnrVWM8uzEPkiQaXLv6Kk=
+    secret_access_key:
+      secure:
+        FlKtQzTkLu2CCu7HXuKiAbZxCR15SO00tp2VxTeDUP4z4lsW6a8E8RQSWS8dZTUogMOHz0FgKRD56O6Hw5rywI1nmwF8FvNY9aNQFhPfSYFbxqcuscI1E9uj1UEwhAWyingocQdTgSV5123rzhlqSF5VQ+0ddPj0l2kL2lkeGDZDzcVjDDiW7M0eVOD6NF4LsDCjG1O/7GiI+uk7zzn1s2cQwOdcPM1Y/nD7gUOwz94YXLnNbortdcerZ8eby/4H7bsnDWwQ/8yHh88M/ketzrPF62KkA3NMmtwQZ5BLKPCGHw50Pk890RsG4bOTeixDFxIOcUdmp1TUmyoutDp8g58T+EVJakHROcWz1Brme2OVUldCg+tDMhhCr1IQ7r/+IOyzDsT1z64Y/JgfoJkzz0zm4O6pN5WIeqHupn3H5IFERbz2yIHby1zvzmWO9k8prKZmMRZ+0tPQS3lHc3bbTXswia8vlBMyF36nsYKgp+k6utag9NQ5DG/pQsQtNt2TjD9Ux3FJLzTTCvHPHnd4rygAW9/CMlaxEeUzSYWNGgIgGUXxR9lLFpdbaS9bcExD8ovH6rz4hQU68ilTxx8dGny9IO+Q3Wu8u3EH+/JFOx9ErqKNvCIw7fv9kO0DubW15Oaqz8uD4eOxooEdrMegfE+ZN0YpJmoqqwU2iNZ0RkQ=
+    on:
+      branch: master
+      tags: true
+      condition: "$TRAVIS_TAG =~ ^release.+$"
+  - provider: s3
+    bucket: "com.sungardas.releases.beta"
+    endpoint: "s3-us-east-1.amazonaws.com"
+    skip_cleanup: true
+    region: "us-east-1"
+    local_dir: build_artifacts
+    upload-dir: "travis-builds"
+    file: "*.war"
+    access_key_id:
+      secure:
+        f/Ep6w1BuWXbeFlj2QRgUTMt2JpNMQ7DXtZRxhTnfX4UJ8+V8sfvbxphkpV5vgCFfNIbriX3Ht4hf3pXHxyKvmODfm/YvzLGVD+THAreHq43isFNaWGIVR0/pnj3XpwolNspbjkZeSjcMH+DXmpJ23QrIwiVVlyf9YVC2hgKcxAZH0KTRzFgCO3BGLU+PKXKSjbOa9dx1XUpZMovVaFyYT33Ph3ARLvJSE7voshXx3u2QZ7rNAF98mXd3yjIbDF/5aCXDSv9tURNOMY/zxmU4KiPicQ9bVhxOOAwSIagUaueXqX2fX6mYw77+s6ouezgLonYi9VWokr4soYJrHvzcs8RY3+0Qz1QVf5GrSY+TA7RBpnhR10ErIXGZ9acV0C3+1czzkE+kLf73A/rT7C01caIcaaUzWBKfoKRfQiJI2NkQvxmQT801qbuXETXlB/ScfmZmRa2oZuAMuOCR4o608hx4Aa9o1OYtSi01HnabV76TQ19mcHeySmh2eOGJK1dGfTin/sITU+Dj6dW9N6IFV76b3nquU/INKx6y3x6cBiEj4YrB1ySWoE7NPkO85Tmm1OGvONYJDtTzotdQjZoxoVVuilrzTA6iYaf4U6dJm7j6CtLsPH07pasGsqi3VjNpmxB+lOm7H+Cuj4J39qc3tpnrVWM8uzEPkiQaXLv6Kk=
+    secret_access_key:
+      secure:
+        FlKtQzTkLu2CCu7HXuKiAbZxCR15SO00tp2VxTeDUP4z4lsW6a8E8RQSWS8dZTUogMOHz0FgKRD56O6Hw5rywI1nmwF8FvNY9aNQFhPfSYFbxqcuscI1E9uj1UEwhAWyingocQdTgSV5123rzhlqSF5VQ+0ddPj0l2kL2lkeGDZDzcVjDDiW7M0eVOD6NF4LsDCjG1O/7GiI+uk7zzn1s2cQwOdcPM1Y/nD7gUOwz94YXLnNbortdcerZ8eby/4H7bsnDWwQ/8yHh88M/ketzrPF62KkA3NMmtwQZ5BLKPCGHw50Pk890RsG4bOTeixDFxIOcUdmp1TUmyoutDp8g58T+EVJakHROcWz1Brme2OVUldCg+tDMhhCr1IQ7r/+IOyzDsT1z64Y/JgfoJkzz0zm4O6pN5WIeqHupn3H5IFERbz2yIHby1zvzmWO9k8prKZmMRZ+0tPQS3lHc3bbTXswia8vlBMyF36nsYKgp+k6utag9NQ5DG/pQsQtNt2TjD9Ux3FJLzTTCvHPHnd4rygAW9/CMlaxEeUzSYWNGgIgGUXxR9lLFpdbaS9bcExD8ovH6rz4hQU68ilTxx8dGny9IO+Q3Wu8u3EH+/JFOx9ErqKNvCIw7fv9kO0DubW15Oaqz8uD4eOxooEdrMegfE+ZN0YpJmoqqwU2iNZ0RkQ=
+    on:
+      branch: develop
+      tags: true
+      condition: "$TRAVIS_TAG =~ ^beta.+$"
 
+after_deploy:
+  - ./packer build snapdirector_ami.json
+
+notifications:
+  email:
+    recipients:
+      - secure: "cHxfyyfe/O+gLHYfT6nu68VZu0/FEECobMyRoKoIth7M3ePaudDaMXxPVXAxy/lhg2ivl6H7eBYt/DnJ+8XhrW8Gzuk/WoOCyegin+LA7VHbHBpz16o303dPKU6La7LwIE6JnVo/DSzQQp+97gwTnAO05DKDqzKiNVxlAVFKFM61vRg5zsnxAzeLjnMGaMiAAiu/sHI8nzmMG9m8qXEJItgNKBtSzjGbTgya6Hc3YKoM3ghjLqUeTxYJR3tWnn27VB/ikKhrRQLx2CdM2y2Tg8l51cxDdiFzCU2xlp4lgCNxUVt6xY6E2jiM7Vg/tHfRATDUqFj1ULHhFKuv9nLmCjE4sHlJJJYLKWyV7IfwVNRNrqktzm/3M+j1H6r+bbk0AtQ9LPsHVJ6fyumNdCvHFEevzl7oieF3rvlKD32yYJ20AyMHhkN0zMX/q/0rOWRnXpsiYP7tfIA9mqWO+3rTJMTly2YPhPzTMr/5y9VEGpISNFH1cU2OKCbbp7yd3ONvCNLYiZR/44iEzkaGviDZjPuZVaIi7EB1/Te9SHgtAuoJXhAWIi0+kfKiycgimty8gX/5L4hwq+Z13Gx17VvgEqZUaZsSSaD6QA82YnRCfzSp+PZLvkKOR49P+DoDT2UqBd3F5gW+5hZrCyiNAyJ7/6b0kZbpsg1tIyjGSERufxE="
+      - secure: "mzlusVfje3gF7ZVVcqVSyi+MhUj8NjnkiKH/4Dh8/yHcF+yP8IKDzXj/HALSlYY4kUkGqSSnBah2Cygtsotg0GBqqy4PIsdvneda5IVvRcDLlUzewAuA1Hs6E55EYYcwX7oYk8WLcuAKsCJGp80Rjjwm32zx8vHpXbp2qUHhSxZHNtUXwqM4X3R4GLRmH52KH/xR6bslS2Pg7K3/YeSCaXE0KRrETbYygvqDQrJk/f5xEO/aX5sihciOFgZZG8RjnIkGB6kvum8/6lQ5hCSl2hyAwl8+RmaUA+jdIA884R2Mu/EfrzDotl/2/cOidvljkaG+p4OYZanYnUVnFnGIAmh6wzUh1Vg/GwTHltzyC83TKuSHdaR6flnEFUwvVgEL+CqfxPUCpjl7o4esW7awYO1JthiIYx5swfgqI1EQNOIkvOJ2tIt5LV2CBtCe30uUwHVm81erQb2IH/n6VG+dCVuHzT2hHyfes7PVHSgdDbmeD12wmpbQ2VV8tGu1p+Hs9oxsIOrC4o0LIPclLT7cbRvVqHZMSNYKYwmPHiSE0KBkSwNETZRSPxdtdtevvXfkoB4SCH9Qv4ScKbV8dCtGsbEjZvLfitOQfbILc7B+eeW/MweE7Xc7h9qhNawpJkGrSqB7MbYVlb4b2VPTi154J+JKUbCnf6judC8F4i2KwGw="
+      - secure: "qWdYsQ0QjUI2eRcRmNmDzA5CdJk04N6HEw8jzfXxj2zFc9AInh3KpJ5rT6YaEEtTOSaY04g9NIaQBE+1k0PNuu4zSLPu3OjnDHu5s/17/XN2+SJ4HuDyOJBDi19aDs0XKcaIxg2BV8lMaMsilMhiPgHHRlURF2cO5WWvrzVI3IzS1sTPVE6+I6p02Vn74IfbBI4xgON5I2LQ3oUJuN0cyC4x9D2LF0WA9NN5tp5mhP7r7lREiDX11VZ+J4t+1CopCtDkTHqZUSdQHJXvH2UnfhFbgU7tDzVYksGvihDFrWoVTDvaG4NDLVEUTj3GHtAH7KxZI1G1ZFQDk/6qE10ptxpGTdClxeGNlvZXn/LhDSKyzfetdar3oSB42oIoPG1Qu0k2MFHDN2j5dW6tjcYK1xdHJSbnfL0rsJmDsuxHbyH3lIHWY99OHs+5aqTdPiMxZEaWwPLHbiMv+01dIFwjZcdjkKytl5PKkKzhe0sNwDePs4yqiqHWh6PyQGCqNPNtr3sL60hmlW7Qzez/0eNK9cetD1hZyLd6iW9h0FCa9x/rVOUW7AYtIfSgGPFlqJSSpdnSXTFARg0uBt3tu9HAkrA9sA7y46Cn7qp/K5z/9tGrma4d1TFbkvbZIrgpHilvYPpu/93nP+2LXlZVE9oH/DFAFs65mwJkA1sqm9QYV7o="
+      - secure: "JifsYpEtyPkRyEDgQYVVaD0u03IJdhVBqRQQstOR10lOEGK0QAtXZNdspq7uwHnWZ5n0oNINc2krniLIlcK64YfyxYmdA5GvhrgY30/FC+9n6V5gxKbqzmmBhxs0PB74GlngyFSYufYaAQg+9W/bgT2TZdmmqcGfJIwtKbt95klKY2F8Q6qZSwItDhegKjig5MuwDX39dMKST1Sy0vo27YyG9jZLl0NpizmckPjVKkcMMHRBBprdZSmQ/NIxE7HJZuh/tAzYlS0RUUQ7lyqAW+w2n8IVO70UjGmCMV7irlWRUqQrDnjYz3j+qgrMVWYkGRvAM0wVJLtQErUqL2rpJl2D6R17hlS/ZDAne/LYD8z4sIN/l5e9Cw/e+Y+HLbodbtkXPRElb57eyJ746VlVQpIWoWkMlZ6qzTgD+MJ6TrLlOf8CQXRzWUNKNn37AeT5yEO2vg3ULI96rIaq3nKhDG1+gCy3toeB1aPcQ9MXYuJSf6lN7J95L32wxHdh6C7TwIBgH5LaVD8Ss+B5YNG4TF2BIgpAq6UAYEha2oQDow7xp2PyRCgZMv+GQOIjcLrivIZNUK6tMTNOoqBLiONVZgtuU+Whb8bzBB1QXpckOeRkn+4ljnuTKhPi2ZcpibCJYIup4/ZU1J4Rw5v20QdJuLSQiIOOEvDqQeLhDinWu7Q="
+      - secure: "LvkxhD17oQMrsLzG/b2B54g7DCcggRLxpGQLdZvF9HRMeMmqljTFDOMGDUPBd/x1UTAW9R3T3mQ3lYwYjhFNsJ1JyLn/Quk5Ypbbhqr11jnZ4BqVwsbkkyAdO8aNdxV1wWz9yDZ2cEnalgZsfxIvgv9fXfGrwU/FDKNiZdvrxinetRvcepD4patPsAaB+TUuC2cIYOWf4HaUMy7Mvri5YqqUwdK6DACEmumDjDE/Wk689DSu6sqxA7vc5Btxki7OOXlC8SXZzMxJVo1cGDCK2KJ2EoqXQuT1yJeZJye0IE0BPoNyRNn+txCdJnhz7cCREDakM4z86xWZIFDU3qIJTJJDQDtZwVXEaOcBm5oRYEKQBogcE3sAgHKtD6OxIz3NZLf2kBaKOLUkrY0byKDGTp9fpQ3QCBRTH69qhaDsCAfgM/S2nB1qzLygQXS0RcCSUArVXdLrdLupA34efnCX9Z6qRwOK1k/pIEoxS4llrNwlG+yf61gROC0CZ2xVQi3i6bpJz+uyvv0ftOthMlJSwo9cba5wt11enDvWfbEV9d/YiO2A6PUTwrm093+YezNcggv5j+n/Y0iRvVdD1HfSLaP8raVDFBheUy13+Y4V59i9wXKICyJkB3hjN3RyKJ8uKD7OuiEQuOAjZzQ6Fjsenb7PYquYQ4JbQUi/5eaI2HU="
+    on_success: change
+    on_failure: always
