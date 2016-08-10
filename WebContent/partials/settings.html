@@ -40,18 +40,19 @@
 
                 <div class="full-width">
                     <h3>EC2 Instance</h3>
-                    <div class="col-sm-5 text-right">Instance ID:</div>
-                    <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceID || 'unknown'}}</div>
+                    <div class="col-sm-12 form-group">
+                        <div class="col-sm-5 text-right">Instance ID:</div>
+                        <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceID || 'unknown'}}</div>
+                    </div>
                 </div>
-
-                    <hr/>
 
                 <div class="full-width">
                     <h3>S3</h3>
-                    <div class="col-sm-5 text-right">Bucket:</div>
-                    <div class="col-sm-7 text-left">{{settings.s3.bucketName || 'unknown'}}</div>
+                    <div class="col-sm-12 form-group">
+                        <div class="col-sm-5 text-right">Bucket:</div>
+                        <div class="col-sm-7 text-left">{{settings.s3.bucketName || 'unknown'}}</div>
+                    </div>
                 </div>
-                    <hr/>
 
                 <div class="full-width">
                     <form name="sdfs">
@@ -79,7 +80,7 @@
                             <div class="col-sm-7 text-left">{{settings.sdfs.mountPoint || 'unknown'}}</div>
                         </div>
 
-                        <div class="col-sm-12">
+                        <div class="col-sm-12 form-group">
                             <div class="settings field-label col-sm-5 text-right">Local Cache Size:</div>
                             <div class="col-sm-2 text-left">
                                 <input class="settings form-control"
@@ -96,8 +97,6 @@
                         <div class="col-sm-12 text-danger small" ng-show="sdfs.volumeSize.$error.required"> {{STRINGS.sdfs.volumeSize.empty}} </div>
                     </form>
                 </div>
-
-                    <hr/>
 
                 <div class="full-width">
                     <form name="volumeTypes" >
@@ -162,8 +161,6 @@
                     </form>
                 </div>
 
-                <hr/>
-
                 <div class="full-width">
                     <form name="otherSettings">
                         <h3>Other settings</h3>
@@ -203,6 +200,15 @@
                             </div>
                             <div class="settings field-label col-sm-5 text-left">milliseconds</div>
                         </div>
+                        <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">Store Snapshots:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="chb settings text-left"
+                                       type="checkbox"
+                                       ng-model="settings.systemProperties.storeSnapshots"
+                                       name="storeSnapshots">
+                            </div>
+                        </div>
 
                         <div class="col-sm-12 text-danger small"
                              ng-show="otherSettings.maxQueueSize.$error.required ||
@@ -232,8 +238,6 @@
                 <button class="btn btn-danger" title="Uninstall system" ng-disabled="!isAdmin"
                    ng-click="uninstall()">Uninstall</button>
             </div>
-
         </div>
     </div>
-
 </div>
