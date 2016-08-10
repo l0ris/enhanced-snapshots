@@ -1,8 +1,5 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
@@ -15,17 +12,15 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
-
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 
 @Service("awsRestoreVolumeTaskExecutor")
@@ -115,8 +110,6 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
     }
 
-    //TODO: in case availability zone is the same we do not need temp volume
-    // add logic to handle this situation
     private void restoreFromBackupFile(TaskEntry taskEntry) {
         Volume tempVolume = null;
         Snapshot tempSnapshot = null;
@@ -181,12 +174,18 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 95);
 
-            Volume volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), taskEntry.getAvailabilityZone(),
-                    VolumeType.fromValue(taskEntry.getRestoreVolumeType()), taskEntry.getRestoreVolumeIopsPerGb());
-            checkThreadInterruption(taskEntry);
-
+            Volume volumeToRestore = null;
+            if (!tempVolume.getAvailabilityZone().equals(taskEntry.getAvailabilityZone())) {
+                //move to target availability zone
+                volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), taskEntry.getAvailabilityZone(),
+                        VolumeType.fromValue(taskEntry.getRestoreVolumeType()), taskEntry.getRestoreVolumeIopsPerGb());
+                awsCommunication.deleteVolume(tempVolume);
+            } else {
+                //in case availability zone is the same we do not need temp volume
+                volumeToRestore = tempVolume;
+            }
             awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
-            awsCommunication.deleteVolume(tempVolume);
+
             awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
             awsCommunication.addTag(volumeToRestore.getVolumeId(), "Created by", "Enhanced Snapshots");
         } catch (Exception e) {
