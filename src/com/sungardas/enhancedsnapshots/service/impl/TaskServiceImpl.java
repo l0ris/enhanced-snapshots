@@ -1,13 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -24,17 +16,18 @@ import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeTaskExecutor;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import java.util.*;
+
 @Service
 public class TaskServiceImpl implements TaskService {
 
     private static final Logger LOG = LogManager.getLogger(TaskServiceImpl.class);
-    private static final long TTL = 300000;
 
     @Autowired
     private TaskRepository taskRepository;
@@ -165,7 +158,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void complete(TaskEntry taskEntry) {
-        long expirationDate = System.currentTimeMillis() + TTL;
+        long expirationDate = System.currentTimeMillis() + configurationMediator.getTaskHistoryTTL();
         taskEntry.setExpirationDate(expirationDate + "");
         taskEntry.setStatus(TaskEntry.TaskEntryStatus.COMPLETE.getStatus());
         taskRepository.save(taskEntry);

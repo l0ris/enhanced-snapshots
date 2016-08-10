@@ -48,5 +48,7 @@ public interface ConfigurationMediator {
 
     int getMaxWaitTimeToDetachVolume();
 
+    int getTaskHistoryTTL();
+
     String getVolumeSizeUnit();
 }
