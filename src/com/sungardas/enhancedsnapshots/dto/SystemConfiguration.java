@@ -182,6 +182,7 @@ public class SystemConfiguration {
         private int amazonRetryCount;
         private int amazonRetrySleep;
         private int maxQueueSize;
+        private boolean storeSnapshots;
 
         public int getAmazonRetryCount() {
             return amazonRetryCount;
@@ -245,6 +246,14 @@ public class SystemConfiguration {
 
         public void setVolumeTypeOptions(String[] volumeTypeOptions) {
             this.volumeTypeOptions = volumeTypeOptions;
+        }
+
+        public boolean isStoreSnapshots() {
+            return storeSnapshots;
+        }
+
+        public void setStoreSnapshots(boolean storeSnapshots) {
+            this.storeSnapshots = storeSnapshots;
         }
     }
 }

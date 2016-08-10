@@ -1,11 +1,10 @@
 package com.sungardas.enhancedsnapshots.components.impl;
 
-import javax.annotation.PostConstruct;
-
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
-
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
 
 import static com.sungardas.enhancedsnapshots.service.SystemService.VOLUME_SIZE_UNIT;
 
@@ -143,5 +142,10 @@ public class ConfigurationMediatorImpl implements ConfigurationMediator {
     @Override
     public String getVolumeSizeUnit() {
         return VOLUME_SIZE_UNIT;
+    }
+
+    @Override
+    public boolean isStoreSnapshot() {
+        return currentConfiguration.isStoreSnapshot();
     }
 }

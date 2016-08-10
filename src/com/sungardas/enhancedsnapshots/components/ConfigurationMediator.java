@@ -49,4 +49,6 @@ public interface ConfigurationMediator {
     int getMaxWaitTimeToDetachVolume();
 
     String getVolumeSizeUnit();
+
+    boolean isStoreSnapshot();
 }
