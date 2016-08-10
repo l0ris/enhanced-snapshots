@@ -1,17 +1,17 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
-
+import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.PostConstruct;
 
 
 class CreateAppConfigurationImpl {
@@ -41,8 +41,9 @@ class CreateAppConfigurationImpl {
             LOG.info("Initialization started");
             init = true;
             boolean isBucketContainsSDFSMetadata = false;
-            if (isBucketExits(configurationMediator.getS3Bucket())) {
-                isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(configurationMediator.getS3Bucket());
+            if (EnhancedSnapshotSystemMetadataUtil.isBucketExits(configurationMediator.getS3Bucket(), amazonS3)) {
+                isBucketContainsSDFSMetadata = EnhancedSnapshotSystemMetadataUtil.containsSdfsMetadata(configurationMediator.getS3Bucket(),
+                        configurationMediator.getSdfsBackupFileName(), amazonS3);
             }
             LOG.info("Initialization restore");
             if (isBucketContainsSDFSMetadata) {
@@ -53,15 +54,6 @@ class CreateAppConfigurationImpl {
                 sdfsService.startSDFS();
             }
             LOG.info("Initialization finished");
-        }
-    }
-
-    private boolean isBucketExits(String s3Bucket) {
-        try {
-            String location = amazonS3.getBucketLocation(s3Bucket);
-            return location != null;
-        } catch (Exception e) {
-            return false;
         }
     }
 }

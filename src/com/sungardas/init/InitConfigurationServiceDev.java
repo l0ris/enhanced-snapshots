@@ -1,14 +1,8 @@
 package com.sungardas.init;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.amazonaws.auth.AWSCredentialsProvider;
-
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
-import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.Bucket;
@@ -19,10 +13,11 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
 
 class InitConfigurationServiceDev implements InitConfigurationService {
 
@@ -174,5 +169,13 @@ class InitConfigurationServiceDev implements InitConfigurationService {
             LOG.info("Removing bucket {} in {}", bucketName, "us-west-2");
             amazonS3.deleteBucket(bucketName);
         }
+    }
+
+    @Override
+    public InitConfigurationDto.DB containsMetadata(final String bucketName) {
+        InitConfigurationDto.DB db = new InitConfigurationDto.DB();
+        db.setValid(true);
+        db.setAdminExist(true);
+        return db;
     }
 }

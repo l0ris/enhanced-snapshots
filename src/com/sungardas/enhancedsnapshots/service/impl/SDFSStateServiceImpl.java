@@ -1,12 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
@@ -17,7 +10,6 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.SDFSException;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +17,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -80,15 +81,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             }
             throw new SDFSException("Can't restore sdfs state", e);
         }
-    }
-
-
-    @Override
-    public boolean containsSdfsMetadata(String sBucket) {
-        ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(sBucket).withPrefix(configurationMediator.getSdfsBackupFileName());
-        return amazonS3.listObjects(request).getObjectSummaries().size() > 0;
-
     }
 
     @Override

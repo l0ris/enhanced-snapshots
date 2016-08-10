@@ -1,41 +1,14 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.EC2MetadataUtils;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
@@ -46,7 +19,8 @@ import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
-
+import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -55,6 +29,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.PropertySource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Implementation for {@link SystemService}
@@ -159,9 +147,10 @@ public class SystemServiceImpl implements SystemService {
             LOG.info("System restore started");
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
             LOG.info("Download from S3");
-            downloadFromS3(tempDirectory);
+            EnhancedSnapshotSystemMetadataUtil.downloadFromS3(tempDirectory,
+                    configurationMediator.getS3Bucket(), configurationMediator.getSdfsBackupFileName(), amazonS3);
             LOG.info("Upgrade");
-            systemUpgrade.upgrade(tempDirectory, getBackupVersion(tempDirectory));
+            systemUpgrade.upgrade(tempDirectory, EnhancedSnapshotSystemMetadataUtil.getBackupVersion(tempDirectory));
             LOG.info("Restore SDFS state");
             restoreSDFS(tempDirectory);
             LOG.info("Restore files");
@@ -169,6 +158,7 @@ public class SystemServiceImpl implements SystemService {
             LOG.info("Restore DB");
             restoreDB(tempDirectory);
             syncBackupsInDBWithExistingOnes();
+            FileUtils.deleteDirectory(tempDirectory.toFile());
         } catch (IOException e) {
             LOG.error("System restore failed");
             LOG.error(e);
@@ -176,31 +166,6 @@ public class SystemServiceImpl implements SystemService {
         }
     }
 
-    /**
-     * Method for defining application version, which created system backup
-     *
-     * @param tempDirectory directory to which was unzipped system backup
-     * @return application version
-     */
-    private String getBackupVersion(final Path tempDirectory) {
-        Path infoFile = Paths.get(tempDirectory.toString(), INFO_FILE_NAME);
-        if (infoFile.toFile().exists()) {
-            try (FileInputStream fileInputStream = new FileInputStream(infoFile.toFile())) {
-                HashMap<String, String> info = objectMapper.readValue(fileInputStream, HashMap.class);
-                if (info.containsKey(VERSION_KEY)) {
-                    return info.get(VERSION_KEY);
-                } else {
-                    LOG.error("Invalid info file formant");
-                    throw new EnhancedSnapshotsException("Invalid info file formant");
-                }
-            } catch (IOException e) {
-                LOG.error("Failed to parse info file");
-                LOG.error(e);
-                throw new EnhancedSnapshotsException(e);
-            }
-        }
-        return "0.0.1";
-    }
 
     /**
      * Adding metainfo to system backup
@@ -318,40 +283,6 @@ public class SystemServiceImpl implements SystemService {
         amazonS3.putObject(putObjectRequest);
 
         zipFile.toFile().delete();
-    }
-
-    private void downloadFromS3(Path tempDirectory) throws IOException {
-        // download
-        LOG.info("-Download");
-        GetObjectRequest getObjectRequest = new GetObjectRequest(configurationMediator.getS3Bucket(),
-                configurationMediator.getSdfsBackupFileName());
-        S3Object s3object = amazonS3.getObject(getObjectRequest);
-
-        Path tempFile = Files.createTempFile(TEMP_DIRECTORY_PREFIX, TEMP_FILE_SUFFIX);
-        Files.copy(s3object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-
-        LOG.info("  -Unzip");
-        //unzip
-        try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile());
-             ZipInputStream zipInputStream = new ZipInputStream(fileInputStream)) {
-            ZipEntry entry;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-                // in case entry is directory system backup relates to version 0.0.1
-                // copy /etc/sdfs/awspool-volume-cfg.xml to temp dir
-                if(entry.isDirectory()){
-                    zipInputStream.getNextEntry();
-                    zipInputStream.getNextEntry();
-                    Path dest = Paths.get(tempDirectory.toString(), "awspool-volume-cfg.xml");
-                    Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
-                    break;
-                }
-                Path dest = Paths.get(tempDirectory.toString(), entry.getName());
-                Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-
-        //cleanup
-        tempFile.toFile().delete();
     }
 
     private void storeTable(Class tableClass, Path tempDirectory) throws IOException {
