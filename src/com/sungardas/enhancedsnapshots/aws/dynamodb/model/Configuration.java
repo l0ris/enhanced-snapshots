@@ -37,6 +37,7 @@ public class Configuration {
     // Nginx
     private String nginxCertPath;
     private String nginxKeyPath;
+    private boolean storeSnapshot;
 
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
@@ -215,5 +216,13 @@ public class Configuration {
 
     public void setNginxKeyPath(final String nginxKeyPath) {
         this.nginxKeyPath = nginxKeyPath;
+    }
+
+    public boolean isStoreSnapshot() {
+        return storeSnapshot;
+    }
+
+    public void setStoreSnapshot(boolean storeSnapshot) {
+        this.storeSnapshot = storeSnapshot;
     }
 }

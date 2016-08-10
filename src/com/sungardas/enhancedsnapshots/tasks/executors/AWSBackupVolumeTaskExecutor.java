@@ -1,9 +1,5 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import java.io.*;
-import java.text.MessageFormat;
-import java.util.concurrent.TimeUnit;
-
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
@@ -18,12 +14,18 @@ import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.MessageFormat;
+import java.util.concurrent.TimeUnit;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
@@ -173,7 +175,11 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                     LOG.info("Deleting previous snapshot {}", previousSnapshot);
                     snapshotService.deleteSnapshot(previousSnapshot);
                 }
-                snapshotService.saveSnapshot(volumeId, snapshotId);
+                if (configurationMediator.isStoreSnapshot()) {
+                    snapshotService.saveSnapshot(volumeId, snapshotId);
+                } else {
+                    snapshotService.deleteSnapshot(snapshotId);
+                }
                 taskService.complete(taskEntry);
                 LOG.info("Task completed.");
                 checkThreadInterruption(taskEntry);
