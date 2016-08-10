@@ -204,6 +204,19 @@
                             <div class="settings field-label col-sm-5 text-left">milliseconds</div>
                         </div>
 
+                        <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">Tasks History Time Limit:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       min="0"
+                                       ng-model="settings.systemProperties.taskHistoryTTL"
+                                       name="taskHistoryTTL"
+                                       required>
+                            </div>
+                            <div class="settings field-label col-sm-5 text-left">milliseconds</div>
+                        </div>
+
                         <div class="col-sm-12 text-danger small"
                              ng-show="otherSettings.maxQueueSize.$error.required ||
                              otherSettings.amazonRetryCount.$error.required ||
