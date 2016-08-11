@@ -168,21 +168,23 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             awsCommunication.detachVolume(tempVolume);
             LOG.info("Detaching volume after restoring data: " + tempVolume.toString());
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 90);
-            tempSnapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(tempVolume));
-
-            checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 95);
 
             Volume volumeToRestore = null;
             if (!tempVolume.getAvailabilityZone().equals(taskEntry.getAvailabilityZone())) {
                 //move to target availability zone
+                notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 90);
+                tempSnapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(tempVolume));
+
+                checkThreadInterruption(taskEntry);
+                notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 95);
+
                 volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), taskEntry.getAvailabilityZone(),
                         VolumeType.fromValue(taskEntry.getRestoreVolumeType()), taskEntry.getRestoreVolumeIopsPerGb());
                 awsCommunication.deleteVolume(tempVolume);
             } else {
                 //in case availability zone is the same we do not need temp volume
                 volumeToRestore = tempVolume;
+                awsCommunication.deleteTemporaryTag(tempVolume.getVolumeId());
             }
             awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
 
