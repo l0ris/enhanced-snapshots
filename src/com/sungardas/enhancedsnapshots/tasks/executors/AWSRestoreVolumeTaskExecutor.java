@@ -181,6 +181,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
                 volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), taskEntry.getAvailabilityZone(),
                         VolumeType.fromValue(taskEntry.getRestoreVolumeType()), taskEntry.getRestoreVolumeIopsPerGb());
                 awsCommunication.deleteVolume(tempVolume);
+                awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
             } else {
                 //in case availability zone is the same we do not need temp volume
                 volumeToRestore = tempVolume;
@@ -188,7 +189,6 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             }
             awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
 
-            awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
             awsCommunication.addTag(volumeToRestore.getVolumeId(), "Created by", "Enhanced Snapshots");
         } catch (Exception e) {
             // TODO: add user notification about task failure
