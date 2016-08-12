@@ -49,8 +49,9 @@ public class TaskEntry {
     @DynamoDBAttribute
     private String enabled;
 
+    //complete time in milliseconds
     @DynamoDBAttribute
-    private String expirationDate;
+    private long completeTime;
 
     @DynamoDBAttribute
     private String tempVolumeType;
@@ -181,12 +182,12 @@ public class TaskEntry {
         this.enabled = String.valueOf(enabled);
     }
 
-    public String getExpirationDate() {
-        return expirationDate;
+    public long getCompleteTime() {
+        return completeTime;
     }
 
-    public void setExpirationDate(String expirationDate) {
-        this.expirationDate = expirationDate;
+    public void setCompleteTime(long completeTime) {
+        this.completeTime = completeTime;
     }
 
     @DynamoDBIgnore

@@ -13,7 +13,6 @@ import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeTaskExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 
 @Service
@@ -43,23 +41,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private NotificationService notificationService;
-
-    @PostConstruct
-    private void init() {
-        schedulerService.addTask(new Task() {
-            @Override
-            public String getId() {
-                return "taskRetentionPolicy";
-            }
-
-            @Override
-            public void run() {
-                long currentTime = System.currentTimeMillis();
-                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqual(currentTime + "");
-                taskRepository.delete(list);
-            }
-        }, "*/5 * * * *");
-    }
 
     @Override
     public Map<String, String> createTask(TaskDto taskDto) {
@@ -136,7 +117,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDto> getAllTasks() {
         try {
-            return TaskDtoConverter.convert(taskRepository.findByRegular(Boolean.FALSE.toString()));
+            return TaskDtoConverter.convert(taskRepository.findByStatusNotAndRegular(TaskEntry.TaskEntryStatus.COMPLETE.toString(), Boolean.FALSE.toString()),
+                    taskRepository.findByRegularAndCompleteTimeGreaterThanEqual(Boolean.FALSE.toString(), System.currentTimeMillis() - configurationMediator.getTaskHistoryTTS()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -158,8 +140,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void complete(TaskEntry taskEntry) {
-        long expirationDate = System.currentTimeMillis() + configurationMediator.getTaskHistoryTTL();
-        taskEntry.setExpirationDate(expirationDate + "");
+        taskEntry.setCompleteTime(System.currentTimeMillis());
         taskEntry.setStatus(TaskEntry.TaskEntryStatus.COMPLETE.getStatus());
         taskRepository.save(taskEntry);
     }

@@ -76,8 +76,8 @@ public class SystemController {
         if (newConfiguration.getSdfs().getSdfsLocalCacheSize() > currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize()) {
             return new ResponseEntity<>("Local cache size can not be more than " + currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize(), HttpStatus.BAD_REQUEST);
         }
-        if (newConfiguration.getSystemProperties().getTaskHistoryTTL() <= 0) {
-            return new ResponseEntity<>("Task history TTL should be greater than 0", HttpStatus.BAD_REQUEST);
+        if (newConfiguration.getSystemProperties().getTaskHistoryTTS() <= 0) {
+            return new ResponseEntity<>("Task history TTS should be greater than 0", HttpStatus.BAD_REQUEST);
         }
         boolean needToReconfigureSdfs = false;
 

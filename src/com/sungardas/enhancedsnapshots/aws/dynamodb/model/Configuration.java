@@ -21,7 +21,8 @@ public class Configuration {
     private int restoreVolumeIopsPerGb;
     private int waitTimeBeforeNewSyncWithAWS;
     private int maxWaitTimeToDetachVolume;
-    private int taskHistoryTTL;
+    //time to show
+    private int taskHistoryTTS;
 
     // sdfs settings
     private String sdfsVolumeName;
@@ -218,11 +219,11 @@ public class Configuration {
         this.nginxKeyPath = nginxKeyPath;
     }
 
-    public int getTaskHistoryTTL() {
-        return taskHistoryTTL;
+    public int getTaskHistoryTTS() {
+        return taskHistoryTTS;
     }
 
-    public void setTaskHistoryTTL(int taskHistoryTTL) {
-        this.taskHistoryTTL = taskHistoryTTL;
+    public void setTaskHistoryTTS(int taskHistoryTTS) {
+        this.taskHistoryTTS = taskHistoryTTS;
     }
 }

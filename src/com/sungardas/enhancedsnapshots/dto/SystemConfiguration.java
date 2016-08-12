@@ -182,7 +182,7 @@ public class SystemConfiguration {
         private int amazonRetryCount;
         private int amazonRetrySleep;
         private int maxQueueSize;
-        private int taskHistoryTTL;
+        private int taskHistoryTTS;
 
         public int getAmazonRetryCount() {
             return amazonRetryCount;
@@ -248,12 +248,12 @@ public class SystemConfiguration {
             this.volumeTypeOptions = volumeTypeOptions;
         }
 
-        public int getTaskHistoryTTL() {
-            return taskHistoryTTL;
+        public int getTaskHistoryTTS() {
+            return taskHistoryTTS;
         }
 
-        public void setTaskHistoryTTL(int taskHistoryTTL) {
-            this.taskHistoryTTL = taskHistoryTTL;
+        public void setTaskHistoryTTS(int taskHistoryTTS) {
+            this.taskHistoryTTS = taskHistoryTTS;
         }
     }
 }
