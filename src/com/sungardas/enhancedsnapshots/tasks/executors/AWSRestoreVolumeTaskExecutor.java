@@ -1,8 +1,5 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
@@ -15,17 +12,15 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
-
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 
 @Service("awsRestoreVolumeTaskExecutor")
@@ -66,7 +61,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         String sourceFile = taskEntry.getSourceFileName();
         changeTaskStatusToRunning(taskEntry);
         try {
-            if (sourceFile == null || sourceFile.isEmpty()) {
+            if (snapshotService.getSnapshotIdByVolumeId(taskEntry.getVolume()) != null && (sourceFile == null || sourceFile.isEmpty())) {
                 LOG.info("Task was defined as restore from snapshot.");
                 restoreFromSnapshot(taskEntry);
             } else {
@@ -124,7 +119,12 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
 
-            BackupEntry backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            BackupEntry backupentry = null;
+            if (taskEntry.getSourceFileName() != null || !taskEntry.getSourceFileName().isEmpty()) {
+                backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            } else {
+                backupentry = backupRepository.findFirstByVolumeIdOrderByTimeCreatedDesc(taskEntry.getVolume());
+            }
             LOG.info("Used backup record: {}", backupentry.getFileName());
             Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
             int size = Integer.parseInt(backupentry.getSizeGiB());
