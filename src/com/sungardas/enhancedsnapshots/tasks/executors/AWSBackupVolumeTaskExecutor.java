@@ -34,7 +34,7 @@ import static java.lang.String.format;
 
 @Service("awsBackupVolumeTaskExecutor")
 @Profile("prod")
-public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
+public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTaskExecutor.class);
 
     @Autowired
@@ -192,23 +192,13 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Canceling...", 90);
             LOG.info("Backup process for volume {} canceled ", volumeId);
+            //TODO: set to canceled status
             taskRepository.delete(taskEntry);
 
-            // clean up
             // kill initialization Process if it's alive, should be killed before volume detaching
             killInitializationVolumeProcessIfAlive(tempVolume);
-            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
-                tempVolume = awsCommunication.syncVolume(tempVolume);
-                if (tempVolume.getAttachments().size() != 0) {
-                    awsCommunication.detachVolume(tempVolume);
-                }
-                awsCommunication.deleteVolume(tempVolume);
-            }
-            try {
-                storageService.deleteFile(backupFileName);
-            } catch (Exception ex) {
-                //do nothing if file not found
-            }
+            deleteTempResources(tempVolume, backupFileName);
+
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Done", 100);
         } catch (Exception e) {
             // TODO: add user notification about task failure
@@ -216,17 +206,24 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
 
-            // clean up
             // kill initialization Process if it's alive, should be killed before volume detaching
             killInitializationVolumeProcessIfAlive(tempVolume);
-            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
-                tempVolume = awsCommunication.syncVolume(tempVolume);
-                if (tempVolume.getAttachments().size() != 0) {
-                    awsCommunication.detachVolume(tempVolume);
-                }
-                awsCommunication.deleteVolume(tempVolume);
-            }
+            deleteTempResources(tempVolume, backupFileName);
+        }
+    }
 
+    /**
+     * Clean up resources if exception appeared
+     *
+     * @param tempVolume
+     * @param backupFileName
+     */
+    private void deleteTempResources(Volume tempVolume, String backupFileName) {
+        deleteTempVolume(tempVolume);
+        try {
+            storageService.deleteFile(backupFileName);
+        } catch (Exception ex) {
+            //do nothing if file not found
         }
     }
 

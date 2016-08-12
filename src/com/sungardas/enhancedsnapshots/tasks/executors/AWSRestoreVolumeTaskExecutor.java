@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service("awsRestoreVolumeTaskExecutor")
 @Profile("prod")
-public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
+public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     public static final String RESTORED_NAME_PREFIX = "Restore of ";
     private static final Logger LOG = LogManager.getLogger(AWSRestoreVolumeTaskExecutor.class);
     @Autowired
@@ -194,14 +194,8 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Canceling...", 90);
             LOG.info("Restore task was canceled");
             taskRepository.delete(taskEntry);
-            // clean up
-            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
-                tempVolume = awsCommunication.syncVolume(tempVolume);
-                if (tempVolume.getAttachments().size() != 0) {
-                    awsCommunication.detachVolume(tempVolume);
-                }
-                awsCommunication.deleteVolume(tempVolume);
-            }
+
+            deleteTempVolume(tempVolume);
             if (tempSnapshot != null && awsCommunication.snapshotExists(tempSnapshot.getSnapshotId())) {
                 awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
             }
@@ -209,14 +203,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         } catch (Exception e) {
             // TODO: add user notification about task failure
             LOG.error("Failed to restore backup.", e);
-            // clean up
-            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
-                tempVolume = awsCommunication.syncVolume(tempVolume);
-                if (tempVolume.getAttachments().size() != 0) {
-                    awsCommunication.detachVolume(tempVolume);
-                }
-                awsCommunication.deleteVolume(tempVolume);
-            }
+            deleteTempVolume(tempVolume);
             if (tempSnapshot != null && awsCommunication.snapshotExists(tempSnapshot.getSnapshotId())) {
                 awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
             }
