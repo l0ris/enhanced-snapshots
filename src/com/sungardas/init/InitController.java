@@ -101,9 +101,6 @@ class InitController implements ApplicationContextAware {
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
         InitConfigurationDto initConfigurationDto = getInitConfigurationDTO();
         if (!initConfigurationDto.getDb().isValid()) {
-            if (config.getUser() == null) {
-                throw new ConfigurationException("Please create default user");
-            }
             initConfigurationService.setUser(config.getUser());
         }
         if (config.getUser() != null) {
