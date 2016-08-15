@@ -15,6 +15,4 @@ public interface BackupRepository extends PagingAndSortingRepository<BackupEntry
     List<BackupEntry> findByFileName(String fileName);
 
     List<BackupEntry> findAll();
-
-    BackupEntry findFirstByVolumeIdOrderByTimeCreatedDesc(String volumeId);
 }

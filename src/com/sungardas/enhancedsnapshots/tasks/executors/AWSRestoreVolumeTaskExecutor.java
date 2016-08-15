@@ -123,7 +123,9 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             if (taskEntry.getSourceFileName() != null && !taskEntry.getSourceFileName().isEmpty()) {
                 backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
             } else {
-                backupentry = backupRepository.findFirstByVolumeIdOrderByTimeCreatedDesc(taskEntry.getVolume());
+                backupentry = backupRepository.findByVolumeId(taskEntry.getVolume())
+                        .stream().sorted((e1, e2) -> e2.getTimeCreated().compareTo(e1.getTimeCreated()))
+                        .findFirst().get();
             }
             LOG.info("Used backup record: {}", backupentry.getFileName());
             Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
