@@ -120,7 +120,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
 
             BackupEntry backupentry = null;
-            if (taskEntry.getSourceFileName() != null || !taskEntry.getSourceFileName().isEmpty()) {
+            if (taskEntry.getSourceFileName() != null && !taskEntry.getSourceFileName().isEmpty()) {
                 backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
             } else {
                 backupentry = backupRepository.findFirstByVolumeIdOrderByTimeCreatedDesc(taskEntry.getVolume());
