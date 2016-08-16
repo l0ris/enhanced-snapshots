@@ -10,7 +10,6 @@ import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SnapshotService;
 import com.sungardas.enhancedsnapshots.service.StorageService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,7 @@ import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskE
 
 @Service("awsDeleteTaskExecutor")
 @Profile("prod")
-public class AWSDeleteTaskExecutor implements TaskExecutor {
+public class AWSDeleteTaskExecutor extends AbstractAWSVolumeTaskExecutor {
 
     private static final Logger LOG = LogManager.getLogger(AWSDeleteTaskExecutor.class);
 

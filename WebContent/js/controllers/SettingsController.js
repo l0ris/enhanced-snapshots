@@ -85,5 +85,4 @@ angular.module('web')
            return JSON.stringify($scope.settings) !== JSON.stringify($scope.initialSettings);
         };
 
-
     });

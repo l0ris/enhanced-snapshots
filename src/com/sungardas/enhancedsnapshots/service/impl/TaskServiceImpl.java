@@ -1,13 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -24,11 +16,14 @@ import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeTaskExecutor;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -50,6 +45,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private NotificationService notificationService;
+
+
+    private Set<String> canceledTasks = new CopyOnWriteArraySet<>();
 
     @PostConstruct
     private void init() {
@@ -177,6 +175,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public boolean isCanceled(final String taskId) {
+        return canceledTasks.remove(taskId);
+    }
+
+    @Override
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolume(Boolean.TRUE.toString(),
@@ -193,7 +196,8 @@ public class TaskServiceImpl implements TaskService {
         if (taskRepository.exists(id)) {
             TaskEntry taskEntry = taskRepository.findOne(id);
             if (TaskEntry.TaskEntryStatus.RUNNING.getStatus().equals(taskEntry.getStatus())) {
-                throw new EnhancedSnapshotsException("Can`t remove task " + id + ", task in status: " + taskEntry.getStatus());
+                canceledTasks.add(id);
+                return;
             }
             taskRepository.delete(id);
             if (Boolean.valueOf(taskEntry.getRegular())) {
@@ -206,8 +210,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public boolean isCanceled(String id) {
-        return !taskRepository.exists(id);
+    public boolean exists(String id) {
+        return taskRepository.exists(id);
     }
 
     @Override
