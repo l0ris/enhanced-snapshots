@@ -149,4 +149,9 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public String getVolumeSizeUnit() {
         return VOLUME_SIZE_UNIT;
     }
+
+    @Override
+    public boolean isStoreSnapshot() {
+        return currentConfiguration.isStoreSnapshot();
+    }
 }

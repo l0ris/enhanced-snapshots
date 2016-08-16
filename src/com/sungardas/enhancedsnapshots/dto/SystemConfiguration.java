@@ -183,6 +183,7 @@ public class SystemConfiguration {
         private int amazonRetrySleep;
         private int maxQueueSize;
         private int taskHistoryTTS;
+        private boolean storeSnapshots;
 
         public int getAmazonRetryCount() {
             return amazonRetryCount;
@@ -254,6 +255,14 @@ public class SystemConfiguration {
 
         public void setTaskHistoryTTS(int taskHistoryTTS) {
             this.taskHistoryTTS = taskHistoryTTS;
+        }
+
+        public boolean isStoreSnapshots() {
+            return storeSnapshots;
+        }
+
+        public void setStoreSnapshots(boolean storeSnapshots) {
+            this.storeSnapshots = storeSnapshots;
         }
     }
 }

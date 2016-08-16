@@ -18,7 +18,7 @@ body > .container {
     padding: 100px 15px 60px;
     min-height: 100%;
 }
-.container.app{
+.container.app {
     padding-top: 140px;
     padding-bottom: 20px;
 }
@@ -27,7 +27,7 @@ body > .container {
     clear: right;
 }
 
-.no-margin{
+.no-margin {
     margin: 0;
 }
 
@@ -52,7 +52,7 @@ body > .container {
     padding-top: 200px;
 }
 
-.spin{
+.spin {
     -webkit-transform-origin: 50% 50%;
     transform-origin:50% 50%;
     -ms-transform-origin:50% 50%; /* IE 9 */
@@ -88,6 +88,7 @@ body > .container {
         transform: rotate(360deg);
     }
 }
+
 .dropdown-menu. li{
     cursor: pointer;
 }

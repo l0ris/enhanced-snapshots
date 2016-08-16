@@ -360,6 +360,7 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setAmazonRetryCount(configurationMediator.getAmazonRetryCount());
         systemProperties.setAmazonRetrySleep(configurationMediator.getAmazonRetrySleep());
         systemProperties.setMaxQueueSize(configurationMediator.getMaxQueueSize());
+        systemProperties.setStoreSnapshots(configurationMediator.isStoreSnapshot());
         systemProperties.setTaskHistoryTTS(configurationMediator.getTaskHistoryTTS());
         configuration.setSystemProperties(systemProperties);
         return configuration;
@@ -376,6 +377,7 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setAmazonRetryCount(configuration.getSystemProperties().getAmazonRetryCount());
         currentConfiguration.setAmazonRetrySleep(configuration.getSystemProperties().getAmazonRetrySleep());
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
+        currentConfiguration.setStoreSnapshot(configuration.getSystemProperties().isStoreSnapshots());
         currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
 
         // update sdfs setting

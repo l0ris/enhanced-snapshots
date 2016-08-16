@@ -51,4 +51,6 @@ public interface ConfigurationMediator {
     int getTaskHistoryTTS();
 
     String getVolumeSizeUnit();
+
+    boolean isStoreSnapshot();
 }

@@ -62,7 +62,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
         String sourceFile = taskEntry.getSourceFileName();
         changeTaskStatusToRunning(taskEntry);
         try {
-            if (sourceFile == null || sourceFile.isEmpty()) {
+            if (snapshotService.getSnapshotIdByVolumeId(taskEntry.getVolume()) != null && (sourceFile == null || sourceFile.isEmpty())) {
                 LOG.info("Task was defined as restore from snapshot.");
                 restoreFromSnapshot(taskEntry);
             } else {
@@ -123,7 +123,14 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
 
-            BackupEntry backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            BackupEntry backupentry = null;
+            if (taskEntry.getSourceFileName() != null && !taskEntry.getSourceFileName().isEmpty()) {
+                backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            } else {
+                backupentry = backupRepository.findByVolumeId(taskEntry.getVolume())
+                        .stream().sorted((e1, e2) -> e2.getTimeCreated().compareTo(e1.getTimeCreated()))
+                        .findFirst().get();
+            }
             LOG.info("Used backup record: {}", backupentry.getFileName());
             Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
             int size = Integer.parseInt(backupentry.getSizeGiB());
