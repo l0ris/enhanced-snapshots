@@ -84,6 +84,7 @@ public class CreateAppConfigurationDev {
         configuration.setSdfsSize(500);
         configuration.setSdfsVolumeName("awspool");
         configuration.setSdfsMountPoint("/mnt/awspool");
+        configuration.setTaskHistoryTTS(300000);
 
         return configuration;
     }

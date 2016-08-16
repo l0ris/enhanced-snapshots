@@ -149,9 +149,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private int sdfsReservedRam;
     @Value("${enhancedsnapshots.system.reserved.storage}")
     private int systemReservedStorage;
+    @Value("${enhancedsnapshots.system.task.history.tts}")
+    private int taskHistoryTTS;
     @Value("${enhancedsnapshots.default.snapshot.store}")
     private boolean storeSnapshot;
-
 
     @Autowired
     private AmazonS3 amazonS3;
@@ -316,6 +317,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setMaxWaitTimeToDetachVolume(defaultMaxWaitTimeToDetachVolume);
         configuration.setNginxCertPath(nginxCertPath);
         configuration.setNginxKeyPath(nginxKeyPath);
+        configuration.setTaskHistoryTTS(taskHistoryTTS);
         configuration.setStoreSnapshot(storeSnapshot);
         // saving configuration to DB
         mapper.save(configuration);
