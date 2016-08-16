@@ -5,16 +5,19 @@ language: java
 
 jdk:
   - oraclejdk8
-  
+
 branches:
   only:
   - master
   - develop
+  - /^(beta|release).+$/
 
 sudo: required
 
 env:
   global:
+    - secure: DD2m58pLmOnuKkgVMU49OjJYuSZXVDP7x5P3Wxk3T8N1T5ImCXu1l8K9Ti+4uEzFGQ41YMQiLlagqZpsiTjWdz70PESN90CfKEM2C2gA9EWQfuzEA6jYgRJopsTbgC43F+6PwwsVXRTiDCy6KFV+yzFfc5COfeXqgtQx9w1wDbaJrQhy/GzN71OBw97Rzi4uPIg+u/AVPKIdDsEEkjwLr2glJ+1X/l/0LoVwQQuWYaxNl9RwHHylncs+ECbKkpEotAcnYQAKTLFSydz1bWlE1gxp8CM52UlE2oE/W2kvwzRvxhLHJ9sOj7W0zIm2EhgM6X8F5edfuKq4b5IfCfaWpzV9dcWJ+zxzl+O2h1YGGNqpYAbgeT6Aj81tQ5itE+x2poxOY1xSLbMAW4/aWGJ+qW6cia2gqOfL6LujyLx/2MvXn9gx/sUGlTmSWWOdauyIoG0GoCE/SaojX0ymAOBOLDWNsFVLl417fRPMBIoJEkoqMU2DO2rBIm6PXtadOLAtJS+QhKi+gwa23KlGj2ofJuMNFnKwUBtekfGRD9jtKuGMSTObaTERxcrCWyN9/3s5RCyoUPsHP4KKp1TdZn9wPsLRzVmzjNSeRxMuPISmu3nX7KDi0dl6p2653lykKshvejqlkLem28z4GtFr8SCUFh9ZraPwlcpZcxAkWuKCK+g=
+    - secure: Yk0mK8hqTufRmvn3DbvstgdVaE2SDTUphQc1g8/vLnB0AjTzRKAwbIf7Wa9prkTdmj8qOExOQE0tr+ZGFAqljXKLqgxO6Eofr5PfeJQ1b2iyAHiwyIBurUkyKbdtJtqsvEWz4XZ43kHpxdmOIYUbwlxL4mHb8yGvS26C2mY3U/MukSvkiucQnm18yLNDlmFGbdtSUOQxBcICs5vy/Y6iPOKtaDpwteYkJVrVgoXmdtSMXf5fxwgqJbSqQiEDKPdpILsa+nFiB85IHgAdUPO0jhRyiAbQLfNaTPK8IScbp3rHZEA2BfS87PBBfBZo6vc/q0baMyaihW5WoyDXvdUqcRQ1fxueRcZWa+vQeALmvEkwQxwZA3fbN6tG1IvNZr9oUP2MlO3v4bgjunjtj22vEXBUS+yXGEqE0PJumiUx1Eh+RY2EULslHQwqY+Zr2zK7l/QI0sH8JzF0BsJFggTAJJ3nrsl/QCSbO0vbXRkG5oNXaZWQO8upbVfBZubPaec7VKSIM7rzdOKqkGKgkZ1+RzoQhZ9Se5ySV0a2HYv87IafNSoxtZMVMUdGUeyrZBVlecfyLPUTJ3i+KHwWnDnHQ/gS6popUosLPmZAs7HyBUv3y6f1SHGyZ5IDQ5Oy/ZsgfsTVxxggoK8g7gxDIAEXHZut99IkaPhMcAD/3EJWPck=
     - STAGE_STR=DEV
 
 before_install:
@@ -23,6 +26,8 @@ before_install:
 
 install:
   - sudo apt-get install -y nodejs
+  - wget https://releases.hashicorp.com/packer/0.10.1/packer_0.10.1_linux_amd64.zip
+  - unzip packer_0.10.1_linux_amd64.zip
   - cd './WebContent'
   - sudo npm install -g bower
   - bower install --config.interactive=false
@@ -39,22 +44,45 @@ before_deploy:
   - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.2_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
 
 deploy:
-  provider: s3
-  bucket: "com.sungardas.releases"
-  endpoint: "s3-us-east-1.amazonaws.com"
-  skip_cleanup: true
-  region: "us-east-1"
-  local_dir: build_artifacts
-  upload-dir: "travis-builds"
-  file: "*.war"
-  access_key_id:
-    secure:
-      f/Ep6w1BuWXbeFlj2QRgUTMt2JpNMQ7DXtZRxhTnfX4UJ8+V8sfvbxphkpV5vgCFfNIbriX3Ht4hf3pXHxyKvmODfm/YvzLGVD+THAreHq43isFNaWGIVR0/pnj3XpwolNspbjkZeSjcMH+DXmpJ23QrIwiVVlyf9YVC2hgKcxAZH0KTRzFgCO3BGLU+PKXKSjbOa9dx1XUpZMovVaFyYT33Ph3ARLvJSE7voshXx3u2QZ7rNAF98mXd3yjIbDF/5aCXDSv9tURNOMY/zxmU4KiPicQ9bVhxOOAwSIagUaueXqX2fX6mYw77+s6ouezgLonYi9VWokr4soYJrHvzcs8RY3+0Qz1QVf5GrSY+TA7RBpnhR10ErIXGZ9acV0C3+1czzkE+kLf73A/rT7C01caIcaaUzWBKfoKRfQiJI2NkQvxmQT801qbuXETXlB/ScfmZmRa2oZuAMuOCR4o608hx4Aa9o1OYtSi01HnabV76TQ19mcHeySmh2eOGJK1dGfTin/sITU+Dj6dW9N6IFV76b3nquU/INKx6y3x6cBiEj4YrB1ySWoE7NPkO85Tmm1OGvONYJDtTzotdQjZoxoVVuilrzTA6iYaf4U6dJm7j6CtLsPH07pasGsqi3VjNpmxB+lOm7H+Cuj4J39qc3tpnrVWM8uzEPkiQaXLv6Kk=
-  secret_access_key:
-    secure:
-      FlKtQzTkLu2CCu7HXuKiAbZxCR15SO00tp2VxTeDUP4z4lsW6a8E8RQSWS8dZTUogMOHz0FgKRD56O6Hw5rywI1nmwF8FvNY9aNQFhPfSYFbxqcuscI1E9uj1UEwhAWyingocQdTgSV5123rzhlqSF5VQ+0ddPj0l2kL2lkeGDZDzcVjDDiW7M0eVOD6NF4LsDCjG1O/7GiI+uk7zzn1s2cQwOdcPM1Y/nD7gUOwz94YXLnNbortdcerZ8eby/4H7bsnDWwQ/8yHh88M/ketzrPF62KkA3NMmtwQZ5BLKPCGHw50Pk890RsG4bOTeixDFxIOcUdmp1TUmyoutDp8g58T+EVJakHROcWz1Brme2OVUldCg+tDMhhCr1IQ7r/+IOyzDsT1z64Y/JgfoJkzz0zm4O6pN5WIeqHupn3H5IFERbz2yIHby1zvzmWO9k8prKZmMRZ+0tPQS3lHc3bbTXswia8vlBMyF36nsYKgp+k6utag9NQ5DG/pQsQtNt2TjD9Ux3FJLzTTCvHPHnd4rygAW9/CMlaxEeUzSYWNGgIgGUXxR9lLFpdbaS9bcExD8ovH6rz4hQU68ilTxx8dGny9IO+Q3Wu8u3EH+/JFOx9ErqKNvCIw7fv9kO0DubW15Oaqz8uD4eOxooEdrMegfE+ZN0YpJmoqqwU2iNZ0RkQ=
-  on:
-    branch: master
+  - provider: s3
+    bucket: "com.sungardas.releases"
+    endpoint: "s3-us-east-1.amazonaws.com"
+    skip_cleanup: true
+    region: "us-east-1"
+    local_dir: build_artifacts
+    upload-dir: "travis-builds"
+    file: "*.war"
+    access_key_id:
+      secure:
+        f/Ep6w1BuWXbeFlj2QRgUTMt2JpNMQ7DXtZRxhTnfX4UJ8+V8sfvbxphkpV5vgCFfNIbriX3Ht4hf3pXHxyKvmODfm/YvzLGVD+THAreHq43isFNaWGIVR0/pnj3XpwolNspbjkZeSjcMH+DXmpJ23QrIwiVVlyf9YVC2hgKcxAZH0KTRzFgCO3BGLU+PKXKSjbOa9dx1XUpZMovVaFyYT33Ph3ARLvJSE7voshXx3u2QZ7rNAF98mXd3yjIbDF/5aCXDSv9tURNOMY/zxmU4KiPicQ9bVhxOOAwSIagUaueXqX2fX6mYw77+s6ouezgLonYi9VWokr4soYJrHvzcs8RY3+0Qz1QVf5GrSY+TA7RBpnhR10ErIXGZ9acV0C3+1czzkE+kLf73A/rT7C01caIcaaUzWBKfoKRfQiJI2NkQvxmQT801qbuXETXlB/ScfmZmRa2oZuAMuOCR4o608hx4Aa9o1OYtSi01HnabV76TQ19mcHeySmh2eOGJK1dGfTin/sITU+Dj6dW9N6IFV76b3nquU/INKx6y3x6cBiEj4YrB1ySWoE7NPkO85Tmm1OGvONYJDtTzotdQjZoxoVVuilrzTA6iYaf4U6dJm7j6CtLsPH07pasGsqi3VjNpmxB+lOm7H+Cuj4J39qc3tpnrVWM8uzEPkiQaXLv6Kk=
+    secret_access_key:
+      secure:
+        FlKtQzTkLu2CCu7HXuKiAbZxCR15SO00tp2VxTeDUP4z4lsW6a8E8RQSWS8dZTUogMOHz0FgKRD56O6Hw5rywI1nmwF8FvNY9aNQFhPfSYFbxqcuscI1E9uj1UEwhAWyingocQdTgSV5123rzhlqSF5VQ+0ddPj0l2kL2lkeGDZDzcVjDDiW7M0eVOD6NF4LsDCjG1O/7GiI+uk7zzn1s2cQwOdcPM1Y/nD7gUOwz94YXLnNbortdcerZ8eby/4H7bsnDWwQ/8yHh88M/ketzrPF62KkA3NMmtwQZ5BLKPCGHw50Pk890RsG4bOTeixDFxIOcUdmp1TUmyoutDp8g58T+EVJakHROcWz1Brme2OVUldCg+tDMhhCr1IQ7r/+IOyzDsT1z64Y/JgfoJkzz0zm4O6pN5WIeqHupn3H5IFERbz2yIHby1zvzmWO9k8prKZmMRZ+0tPQS3lHc3bbTXswia8vlBMyF36nsYKgp+k6utag9NQ5DG/pQsQtNt2TjD9Ux3FJLzTTCvHPHnd4rygAW9/CMlaxEeUzSYWNGgIgGUXxR9lLFpdbaS9bcExD8ovH6rz4hQU68ilTxx8dGny9IO+Q3Wu8u3EH+/JFOx9ErqKNvCIw7fv9kO0DubW15Oaqz8uD4eOxooEdrMegfE+ZN0YpJmoqqwU2iNZ0RkQ=
+    on:
+      branch: master
+      tags: true
+      condition: "$TRAVIS_TAG =~ ^release.+$"
+  - provider: s3
+    bucket: "com.sungardas.releases.beta"
+    endpoint: "s3-us-east-1.amazonaws.com"
+    skip_cleanup: true
+    region: "us-east-1"
+    local_dir: build_artifacts
+    upload-dir: "travis-builds"
+    file: "*.war"
+    access_key_id:
+      secure:
+        f/Ep6w1BuWXbeFlj2QRgUTMt2JpNMQ7DXtZRxhTnfX4UJ8+V8sfvbxphkpV5vgCFfNIbriX3Ht4hf3pXHxyKvmODfm/YvzLGVD+THAreHq43isFNaWGIVR0/pnj3XpwolNspbjkZeSjcMH+DXmpJ23QrIwiVVlyf9YVC2hgKcxAZH0KTRzFgCO3BGLU+PKXKSjbOa9dx1XUpZMovVaFyYT33Ph3ARLvJSE7voshXx3u2QZ7rNAF98mXd3yjIbDF/5aCXDSv9tURNOMY/zxmU4KiPicQ9bVhxOOAwSIagUaueXqX2fX6mYw77+s6ouezgLonYi9VWokr4soYJrHvzcs8RY3+0Qz1QVf5GrSY+TA7RBpnhR10ErIXGZ9acV0C3+1czzkE+kLf73A/rT7C01caIcaaUzWBKfoKRfQiJI2NkQvxmQT801qbuXETXlB/ScfmZmRa2oZuAMuOCR4o608hx4Aa9o1OYtSi01HnabV76TQ19mcHeySmh2eOGJK1dGfTin/sITU+Dj6dW9N6IFV76b3nquU/INKx6y3x6cBiEj4YrB1ySWoE7NPkO85Tmm1OGvONYJDtTzotdQjZoxoVVuilrzTA6iYaf4U6dJm7j6CtLsPH07pasGsqi3VjNpmxB+lOm7H+Cuj4J39qc3tpnrVWM8uzEPkiQaXLv6Kk=
+    secret_access_key:
+      secure:
+        FlKtQzTkLu2CCu7HXuKiAbZxCR15SO00tp2VxTeDUP4z4lsW6a8E8RQSWS8dZTUogMOHz0FgKRD56O6Hw5rywI1nmwF8FvNY9aNQFhPfSYFbxqcuscI1E9uj1UEwhAWyingocQdTgSV5123rzhlqSF5VQ+0ddPj0l2kL2lkeGDZDzcVjDDiW7M0eVOD6NF4LsDCjG1O/7GiI+uk7zzn1s2cQwOdcPM1Y/nD7gUOwz94YXLnNbortdcerZ8eby/4H7bsnDWwQ/8yHh88M/ketzrPF62KkA3NMmtwQZ5BLKPCGHw50Pk890RsG4bOTeixDFxIOcUdmp1TUmyoutDp8g58T+EVJakHROcWz1Brme2OVUldCg+tDMhhCr1IQ7r/+IOyzDsT1z64Y/JgfoJkzz0zm4O6pN5WIeqHupn3H5IFERbz2yIHby1zvzmWO9k8prKZmMRZ+0tPQS3lHc3bbTXswia8vlBMyF36nsYKgp+k6utag9NQ5DG/pQsQtNt2TjD9Ux3FJLzTTCvHPHnd4rygAW9/CMlaxEeUzSYWNGgIgGUXxR9lLFpdbaS9bcExD8ovH6rz4hQU68ilTxx8dGny9IO+Q3Wu8u3EH+/JFOx9ErqKNvCIw7fv9kO0DubW15Oaqz8uD4eOxooEdrMegfE+ZN0YpJmoqqwU2iNZ0RkQ=
+    on:
+      branch: develop
+      tags: true
+      condition: "$TRAVIS_TAG =~ ^beta.+$"
+
+after_deploy:
+  - ./packer build snapdirector_ami.json
 
 notifications:
   email:

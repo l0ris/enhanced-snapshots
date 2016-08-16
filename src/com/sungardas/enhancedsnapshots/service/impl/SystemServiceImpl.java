@@ -4,15 +4,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
-import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
@@ -42,6 +40,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -87,7 +86,7 @@ public class SystemServiceImpl implements SystemService {
     private BackupRepository backupRepository;
 
     @Autowired
-    private ConfigurationMediatorImpl configurationMediator;
+    private ConfigurationMediatorConfigurator configurationMediator;
 
     @Autowired
     private SDFSStateService sdfsStateService;
@@ -361,6 +360,7 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setAmazonRetryCount(configurationMediator.getAmazonRetryCount());
         systemProperties.setAmazonRetrySleep(configurationMediator.getAmazonRetrySleep());
         systemProperties.setMaxQueueSize(configurationMediator.getMaxQueueSize());
+        systemProperties.setTaskHistoryTTS(configurationMediator.getTaskHistoryTTS());
         configuration.setSystemProperties(systemProperties);
         return configuration;
     }
@@ -376,6 +376,7 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setAmazonRetryCount(configuration.getSystemProperties().getAmazonRetryCount());
         currentConfiguration.setAmazonRetrySleep(configuration.getSystemProperties().getAmazonRetrySleep());
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
+        currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
 
         // update sdfs setting
         currentConfiguration.setSdfsSize(configuration.getSdfs().getVolumeSize());
