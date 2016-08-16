@@ -28,6 +28,7 @@ import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
@@ -595,6 +596,22 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
                 return;
             }
             amazonS3.createBucket(bucketName, region.getName());
+        }
+    }
+
+    @Override
+    public InitConfigurationDto.DB containsMetadata(final String bucketName) {
+        final InitConfigurationDto.DB db = new InitConfigurationDto.DB();
+        if (EnhancedSnapshotSystemMetadataUtil.isBucketExits(bucketName, amazonS3)) {
+            String version = EnhancedSnapshotSystemMetadataUtil.getBackupVersion(bucketName, sdfsStateBackupFileName, amazonS3);
+            if (version == null || "0.0.1".equals(version)) {
+                return db;
+            } else {
+                db.setAdminExist(true);
+            }
+            return db;
+        } else {
+            return db;
         }
     }
 

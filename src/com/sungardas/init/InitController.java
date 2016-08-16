@@ -1,7 +1,5 @@
 package com.sungardas.init;
 
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
@@ -11,7 +9,6 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -22,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import javax.annotation.PostConstruct;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -102,9 +101,6 @@ class InitController implements ApplicationContextAware {
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
         InitConfigurationDto initConfigurationDto = getInitConfigurationDTO();
         if (!initConfigurationDto.getDb().isValid()) {
-            if (config.getUser() == null) {
-                throw new ConfigurationException("Please create default user");
-            }
             initConfigurationService.setUser(config.getUser());
         }
         if (config.getUser() != null) {
@@ -132,6 +128,11 @@ class InitController implements ApplicationContextAware {
     @RequestMapping(value = "/configuration/bucket/{name:.+}", method = RequestMethod.GET)
     public ResponseEntity<BucketNameValidationDTO> validateBucketName(@PathVariable("name") String bucketName) {
         return new ResponseEntity<>(initConfigurationService.validateBucketName(bucketName), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/configuration/bucket/{name:.+}/metadata", method = RequestMethod.GET)
+    public ResponseEntity<BucketNameValidationDTO> containsMetadata(@PathVariable("name") String bucketName) {
+        return new ResponseEntity(initConfigurationService.containsMetadata(bucketName), HttpStatus.OK);
     }
 
     @Override

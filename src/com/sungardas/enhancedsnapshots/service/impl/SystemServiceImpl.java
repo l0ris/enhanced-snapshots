@@ -17,6 +17,8 @@ import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
+import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -144,9 +146,10 @@ public class SystemServiceImpl implements SystemService {
             LOG.info("System restore started");
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
             LOG.info("Download from S3");
-            downloadFromS3(tempDirectory);
+            EnhancedSnapshotSystemMetadataUtil.downloadFromS3(tempDirectory,
+                    configurationMediator.getS3Bucket(), configurationMediator.getSdfsBackupFileName(), amazonS3);
             LOG.info("Upgrade");
-            systemUpgrade.upgrade(tempDirectory, getBackupVersion(tempDirectory));
+            systemUpgrade.upgrade(tempDirectory, EnhancedSnapshotSystemMetadataUtil.getBackupVersion(tempDirectory));
             LOG.info("Restore SDFS state");
             restoreSDFS(tempDirectory);
             LOG.info("Restore files");
@@ -154,6 +157,7 @@ public class SystemServiceImpl implements SystemService {
             LOG.info("Restore DB");
             restoreDB(tempDirectory);
             syncBackupsInDBWithExistingOnes();
+            FileUtils.deleteDirectory(tempDirectory.toFile());
         } catch (IOException e) {
             LOG.error("System restore failed");
             LOG.error(e);
@@ -161,31 +165,6 @@ public class SystemServiceImpl implements SystemService {
         }
     }
 
-    /**
-     * Method for defining application version, which created system backup
-     *
-     * @param tempDirectory directory to which was unzipped system backup
-     * @return application version
-     */
-    private String getBackupVersion(final Path tempDirectory) {
-        Path infoFile = Paths.get(tempDirectory.toString(), INFO_FILE_NAME);
-        if (infoFile.toFile().exists()) {
-            try (FileInputStream fileInputStream = new FileInputStream(infoFile.toFile())) {
-                HashMap<String, String> info = objectMapper.readValue(fileInputStream, HashMap.class);
-                if (info.containsKey(VERSION_KEY)) {
-                    return info.get(VERSION_KEY);
-                } else {
-                    LOG.error("Invalid info file formant");
-                    throw new EnhancedSnapshotsException("Invalid info file formant");
-                }
-            } catch (IOException e) {
-                LOG.error("Failed to parse info file");
-                LOG.error(e);
-                throw new EnhancedSnapshotsException(e);
-            }
-        }
-        return "0.0.1";
-    }
 
     /**
      * Adding metainfo to system backup
@@ -303,40 +282,6 @@ public class SystemServiceImpl implements SystemService {
         amazonS3.putObject(putObjectRequest);
 
         zipFile.toFile().delete();
-    }
-
-    private void downloadFromS3(Path tempDirectory) throws IOException {
-        // download
-        LOG.info("-Download");
-        GetObjectRequest getObjectRequest = new GetObjectRequest(configurationMediator.getS3Bucket(),
-                configurationMediator.getSdfsBackupFileName());
-        S3Object s3object = amazonS3.getObject(getObjectRequest);
-
-        Path tempFile = Files.createTempFile(TEMP_DIRECTORY_PREFIX, TEMP_FILE_SUFFIX);
-        Files.copy(s3object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-
-        LOG.info("  -Unzip");
-        //unzip
-        try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile());
-             ZipInputStream zipInputStream = new ZipInputStream(fileInputStream)) {
-            ZipEntry entry;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-                // in case entry is directory system backup relates to version 0.0.1
-                // copy /etc/sdfs/awspool-volume-cfg.xml to temp dir
-                if(entry.isDirectory()){
-                    zipInputStream.getNextEntry();
-                    zipInputStream.getNextEntry();
-                    Path dest = Paths.get(tempDirectory.toString(), "awspool-volume-cfg.xml");
-                    Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
-                    break;
-                }
-                Path dest = Paths.get(tempDirectory.toString(), entry.getName());
-                Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-
-        //cleanup
-        tempFile.toFile().delete();
     }
 
     private void storeTable(Class tableClass, Path tempDirectory) throws IOException {

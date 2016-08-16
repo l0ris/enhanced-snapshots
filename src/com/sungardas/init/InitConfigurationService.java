@@ -37,4 +37,12 @@ interface InitConfigurationService {
      * @param bucketName
      */
     void createBucket(String bucketName);
+
+    /**
+     * Check if it is possible to restore DB from S3 bucket
+     *
+     * @param bucketName bucket name
+     * @return information about DB
+     */
+    InitConfigurationDto.DB containsMetadata(String bucketName);
 }
