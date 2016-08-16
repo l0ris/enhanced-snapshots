@@ -56,4 +56,11 @@ public class TaskProgressDto implements Dto {
     public void setStatus(TaskEntryStatus status) {
         this.status = status;
     }
+
+    public void addProgress(double progress) {
+        this.progress += progress;
+        if (progress > 100) {
+            progress = 100;
+        }
+    }
 }
