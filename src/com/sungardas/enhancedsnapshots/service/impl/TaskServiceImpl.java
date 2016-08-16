@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -41,6 +42,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private NotificationService notificationService;
+
+
+    private Set<String> canceledTasks = new CopyOnWriteArraySet<>();
 
     @Override
     public Map<String, String> createTask(TaskDto taskDto) {
@@ -151,6 +155,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public boolean isCanceled(final String taskId) {
+        return canceledTasks.remove(taskId);
+    }
+
+    @Override
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolume(Boolean.TRUE.toString(),
@@ -167,7 +176,8 @@ public class TaskServiceImpl implements TaskService {
         if (taskRepository.exists(id)) {
             TaskEntry taskEntry = taskRepository.findOne(id);
             if (TaskEntry.TaskEntryStatus.RUNNING.getStatus().equals(taskEntry.getStatus())) {
-                throw new EnhancedSnapshotsException("Can`t remove task " + id + ", task in status: " + taskEntry.getStatus());
+                canceledTasks.add(id);
+                return;
             }
             taskRepository.delete(id);
             if (Boolean.valueOf(taskEntry.getRegular())) {
@@ -180,8 +190,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public boolean isCanceled(String id) {
-        return !taskRepository.exists(id);
+    public boolean exists(String id) {
+        return taskRepository.exists(id);
     }
 
     @Override
