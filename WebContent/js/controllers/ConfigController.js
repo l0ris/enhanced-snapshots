@@ -44,6 +44,13 @@ angular.module('web')
         $scope.isValidInstance = true;
         $scope.selectBucket = function (bucket) {
             $scope.selectedBucket = bucket;
+            Configuration.get('bucket/' + encodeURIComponent(bucket.bucketName) + '/metadata').then(function (result) {
+                //property settings.db.hasAdmin is a legacy code which should be changed. Currently this field is replaced
+                // with value from result.data.hasAdmin of this function. Speak to Kostya for more details
+                $scope.settings.db.hasAdmin = result.data.hasAdmin;
+            }, function (err) {
+                console.warn(err);
+            });
         };
 
         var wizardCreationProgress = function () {
@@ -132,6 +139,4 @@ angular.module('web')
             }, function (data, status) {
             });
         };
-
-
     });
