@@ -77,10 +77,6 @@ angular.module('web')
             }
         };
 
-        $scope.isRunning = function (task) {
-            return task.status == "running";
-        };
-
         $scope.reject = function (task) {
             $scope.taskToReject = task;
 
@@ -96,6 +92,4 @@ angular.module('web')
                 });
             });
         };
-
-
     });

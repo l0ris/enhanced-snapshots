@@ -2,10 +2,10 @@
     <h3 class="modal-title"><span class="glyphicon glyphicon-tasks"></span>&nbsp; Task</h3>
 </div>
 <div class="modal-body">
-    <p>Are you sure you want to reject <span class="h4">{{taskToReject.type}}</span> task for volume <span class="h4 text-primary">{{taskToReject.volumes[0]}}</span>? </p>
+    <p>Are you sure you want to {{taskToReject.status === "complete" ? "delete" : "reject" }} <span class="h4">{{taskToReject.type}}</span> task {{taskToReject.status === "complete" ? "from history" : "" }} for volume <span class="h4 text-primary">{{taskToReject.volumes[0]}}</span>? </p>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-danger" ng-click="$close()"><span class="glyphicon glyphicon-remove"></span>&nbsp; Reject
+    <button class="btn btn-danger" ng-click="$close()"><span class="glyphicon glyphicon-remove"></span>&nbsp; {{taskToReject.status === "complete" ? "Delete" : "Reject" }}
     </button>
     <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
 </div>

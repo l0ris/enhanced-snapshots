@@ -1,5 +1,32 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
+import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
+import com.amazonaws.util.EC2MetadataUtils;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
+import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
+import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.service.SystemService;
+import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.PropertySource;
+import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -9,52 +36,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-
-import javax.annotation.PostConstruct;
-
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
-import com.amazonaws.services.ec2.model.VolumeType;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.util.EC2MetadataUtils;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
-import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
-import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
-import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
-import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SDFSStateService;
-import com.sungardas.enhancedsnapshots.service.SystemService;
-import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.core.env.PropertySource;
-import org.springframework.web.context.support.XmlWebApplicationContext;
 
 /**
  * Implementation for {@link SystemService}
@@ -99,7 +84,7 @@ public class SystemServiceImpl implements SystemService {
     private BackupRepository backupRepository;
 
     @Autowired
-    private ConfigurationMediatorImpl configurationMediator;
+    private ConfigurationMediatorConfigurator configurationMediator;
 
     @Autowired
     private SDFSStateService sdfsStateService;
@@ -430,6 +415,7 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setAmazonRetryCount(configurationMediator.getAmazonRetryCount());
         systemProperties.setAmazonRetrySleep(configurationMediator.getAmazonRetrySleep());
         systemProperties.setMaxQueueSize(configurationMediator.getMaxQueueSize());
+        systemProperties.setTaskHistoryTTS(configurationMediator.getTaskHistoryTTS());
         configuration.setSystemProperties(systemProperties);
         return configuration;
     }
@@ -445,6 +431,7 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setAmazonRetryCount(configuration.getSystemProperties().getAmazonRetryCount());
         currentConfiguration.setAmazonRetrySleep(configuration.getSystemProperties().getAmazonRetrySleep());
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
+        currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
 
         // update sdfs setting
         currentConfiguration.setSdfsSize(configuration.getSdfs().getVolumeSize());
