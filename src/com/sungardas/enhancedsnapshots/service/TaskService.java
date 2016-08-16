@@ -15,7 +15,7 @@ public interface TaskService {
 
     void removeTask(String Id);
 
-    boolean isCanceled(String id);
+    boolean exists(String id);
 
     void updateTask(TaskDto taskInfo);
 
@@ -24,4 +24,6 @@ public interface TaskService {
     void complete(TaskEntry taskEntry);
 
     boolean isQueueFull();
+
+    boolean isCanceled(String taskId);
 }

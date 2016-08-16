@@ -13,6 +13,7 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,7 +34,7 @@ import static java.lang.String.format;
 
 @Service("awsBackupVolumeTaskExecutor")
 @Profile("prod")
-public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
+public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTaskExecutor.class);
 
     @Autowired
@@ -69,6 +70,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     public void execute(TaskEntry taskEntry) {
         String volumeId = taskEntry.getVolume();
         Volume tempVolume = null;
+        String backupFileName = null;
         try {
             // check volume exists
             if(!volumeService.volumeExists(taskEntry.getVolume())){
@@ -115,7 +117,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
             String sizeGib = tempVolume.getSize().toString();
             if (volumeType.equals("")) volumeType = "gp2";
             if (volumeType.equals("standard")) volumeType = "gp2";
-            String backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
+            backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
 
             BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS, snapshotId, volumeType, iops, sizeGib);
             checkThreadInterruption(taskEntry);
@@ -125,7 +127,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 String source = attachedDeviceName;
                 LOG.info("Starting copying: " + source + " to:" + backupFileName);
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
-                storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto);
+                storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto, taskEntry.getId());
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
                 LOG.fatal(format("Backup of volume %s failed", volumeId));
@@ -191,23 +193,41 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 taskRepository.save(taskEntry);
             }
 
+        } catch (EnhancedSnapshotsTaskInterruptedException e) {
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Canceling...", 90);
+            LOG.info("Backup process for volume {} canceled ", volumeId);
+            //TODO: set to canceled status
+            taskRepository.delete(taskEntry);
+
+            // kill initialization Process if it's alive, should be killed before volume detaching
+            killInitializationVolumeProcessIfAlive(tempVolume);
+            deleteTempResources(tempVolume, backupFileName);
+
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Done", 100);
         } catch (Exception e) {
             // TODO: add user notification about task failure
             LOG.error("Backup process for volume {} failed ", volumeId, e);
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
 
-            // clean up
             // kill initialization Process if it's alive, should be killed before volume detaching
             killInitializationVolumeProcessIfAlive(tempVolume);
-            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
-                tempVolume = awsCommunication.syncVolume(tempVolume);
-                if (tempVolume.getAttachments().size() != 0) {
-                    awsCommunication.detachVolume(tempVolume);
-                }
-                awsCommunication.deleteVolume(tempVolume);
-            }
+            deleteTempResources(tempVolume, backupFileName);
+        }
+    }
 
+    /**
+     * Clean up resources if exception appeared
+     *
+     * @param tempVolume
+     * @param backupFileName
+     */
+    private void deleteTempResources(Volume tempVolume, String backupFileName) {
+        deleteTempVolume(tempVolume);
+        try {
+            storageService.deleteFile(backupFileName);
+        } catch (Exception ex) {
+            //do nothing if file not found
         }
     }
 
@@ -302,6 +322,10 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
         if (Thread.interrupted()) {
             LOG.info("Backup task {} was interrupted.", taskEntry.getId());
             throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+        }
+        if (taskService.isCanceled(taskEntry.getId())) {
+            LOG.info("Backup task {} was canceled.", taskEntry.getId());
+            throw new EnhancedSnapshotsTaskInterruptedException("Task canceled");
         }
     }
 
