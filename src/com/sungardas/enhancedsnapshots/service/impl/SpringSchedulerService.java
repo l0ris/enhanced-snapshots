@@ -1,26 +1,11 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ScheduledFuture;
-import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import com.sungardas.enhancedsnapshots.service.Task;
-import com.sungardas.enhancedsnapshots.service.TaskService;
-import com.sungardas.enhancedsnapshots.service.VolumeService;
-
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -30,6 +15,11 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 
 @Service
 @DependsOn("SystemService")
@@ -85,7 +75,12 @@ public class SpringSchedulerService implements SchedulerService {
 
     @Override
     public void addTask(Task task, String cronExpression) {
-        ScheduledFuture<?> future = scheduler.schedule(task, new CronTrigger("0 " + cronExpression));
+        addTask(task, new CronTrigger("0 " + cronExpression));
+    }
+
+    @Override
+    public void addTask(Task task, CronTrigger cron) {
+        ScheduledFuture<?> future = scheduler.schedule(task, cron);
         jobs.put(task.getId(), future);
     }
 

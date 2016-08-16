@@ -1,17 +1,16 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import java.util.concurrent.TimeUnit;
-
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 @Service ("awsRestoreVolumeTaskExecutor")
 @Profile("dev")
@@ -30,8 +29,8 @@ public class RestoreFakeTaskExecutor implements TaskExecutor {
 
 	@Override
 	public void execute(TaskEntry taskEntry) {
-		notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting restore...", 0);
-		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
+		notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting restore...", 0);
+		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'in progress'");
 		taskEntry.setStatus("running");
 		taskRepository.save(taskEntry);
 		String[] options = taskEntry.getOptions().split(", ");
@@ -39,7 +38,7 @@ public class RestoreFakeTaskExecutor implements TaskExecutor {
 
 		String sourceFile = options[0];
 		LOG.info("restore from: {}; restore to az: {}", sourceFile, targetZone);
-		notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restoring...", 50);
+		notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Restoring...", 50);
 
 		try {
 			TimeUnit.SECONDS.sleep(10);
@@ -49,7 +48,7 @@ public class RestoreFakeTaskExecutor implements TaskExecutor {
 		LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
 		taskService.complete(taskEntry);
 		LOG.info("Task completed.");
-		notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
+		notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
 
 	}
 

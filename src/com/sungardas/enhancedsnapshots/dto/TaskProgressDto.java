@@ -1,5 +1,7 @@
 package com.sungardas.enhancedsnapshots.dto;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus;
+
 public class TaskProgressDto implements Dto {
     private String taskId;
 
@@ -7,13 +9,20 @@ public class TaskProgressDto implements Dto {
 
     private double progress;
 
+    private TaskEntryStatus status;
+
     public TaskProgressDto() {
     }
 
     public TaskProgressDto(String taskId, String message, double progress) {
+        this(taskId, message, progress, TaskEntryStatus.WAITING);
+    }
+
+    public TaskProgressDto(String taskId, String message, double progress, TaskEntryStatus status) {
         this.taskId = taskId;
         this.message = message;
         this.progress = progress;
+        this.status = status;
     }
 
     public String getTaskId() {
@@ -38,5 +47,13 @@ public class TaskProgressDto implements Dto {
 
     public void setProgress(double progress) {
         this.progress = progress;
+    }
+
+    public TaskEntryStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskEntryStatus status) {
+        this.status = status;
     }
 }

@@ -270,6 +270,7 @@ public class TaskEntry {
         RUNNING("running"),
         QUEUED("queued"),
         COMPLETE("complete"),
+        CANCELED("canceled"),
         ERROR("error");
 
         private String status;

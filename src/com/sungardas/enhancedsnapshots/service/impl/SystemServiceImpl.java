@@ -1,41 +1,12 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.EC2MetadataUtils;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
@@ -46,7 +17,6 @@ import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -55,6 +25,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.PropertySource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Implementation for {@link SystemService}
@@ -127,22 +112,22 @@ public class SystemServiceImpl implements SystemService {
     public void backup(final String taskId) {
         try {
             LOG.info("System backup started");
-            notificationService.notifyAboutTaskProgress(taskId, "System backup started", 0);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "System backup started", 0);
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
             LOG.info("Add info file");
-            notificationService.notifyAboutTaskProgress(taskId, "System information backup", 5);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "System information backup", 5);
             addInfo(tempDirectory);
             LOG.info("Backup SDFS state");
-            notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 10);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 10);
             backupSDFS(tempDirectory, taskId);
-            notificationService.notifyAboutTaskProgress(taskId, "Backup system files", 55);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup system files", 55);
             LOG.info("Backup files");
             storeFiles(tempDirectory);
             LOG.info("Backup db");
-            notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 60);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 60);
             backupDB(tempDirectory, taskId);
             LOG.info("Upload to S3");
-            notificationService.notifyAboutTaskProgress(taskId, "Upload to S3", 95);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Upload to S3", 95);
             uploadToS3(tempDirectory);
             tempDirectory.toFile().delete();
             LOG.info("System backup finished");
@@ -215,17 +200,17 @@ public class SystemServiceImpl implements SystemService {
     }
 
     private void backupDB(final Path tempDirectory, final String taskId) throws IOException {
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 65);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 65);
         storeTable(BackupEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 70);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 70);
         storeTable(Configuration.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 75);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 75);
         storeTable(RetentionEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 80);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 80);
         storeTable(SnapshotEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 85);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 85);
         storeTable(User.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 90);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 90);
     }
 
     /**
@@ -264,11 +249,11 @@ public class SystemServiceImpl implements SystemService {
     }
 
     private void backupSDFS(final Path tempDirectory, final String taskId) throws IOException {
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 15);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 15);
         copyToDirectory(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 20);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 20);
         sdfsStateService.cloudSync();
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 45);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 45);
     }
 
     private void restoreSDFS(final Path tempDirectory) throws IOException {

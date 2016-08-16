@@ -19,11 +19,14 @@ import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeTaskExecu
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
+
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -46,8 +49,7 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private NotificationService notificationService;
 
-
-    private Set<String> canceledTasks = new CopyOnWriteArraySet<>();
+    private Set<String> canceledTasks = new HashSet<>();
 
     @PostConstruct
     private void init() {
@@ -64,6 +66,18 @@ public class TaskServiceImpl implements TaskService {
                 taskRepository.delete(list);
             }
         }, "*/5 * * * *");
+
+        schedulerService.addTask(new Task() {
+            @Override
+            public String getId() {
+                return "canceledTaskCheck";
+            }
+
+            @Override
+            public void run() {
+                updateCanceledTasks();
+            }
+        }, new CronTrigger("*/5 * * * * *"));
     }
 
     @Override
@@ -196,7 +210,11 @@ public class TaskServiceImpl implements TaskService {
         if (taskRepository.exists(id)) {
             TaskEntry taskEntry = taskRepository.findOne(id);
             if (TaskEntry.TaskEntryStatus.RUNNING.getStatus().equals(taskEntry.getStatus())) {
+                taskEntry.setStatus(CANCELED.toString());
+                taskRepository.save(taskEntry);
                 canceledTasks.add(id);
+                updateCanceledTasks();
+                notificationService.notifyAboutTaskProgress(id, "Canceling...", 0, CANCELED);
                 return;
             }
             taskRepository.delete(id);
@@ -243,5 +261,10 @@ public class TaskServiceImpl implements TaskService {
                 taskEntry.setRestoreVolumeIopsPerGb(configurationMediator.getRestoreVolumeIopsPerGb());
             }
         }
+    }
+
+    private void updateCanceledTasks() {
+        canceledTasks = taskRepository.findByStatusAndRegular(CANCELED.toString(), Boolean.FALSE.toString())
+                .stream().map(t -> t.getId()).collect(Collectors.toSet());
     }
 }

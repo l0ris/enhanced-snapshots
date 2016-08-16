@@ -1,13 +1,15 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.dto.Dto;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.dto.TaskProgressDto;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
@@ -19,8 +21,13 @@ public class NotificationServiceImpl implements NotificationService {
     private SimpMessagingTemplate template;
 
     @Override
-    public void notifyAboutTaskProgress(String taskId, String message, double progress) {
-        notifyAboutTaskProgress(new TaskProgressDto(taskId, message, progress));
+    public void notifyAboutRunningTaskProgress(String taskId, String message, double progress) {
+        notifyAboutTaskProgress(new TaskProgressDto(taskId, message, progress, RUNNING));
+    }
+
+    @Override
+    public void notifyAboutTaskProgress(String taskId, String message, double progress, TaskEntry.TaskEntryStatus status) {
+        notifyAboutTaskProgress(new TaskProgressDto(taskId, message, progress, status));
     }
 
     @Override
