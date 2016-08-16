@@ -618,11 +618,6 @@ div.tr.state-removed {
     background-color: #cc2130;
 }
 
-
-.snap .card.status-running .show-on-hover a{
-    display: none;
-}
-
 /* end of card statuses */
 
 /* end of CARDS */
