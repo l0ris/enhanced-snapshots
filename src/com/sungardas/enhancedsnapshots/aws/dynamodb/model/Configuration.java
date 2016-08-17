@@ -21,6 +21,8 @@ public class Configuration {
     private int restoreVolumeIopsPerGb;
     private int waitTimeBeforeNewSyncWithAWS;
     private int maxWaitTimeToDetachVolume;
+    //time to show
+    private int taskHistoryTTS;
 
     // sdfs settings
     private String sdfsVolumeName;
@@ -37,6 +39,7 @@ public class Configuration {
     // Nginx
     private String nginxCertPath;
     private String nginxKeyPath;
+    private boolean storeSnapshot;
 
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
@@ -215,5 +218,21 @@ public class Configuration {
 
     public void setNginxKeyPath(final String nginxKeyPath) {
         this.nginxKeyPath = nginxKeyPath;
+    }
+
+    public boolean isStoreSnapshot() {
+        return storeSnapshot;
+    }
+
+    public void setStoreSnapshot(boolean storeSnapshot) {
+        this.storeSnapshot = storeSnapshot;
+    }
+
+    public int getTaskHistoryTTS() {
+        return taskHistoryTTS;
+    }
+
+    public void setTaskHistoryTTS(int taskHistoryTTS) {
+        this.taskHistoryTTS = taskHistoryTTS;
     }
 }

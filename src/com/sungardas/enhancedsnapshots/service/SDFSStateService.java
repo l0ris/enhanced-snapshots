@@ -40,11 +40,6 @@ public interface SDFSStateService {
         return maxLocalCacheInGb;
     }
 
-    /**
-     * Return true when S3 bucket contains SDFS backup, false otherwise
-     */
-    boolean containsSdfsMetadata(String sBucket);
-
     Long getBackupTime();
 
     /**
