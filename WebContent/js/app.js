@@ -127,6 +127,8 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                         Storage.save('lastTaskStatus', msg);
                         $rootScope.$broadcast("task-status-changed", msg);
                     });
+                }, function (e) {
+                    console.log(e);
                 });
         };
 
