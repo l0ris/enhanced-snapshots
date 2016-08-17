@@ -41,22 +41,22 @@ public class AWSDeleteTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     @Override
     public void execute(TaskEntry taskEntry) {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'running'");
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting delete task", 0);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting delete task", 0);
 
         taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
 
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Finding source file", 30);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Finding source file", 30);
         BackupEntry backupEntry = backupRepository.findOne(taskEntry.getSourceFileName());
 
         try {
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting file...", 60);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting file...", 60);
             storageService.deleteFile(backupEntry.getFileName());
             snapshotService.deleteSnapshot(backupEntry.getSnapshotId());
             backupRepository.delete(backupEntry);
             taskService.complete(taskEntry);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
         } catch (EnhancedSnapshotsException e){
             LOG.error(e);
             notificationService.notifyAboutError(new ExceptionDto("Delete task has failed", e.getLocalizedMessage()));

@@ -114,22 +114,22 @@ public class SystemServiceImpl implements SystemService {
     public void backup(final String taskId) {
         try {
             LOG.info("System backup started");
-            notificationService.notifyAboutTaskProgress(taskId, "System backup started", 0);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "System backup started", 0);
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
             LOG.info("Add info file");
-            notificationService.notifyAboutTaskProgress(taskId, "System information backup", 5);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "System information backup", 5);
             addInfo(tempDirectory);
             LOG.info("Backup SDFS state");
-            notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 10);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 10);
             backupSDFS(tempDirectory, taskId);
-            notificationService.notifyAboutTaskProgress(taskId, "Backup system files", 55);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup system files", 55);
             LOG.info("Backup files");
             storeFiles(tempDirectory);
             LOG.info("Backup db");
-            notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 60);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 60);
             backupDB(tempDirectory, taskId);
             LOG.info("Upload to S3");
-            notificationService.notifyAboutTaskProgress(taskId, "Upload to S3", 95);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Upload to S3", 95);
             uploadToS3(tempDirectory);
             tempDirectory.toFile().delete();
             LOG.info("System backup finished");
@@ -179,17 +179,17 @@ public class SystemServiceImpl implements SystemService {
     }
 
     private void backupDB(final Path tempDirectory, final String taskId) throws IOException {
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 65);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 65);
         storeTable(BackupEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 70);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 70);
         storeTable(Configuration.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 75);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 75);
         storeTable(RetentionEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 80);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 80);
         storeTable(SnapshotEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 85);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 85);
         storeTable(User.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 90);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 90);
     }
 
     /**
@@ -228,11 +228,11 @@ public class SystemServiceImpl implements SystemService {
     }
 
     private void backupSDFS(final Path tempDirectory, final String taskId) throws IOException {
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 15);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 15);
         copyToDirectory(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 20);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 20);
         sdfsStateService.cloudSync();
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 45);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 45);
     }
 
     private void restoreSDFS(final Path tempDirectory) throws IOException {

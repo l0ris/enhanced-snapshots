@@ -22,6 +22,7 @@ angular.module('web')
 
         $scope.statusPriority = function (task) {
             var priorities = {
+                canceled: 5,
                 running: 4,
                 queued: 3,
                 error: 2,
@@ -59,10 +60,11 @@ angular.module('web')
                 msg = Storage.get('lastTaskStatus') || {};
             }
             var task = $scope.tasks.filter(function (t) {
-                return t.id == msg.taskId && t.status != "complete" && t.status != "error";
+                return t.id == msg.taskId && msg.status != "COMPLETE";
             })[0];
+
             if (task) {
-                if (task.status != 'running' ) {
+                if (task.status == 'complete' || task.status == 'queued' || task.status == 'waiting') {
                     $scope.refresh();
                 } else {
                     $timeout(function() {
@@ -71,6 +73,7 @@ angular.module('web')
                     }, 0);
 
                     if (msg.progress == 100) {
+                        Storage.remove('lastTaskStatus');
                         $scope.refresh();
                     }
                 }

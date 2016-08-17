@@ -585,6 +585,7 @@ div.tr.state-removed {
 .snap .card.status-waiting > div,
 .snap .card.status-queued > div,
 .snap .card.status-running > div,
+.snap .card.status-canceled > div,
 .snap .card.status-error > div {
     background-color: rgba(255,255,255,.6);
     border-radius: 4px;
@@ -616,7 +617,11 @@ div.tr.state-removed {
 }
 
 .snap .card.status-error {
-    background-color: #cc2130;
+    background-color: #e62e00;
+}
+
+.snap .card.status-canceled {
+    background-color: #99e6ff;
 }
 
 /* end of card statuses */

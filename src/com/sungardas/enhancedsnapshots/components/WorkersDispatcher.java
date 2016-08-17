@@ -127,12 +127,12 @@ public class WorkersDispatcher {
                                         break;
                                     case SYSTEM_BACKUP: {
                                         LOGtw.info("Task was identified as system backup");
-                                        notificationService.notifyAboutTaskProgress(entry.getId(), "System backup started", 0);
+                                        notificationService.notifyAboutRunningTaskProgress(entry.getId(), "System backup started", 0);
                                         entry.setStatus(RUNNING.getStatus());
                                         taskRepository.save(entry);
                                         systemService.backup(entry.getId());
                                         taskRepository.delete(entry);
-                                        notificationService.notifyAboutTaskProgress(entry.getId(), "System backup finished", 100);
+                                        notificationService.notifyAboutRunningTaskProgress(entry.getId(), "System backup finished", 100);
                                         break;
                                     }
                                     case UNKNOWN:
