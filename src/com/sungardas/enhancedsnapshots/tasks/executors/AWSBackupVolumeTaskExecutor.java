@@ -163,7 +163,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             if (configurationMediator.isStoreSnapshot()) {
                 snapshotService.saveSnapshot(volumeId, snapshotId);
             } else {
-                snapshotService.deleteSnapshot(snapshotId);
+                awsCommunication.deleteSnapshot(snapshotId);
             }
             taskService.complete(taskEntry);
             LOG.info("Task completed.");
