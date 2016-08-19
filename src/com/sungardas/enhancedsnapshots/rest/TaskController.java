@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.security.RolesAllowed;
+
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -38,6 +40,7 @@ public class TaskController {
         return e;
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity getTasks() throws ParseException {
         try {
@@ -47,6 +50,7 @@ public class TaskController {
         }
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.GET, value = "/{volumeId}")
     public ResponseEntity getTasks(@PathVariable String volumeId) throws ParseException {
         try {
@@ -56,6 +60,7 @@ public class TaskController {
         }
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.GET, value = "/regular/{valueId}")
     public ResponseEntity getRegularTasks(@PathVariable String valueId) throws ParseException {
         try {
@@ -65,6 +70,7 @@ public class TaskController {
         }
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<MessageDto> addTask(@RequestBody TaskDto taskInfo) {
         taskInfo.setId(UUID.randomUUID().toString());
@@ -72,6 +78,7 @@ public class TaskController {
         return new ResponseEntity(new MessageDto(taskService.createTask(taskInfo)), OK);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.PUT)
     public ResponseEntity updateTask(@RequestBody TaskDto taskInfo) {
         try {
@@ -82,6 +89,7 @@ public class TaskController {
         }
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/{taskId}", method = RequestMethod.DELETE)
     @ResponseStatus(OK)
     public void removeTask(@PathVariable String taskId) {

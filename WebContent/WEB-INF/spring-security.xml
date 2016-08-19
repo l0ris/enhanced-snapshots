@@ -11,7 +11,7 @@
     <http pattern="/js/**" security="none"/>
     <http pattern="/partials/**" security="none"/>
 
-    <http auto-config="false" use-expressions="true" >
+    <http name="initFilter" auto-config="false" use-expressions="true" >
         <intercept-url pattern="/**" access="hasAnyRole('ROLE_ADMIN', 'ROLE_CONFIGURATOR', 'ROLE_USER')"/>
         <intercept-url pattern="/login*" access="none"/>
 
@@ -28,7 +28,6 @@
     <b:bean id="initSuccessHandler" class="com.sungardas.enhancedsnapshots.security.AuthSuccessHandler"/>
     <b:bean id="initFailureHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler"/>
     <b:bean id="accessDeniedHandler" class="com.sungardas.enhancedsnapshots.security.SimpleAccessDeniedHandler"/>
-
 
     <authentication-manager alias="authenticationManager">
         <authentication-provider user-service-ref="initUserDetailsService"/>

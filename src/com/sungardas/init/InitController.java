@@ -9,12 +9,14 @@ import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 
+import com.sungardas.enhancedsnapshots.security.RefreshingDelegatingFilterProxy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -37,6 +39,9 @@ class InitController implements ApplicationContextAware {
 
     @Autowired
     private XmlWebApplicationContext applicationContext;
+
+//    @Autowired
+//    private RefreshingDelegatingFilterProxy delegatingFilterProxy;
 
     private boolean CONTEXT_REFRESH_IN_PROCESS = false;
 
@@ -139,17 +144,26 @@ class InitController implements ApplicationContextAware {
     private void refreshContext() {
         LOG.info("Context refresh process started.");
         CONTEXT_REFRESH_IN_PROCESS = true;
-        //for sso - "/WEB-INF/spring-security-saml.xml"
-        String additionalSpringSecurityContext = "/WEB-INF/spring-security-dynamoDB.xml";
-        applicationContext.setConfigLocations("/WEB-INF/spring-web-config.xml", additionalSpringSecurityContext);
-        applicationContext.refresh();
+        //for local authentication
+        if(false) {
+            applicationContext.setConfigLocations("/WEB-INF/spring-web-config.xml", "/WEB-INF/spring-security-dynamoDB.xml");
+            applicationContext.refresh();
+            // clearing init auth providers
+            ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders().clear();
 
-        // clearing init auth providers
-        ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders().clear();
-
-        // adding main auth provider
-        ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders()
-                .add((AuthenticationProvider) applicationContext.getBean("authProvider"));
+            // adding main auth provider
+            ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders()
+                    .add((AuthenticationProvider) applicationContext.getBean("authProvider"));
+        }
+        // for sso
+        else {
+            applicationContext.setConfigLocations("/WEB-INF/spring-web-config.xml");
+            XmlWebApplicationContext rootContext = (XmlWebApplicationContext) applicationContext.getParent();
+            rootContext.setConfigLocations("/WEB-INF/spring-security-saml.xml");
+            rootContext.refresh();
+            // do not change order of context refreshes
+            applicationContext.refresh();
+        }
 
         LOG.info("Context refreshed successfully.");
         CONTEXT_REFRESH_IN_PROCESS = false;

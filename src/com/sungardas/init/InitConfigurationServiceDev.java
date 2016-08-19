@@ -137,7 +137,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public boolean propertyFileExists() {
-        return false;
+        return true;
     }
 
     @Override

@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.security.RolesAllowed;
+
 @RestController
 @RequestMapping("/backup")
 public class BackupController {
@@ -40,6 +42,7 @@ public class BackupController {
         return e;
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/{volumeId}", method = RequestMethod.GET)
     public ResponseEntity<String> get(@PathVariable(value = "volumeId") String volumeId) {
         List<BackupEntry> items = backupService.getBackupList(volumeId);
@@ -61,6 +64,7 @@ public class BackupController {
     }
 
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/{backupName}", method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteBackup(Principal principal, @PathVariable String backupName) {
         LOG.debug("Removing backup [{}]", backupName);

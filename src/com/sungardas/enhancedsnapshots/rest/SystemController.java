@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.security.RolesAllowed;
+
 
 @RestController
 @RequestMapping("/system")
@@ -28,6 +30,7 @@ public class SystemController {
     @Autowired
     private ConfigurationMediator configurationMediator;
 
+    @RolesAllowed("ROLE_ADMIN")
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody RemoveAppDTO removeAppDTO) {
         if (!configurationMediator.getConfigurationId().equals(removeAppDTO.getInstanceId())) {
@@ -37,11 +40,13 @@ public class SystemController {
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<SystemConfiguration> getSystem() {
         return new ResponseEntity<>(systemService.getSystemConfiguration(), HttpStatus.OK);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<String> updateSystemProperties(@RequestBody SystemConfiguration newConfiguration) {
         SystemConfiguration currentConfiguration = systemService.getSystemConfiguration();
@@ -71,6 +76,7 @@ public class SystemController {
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/backup", method = RequestMethod.GET)
     public ResponseEntity<SystemBackupDto> getConfiguration() {
         return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);

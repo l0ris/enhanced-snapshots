@@ -1,9 +1,12 @@
 package com.sungardas.enhancedsnapshots.rest;
 
+import java.security.Principal;
+import java.util.Collections;
 import java.util.HashSet;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.model.AvailabilityZone;
+import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 
 import org.json.JSONArray;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.security.RolesAllowed;
+
 
 @RestController
 public class RegionsController {
@@ -22,6 +27,7 @@ public class RegionsController {
     @Autowired
     AWSCommunicationService communicationService;
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/regions", method = RequestMethod.GET)
     public String getRegions() {
         JSONObject record;
@@ -36,6 +42,7 @@ public class RegionsController {
         return regionsJson.toString();
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping( value = "/zones", method = RequestMethod.GET)
     public ResponseEntity getAvailabilityZones() {
         try {
@@ -49,6 +56,7 @@ public class RegionsController {
         }
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping( value = "/zones/current", method = RequestMethod.GET)
     public ResponseEntity getCurrentAvailabilityZone() {
         try {

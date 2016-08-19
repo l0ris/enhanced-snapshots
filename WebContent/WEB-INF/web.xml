@@ -18,7 +18,7 @@
     <!-- Spring Security -->
     <filter>
         <filter-name>springSecurityFilterChain</filter-name>
-        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+        <filter-class>com.sungardas.enhancedsnapshots.security.RefreshingDelegatingFilterProxy</filter-class>
     </filter>
 
     <filter-mapping>
@@ -48,7 +48,7 @@
 
     <context-param>
         <param-name>spring.profiles.active</param-name>
-        <param-value>prod</param-value>
+        <param-value>dev</param-value>
     </context-param>
 
 </web-app>

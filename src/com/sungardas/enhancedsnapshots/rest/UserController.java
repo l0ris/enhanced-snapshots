@@ -3,16 +3,12 @@ package com.sungardas.enhancedsnapshots.rest;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Collections;
-import java.util.Map;
 
 import javax.annotation.security.RolesAllowed;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.rest.utils.Constants;
 import com.sungardas.enhancedsnapshots.service.UserService;
 
 import org.apache.commons.logging.Log;
@@ -44,11 +40,6 @@ public class UserController {
 
 	@Autowired
 	private UserService userService;
-	@Autowired
-	private ServletContext context;
-	@Autowired
-	private HttpServletRequest servletRequest;
-
 	private ObjectMapper mapper;
 
 	@ExceptionHandler(EnhancedSnapshotsException.class)
@@ -67,7 +58,17 @@ public class UserController {
 		return exception;
 	}
 
+	@RequestMapping(value = "/currentUser", method = RequestMethod.GET)
+	public ResponseEntity getCurrentUser(Principal principal) {
+		try {
+			return new ResponseEntity<>("{ \"role\":\"" + "\"ROLE_ADMIN\""
+					+ "\", \"email\":\"" + principal.getName() + "\" }", HttpStatus.OK);
+		} catch (DataAccessException e) {
+			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.NOT_ACCEPTABLE);
+		}
+	}
 
+	@RolesAllowed("ROLE_ADMIN")
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<String> createUser(@RequestBody String userInfo) throws IOException {
 		// getting userDto from json
@@ -78,6 +79,7 @@ public class UserController {
 		return new ResponseEntity<>("", HttpStatus.OK);
 	}
 
+	@RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
 	@RequestMapping(method = RequestMethod.PUT)
 	public ResponseEntity updateUser(Principal principal, @RequestBody String userInfo) throws IOException {
 		// getting userDto from json
@@ -90,7 +92,7 @@ public class UserController {
 		return new ResponseEntity<>("", HttpStatus.OK);
 	}
 
-
+	@RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
 	@RequestMapping(method = RequestMethod.GET)
 	public ResponseEntity getAllUsers() {
 		try {
@@ -100,6 +102,7 @@ public class UserController {
 		}
 	}
 
+	@RolesAllowed("ROLE_ADMIN")
 	@RequestMapping(value = "/{userEmail:.+}", method = RequestMethod.DELETE)
 	public ResponseEntity removeUser(@PathVariable("userEmail") String userEmail) {
 		userService.removeUser(userEmail);

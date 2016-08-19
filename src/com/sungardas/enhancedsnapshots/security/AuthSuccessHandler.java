@@ -15,7 +15,9 @@ public class AuthSuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Authentication authentication) throws IOException, ServletException {
         httpServletResponse.setStatus(200);
-        httpServletResponse.getWriter().write("{ \"role\":\"" + authentication.getAuthorities().iterator().next().getAuthority().replace(ROLE_PREFIX, "").toLowerCase()
+//        httpServletResponse.getWriter().write("{ \"role\":\"" + authentication.getAuthorities().iterator().next().getAuthority().replace(ROLE_PREFIX, "").toLowerCase()
+//                + "\", \"email\":\"" + authentication.getName() + "\" }");
+        httpServletResponse.getWriter().write("{ \"role\":\"" + "\"ROLE_ADMIN\""
                 + "\", \"email\":\"" + authentication.getName() + "\" }");
     }
 
