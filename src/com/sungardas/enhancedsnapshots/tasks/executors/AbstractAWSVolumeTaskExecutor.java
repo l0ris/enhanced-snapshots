@@ -43,6 +43,7 @@ public abstract class AbstractAWSVolumeTaskExecutor implements TaskExecutor {
                 notificationService.notifyAboutTaskProgress(dto);
                 awsCommunication.detachVolume(tempVolume);
             }
+            awsCommunication.deleteSnapshot(tempVolume.getSnapshotId());
             dto.setMessage("Deleting temp volume");
             dto.addProgress(10);
             notificationService.notifyAboutTaskProgress(dto);

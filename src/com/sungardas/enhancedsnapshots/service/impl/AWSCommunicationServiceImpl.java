@@ -1,54 +1,24 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.AttachVolumeRequest;
-import com.amazonaws.services.ec2.model.AttachVolumeResult;
-import com.amazonaws.services.ec2.model.AvailabilityZone;
-import com.amazonaws.services.ec2.model.CreateSnapshotRequest;
-import com.amazonaws.services.ec2.model.CreateSnapshotResult;
-import com.amazonaws.services.ec2.model.CreateTagsRequest;
-import com.amazonaws.services.ec2.model.CreateVolumeRequest;
-import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
-import com.amazonaws.services.ec2.model.DeleteTagsRequest;
-import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
-import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
-import com.amazonaws.services.ec2.model.DescribeVolumesResult;
-import com.amazonaws.services.ec2.model.DetachVolumeRequest;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceBlockDeviceMapping;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.SnapshotState;
-import com.amazonaws.services.ec2.model.Tag;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeState;
-import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.S3VersionSummary;
-import com.amazonaws.services.s3.model.VersionListing;
+import com.amazonaws.services.s3.model.*;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -70,7 +40,6 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Autowired
     private ConfigurationMediator configurationMediator;
-
 
    @Override
    public List<AvailabilityZone> describeAvailabilityZonesForCurrentRegion() {
@@ -200,18 +169,18 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public Volume waitForAvailableState(Volume volume) {
+    public Volume waitForVolumeState(Volume volume, VolumeState expectedState) {
         String state;
         Volume result;
         do {
             sleepTillNextSync();
             result = syncVolume(volume);
             state = result.getState();
-            System.out.println("waitForAvailableState.current state: " + state);
+            LOG.debug("waitForAvailableState.current state: " + state);
             if (state.equals(VolumeState.Error.toString())) {
-                throw new RuntimeException("error...");
+                throw new EnhancedSnapshotsException("Volume state error, volumeID: " + volume.getVolumeId());
             }
-        } while (!state.equals(VolumeState.Available.toString())
+        } while (!state.equals(expectedState.toString())
                 && !state.equals(VolumeState.Deleted.toString()));
         return result;
     }
@@ -284,31 +253,29 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public void attachVolume(Instance instance, Volume volume) {
+    public synchronized void attachVolume(Instance instance, Volume volume) {
         String deviceName = getNextAvailableDeviceName(instance);
         AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest(volume.getVolumeId(),
                 instance.getInstanceId(), deviceName);
-        AttachVolumeResult res = ec2client.attachVolume(attachVolumeRequest);
-        LOG.info(format("\nVolume attached. check instance data\n %s", instance.toString()));
+        ec2client.attachVolume(attachVolumeRequest);
+        waitForVolumeState(volume, VolumeState.InUse);
 
+        LOG.info(format("\nVolume attached. check instance data\n %s", instance.toString()));
     }
 
     private String getNextAvailableDeviceName(Instance instance) {
+        String deviceName = "/dev/sd";
+        List<String> reservedDeviceNames = new ArrayList<>(11);
+        for (char c = 'f'; c <= 'p'; c++) {
+            reservedDeviceNames.add(deviceName + c);
+        }
 
         List<InstanceBlockDeviceMapping> devList = instance
                 .getBlockDeviceMappings();
-        char lastChar = 'a';
-        for (InstanceBlockDeviceMapping map : devList) {
-            char ch = map.getDeviceName().charAt(map.getDeviceName().length() - 1);
-            if (ch > lastChar) {
-                lastChar = ch;
-            }
-        }
-        if (lastChar < 'p' && lastChar >= 'f') {
-            lastChar++;
-            return "/dev/sd" + (char) lastChar;
-        }
-        return "/dev/sdf";
+        Set<String> devicesInUsage = devList.stream().map(d -> d.getDeviceName()).collect(Collectors.toSet());
+
+        String newDeviceName = reservedDeviceNames.stream().filter(r -> !devicesInUsage.contains(r) && !Files.exists(Paths.get(r))).findFirst().orElseThrow(() -> new EnhancedSnapshotsException("There are no available mount point, please detach some volume"));
+        return newDeviceName;
     }
 
     @Override
