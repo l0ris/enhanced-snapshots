@@ -10,12 +10,12 @@ import java.util.List;
 public interface UserService {
     List<UserDto> getAllUsers();
 
-    @RolesAllowed("ROLE_ADMIN")
     void createUser(UserDto newUser, String password);
+
+    void createSamlUser(UserDto newUser);
 
     void updateUser(UserDto newUser, String newPassword, String currentUserEmail);
 
-    @RolesAllowed("ROLE_ADMIN")
     void removeUser(String userEmail);
 
     User getUser(String user);

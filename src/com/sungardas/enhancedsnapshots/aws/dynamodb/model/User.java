@@ -32,6 +32,7 @@ public class User {
         super();
     }
 
+    // for local users
     public User(String email, String password, String role, String firstName, String lastName) {
         this.email = email;
         this.password = password;
@@ -87,7 +88,6 @@ public class User {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
-
 
     @Override
     public boolean equals(final Object o) {

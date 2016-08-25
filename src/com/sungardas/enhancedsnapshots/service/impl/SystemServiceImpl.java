@@ -9,11 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -82,6 +78,10 @@ public class SystemServiceImpl implements SystemService {
     private int sdfsReservedRam;
     @Value("${enhancedsnapshots.system.reserved.storage}")
     private int systemReservedStorage;
+    @Value("${enhancedsnapshots.saml.sp.cert.jks}")
+    private String samlCertJks;
+    @Value("${enhancedsnapshots.saml.idp.metadata}")
+    private String samlIdpMetadata;
 
     @Autowired
     private IDynamoDBMapper dynamoDBMapper;
@@ -141,6 +141,10 @@ public class SystemServiceImpl implements SystemService {
             LOG.info("Backup db");
             notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 60);
             backupDB(tempDirectory, taskId);
+            if (configurationMediator.isSsoLoginMode()){
+                LOG.info("Backup up saml certificate and ipd metadata", 90);
+                backupSamlFiles(tempDirectory);
+            }
             LOG.info("Upload to S3");
             notificationService.notifyAboutTaskProgress(taskId, "Upload to S3", 95);
             uploadToS3(tempDirectory);
@@ -225,7 +229,6 @@ public class SystemServiceImpl implements SystemService {
         storeTable(SnapshotEntry.class, tempDirectory);
         notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 85);
         storeTable(User.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 90);
     }
 
     /**
@@ -269,6 +272,11 @@ public class SystemServiceImpl implements SystemService {
         notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 20);
         sdfsStateService.cloudSync();
         notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 45);
+    }
+
+    private void backupSamlFiles(final Path tempDirectory) throws IOException {
+        copyToDirectory(Paths.get(System.getProperty("catalina.home"), "conf", samlCertJks), tempDirectory);
+        copyToDirectory(Paths.get(System.getProperty("catalina.home"), "conf", samlIdpMetadata), tempDirectory);
     }
 
     private void restoreSDFS(final Path tempDirectory) throws IOException {
@@ -431,6 +439,7 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setAmazonRetrySleep(configurationMediator.getAmazonRetrySleep());
         systemProperties.setMaxQueueSize(configurationMediator.getMaxQueueSize());
         configuration.setSystemProperties(systemProperties);
+        configuration.setSsoMode(configurationMediator.isSsoLoginMode());
         return configuration;
     }
 

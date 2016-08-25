@@ -49,4 +49,8 @@ public interface ConfigurationMediator {
     int getMaxWaitTimeToDetachVolume();
 
     String getVolumeSizeUnit();
+
+    boolean isSsoLoginMode();
+
+    String getSamlEntityId();
 }

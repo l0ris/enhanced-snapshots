@@ -17,6 +17,7 @@ public class RefreshingDelegatingFilterProxy extends DelegatingFilterProxy imple
 
     private boolean listenerRegistered = false;
 
+
     @Override
     protected Filter initDelegate(WebApplicationContext wac) throws ServletException {
         Filter filter = super.initDelegate(wac);

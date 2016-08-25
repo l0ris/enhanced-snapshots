@@ -9,52 +9,39 @@ import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 
-import com.sungardas.enhancedsnapshots.security.RefreshingDelegatingFilterProxy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.support.XmlWebApplicationContext;
+import org.springframework.web.multipart.MultipartFile;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 
 @RestController
-class InitController implements ApplicationContextAware {
+class InitController {
 
     private static final Logger LOG = LogManager.getLogger(InitController.class);
 
-
     @Autowired
     private InitConfigurationService initConfigurationService;
+    @Autowired
+    private ContextManager contextManager;
     private InitConfigurationDto configurationDto;
 
-    @Autowired
-    private XmlWebApplicationContext applicationContext;
 
-//    @Autowired
-//    private RefreshingDelegatingFilterProxy delegatingFilterProxy;
-
-    private boolean CONTEXT_REFRESH_IN_PROCESS = false;
 
     @PostConstruct
     private void init() {
         // check that aws credentials are provided
         // try to authenticate as real admin user
-        if (initConfigurationService.propertyFileExists()) {
+        if (initConfigurationService.systemIsConfigured()) {
             LOG.info("System is already configured.");
-            initConfigurationService.syncSettingsInDbAndConfigFile();
-            refreshContext();
-        } else {
-            initConfigurationService.configureAWSLogAgent();
+            initConfigurationService.configureSystem(null);
         }
     }
 
@@ -62,6 +49,14 @@ class InitController implements ApplicationContextAware {
     @ResponseBody
     @ResponseStatus(INTERNAL_SERVER_ERROR)
     private Exception internalServerError(Exception exception) {
+        LOG.error(exception);
+        return exception;
+    }
+
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    @ResponseBody
+    @ResponseStatus(UNPROCESSABLE_ENTITY)
+    private Exception illegalArg(IllegalArgumentException exception) {
         LOG.error(exception);
         return exception;
     }
@@ -82,7 +77,7 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(method = RequestMethod.POST, value = "/session")
     public ResponseEntity<String> init(@RequestBody User user) {
-        if (CONTEXT_REFRESH_IN_PROCESS) {
+        if (contextManager.contextRefreshInProcess()) {
             return new ResponseEntity<>("", HttpStatus.NOT_FOUND);
         }
         // no aws credentials are provided
@@ -102,101 +97,31 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
-        InitConfigurationDto initConfigurationDto = getInitConfigurationDTO();
-        if (!initConfigurationDto.getDb().isValid()) {
-            if (config.getUser() == null) {
-                throw new ConfigurationException("Please create default user");
-            }
-            initConfigurationService.setUser(config.getUser());
-        }
-        if (config.getUser() != null) {
-            initConfigurationService.setUser(config.getUser());
-        }
-        initConfigurationService.validateVolumeSize(config.getVolumeSize());
-        try {
-            // we need to ensure before context refresh that provided bucket name is valid
-            initConfigurationService.createBucket(config.getBucketName());
-        } catch (IllegalArgumentException e) {
-            LOG.warn("Failed to create bucket {}", config.getBucketName());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-        initConfigurationService.storePropertiesEditableFromConfigFile();
-        initConfigurationService.createDBAndStoreSettings(config);
-        try {
-            refreshContext();
-        } catch (Exception e) {
-            initConfigurationService.removeProperties();
-            throw e;
-        }
+        initConfigurationService.configureSystem(config);
         return new ResponseEntity<>("", HttpStatus.OK);
+    }
+
+    /**
+     * Upload saml sp certificate
+     */
+    @RequestMapping(value = "/configuration/uploadSPCert", method = RequestMethod.POST)
+    public @ResponseBody ResponseEntity<String> uploadSPCert(@RequestParam("file") MultipartFile file) throws Exception {
+        initConfigurationService.saveSamlSPCertificate(file);
+        return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
+    }
+
+    /**
+     * Upload idp metadata
+     */
+    @RequestMapping(value = "/configuration/uploadIDPMetadata", method = RequestMethod.POST)
+    public @ResponseBody ResponseEntity<String> uploadIDPMetadata(@RequestParam("file") MultipartFile file) throws Exception {
+        initConfigurationService.saveIdpMetadata(file);
+        return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
     }
 
     @RequestMapping(value = "/configuration/bucket/{name:.+}", method = RequestMethod.GET)
     public ResponseEntity<BucketNameValidationDTO> validateBucketName(@PathVariable("name") String bucketName) {
         return new ResponseEntity<>(initConfigurationService.validateBucketName(bucketName), HttpStatus.OK);
-    }
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = (XmlWebApplicationContext) applicationContext;
-    }
-
-    private void refreshContext() {
-        LOG.info("Context refresh process started.");
-        CONTEXT_REFRESH_IN_PROCESS = true;
-        //for local authentication
-        if(false) {
-            applicationContext.setConfigLocations("/WEB-INF/spring-web-config.xml", "/WEB-INF/spring-security-dynamoDB.xml");
-            applicationContext.refresh();
-            // clearing init auth providers
-            ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders().clear();
-
-            // adding main auth provider
-            ((ProviderManager)applicationContext.getBean("authenticationManager")).getProviders()
-                    .add((AuthenticationProvider) applicationContext.getBean("authProvider"));
-        }
-        // for sso
-        else {
-            applicationContext.setConfigLocations("/WEB-INF/spring-web-config.xml");
-            XmlWebApplicationContext rootContext = (XmlWebApplicationContext) applicationContext.getParent();
-            rootContext.setConfigLocations("/WEB-INF/spring-security-saml.xml");
-            rootContext.refresh();
-            // do not change order of context refreshes
-            applicationContext.refresh();
-        }
-
-        LOG.info("Context refreshed successfully.");
-        CONTEXT_REFRESH_IN_PROCESS = false;
-    }
-
-    static class ConfigDto {
-        private User user;
-        private String bucketName;
-        private int volumeSize;
-
-        public int getVolumeSize() {
-            return volumeSize;
-        }
-
-        public void setVolumeSize(final int volumeSize) {
-            this.volumeSize = volumeSize;
-        }
-
-        public User getUser() {
-            return user;
-        }
-
-        public void setUser(User user) {
-            this.user = user;
-        }
-
-        public String getBucketName() {
-            return bucketName;
-        }
-
-        public void setBucketName(String bucketName) {
-            this.bucketName = bucketName;
-        }
     }
 
     private InitConfigurationDto getInitConfigurationDTO() {
@@ -205,4 +130,6 @@ class InitController implements ApplicationContextAware {
         }
         return configurationDto;
     }
+
+
 }

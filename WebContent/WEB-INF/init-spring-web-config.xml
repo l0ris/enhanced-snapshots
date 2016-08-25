@@ -19,6 +19,7 @@
     <context:property-placeholder location="classpath:/defaultEnhancedSnapshots.properties,file:${catalina.home}/conf/EnhancedSnapshots.properties" ignore-resource-not-found="true"/>
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
+    <bean class="com.sungardas.init.ContextManager"/>
 
     <beans profile="dev">
         <bean class="com.sungardas.init.InitConfigurationServiceDev"/>

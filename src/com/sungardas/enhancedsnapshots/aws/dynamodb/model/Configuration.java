@@ -21,6 +21,7 @@ public class Configuration {
     private int restoreVolumeIopsPerGb;
     private int waitTimeBeforeNewSyncWithAWS;
     private int maxWaitTimeToDetachVolume;
+    private boolean ssoLoginMode;
 
     // sdfs settings
     private String sdfsVolumeName;
@@ -37,6 +38,9 @@ public class Configuration {
     // Nginx
     private String nginxCertPath;
     private String nginxKeyPath;
+
+    // saml settings
+    private String entityId;
 
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
@@ -215,5 +219,21 @@ public class Configuration {
 
     public void setNginxKeyPath(final String nginxKeyPath) {
         this.nginxKeyPath = nginxKeyPath;
+    }
+
+    public String getEntityId() {
+        return entityId;
+    }
+
+    public void setEntityId(String entityId) {
+        this.entityId = entityId;
+    }
+
+    public boolean isSsoLoginMode() {
+        return ssoLoginMode;
+    }
+
+    public void setSsoLoginMode(boolean ssoLoginMode) {
+        this.ssoLoginMode = ssoLoginMode;
     }
 }

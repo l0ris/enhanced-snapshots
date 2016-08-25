@@ -30,10 +30,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ResourceLoader;
 
 import javax.annotation.PostConstruct;
 
-class InitConfigurationServiceDev implements InitConfigurationService {
+class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
 
     private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceDev.class);
@@ -83,17 +84,17 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     private AWSCredentialsProvider credentialsProvider;
     private AmazonS3Client amazonS3;
 
-    @Override
     public void removeProperties() {
     }
 
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
     private DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
-
+    @Autowired
+    private ResourceLoader resourceLoader;
 
     @PostConstruct
-    private void init() {
+    protected void init() {
         String accessKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSAccessKey);
         String secretKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSSecretKey);
         credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey));
@@ -126,7 +127,6 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         db.setValid(true);
         db.setAdminExist(true);
 
-
         config.setS3(names);
         config.setSdfs(sdfs);
         config.setDb(db);
@@ -136,8 +136,8 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     }
 
     @Override
-    public boolean propertyFileExists() {
-        return true;
+    public boolean systemIsConfigured() {
+        return false;
     }
 
     @Override
@@ -145,17 +145,11 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         return true;
     }
 
-    @Override
-    public String getInstanceId() {
-        return "DEV";
+    protected boolean requiredTablesExist(){
+        return true;
     }
 
-    @Override
-    public void configureAWSLogAgent() {
-    }
-
-    @Override
-    public void validateVolumeSize(final int volumeSize) {
+    protected void validateVolumeSize(final int volumeSize) {
         int min = 10;
         int max = 2000;
         if (volumeSize < min || volumeSize > max) {
@@ -163,17 +157,20 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         }
     }
 
-    @Override
+
     public void storePropertiesEditableFromConfigFile() {
     }
 
-    @Override
+
+    public void configureSSO(String spEntityID) {
+
+    }
+
     public void setUser(User user) {
 
     }
 
-    @Override
-    public void createDBAndStoreSettings(final InitController.ConfigDto config) {
+    public void createDBAndStoreSettings(final ConfigDto config) {
         createDbStructure();
         storeSettings();
     }
@@ -252,9 +249,8 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     }
 
 
-    @Override
-    public void syncSettingsInDbAndConfigFile() {
 
+    public void syncSettingsInDbAndConfigFile() {
     }
 
     public BucketNameValidationDTO validateBucketName(String bucketName) {
@@ -279,8 +275,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         }
     }
 
-    @Override
-    public void createBucket(String bucketName) {
+    protected void createBucket(String bucketName) {
         BucketNameValidationDTO validationDTO = validateBucketName(bucketName);
         if (!validationDTO.isValid()) {
             throw new IllegalArgumentException(validationDTO.getMessage());

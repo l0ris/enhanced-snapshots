@@ -63,6 +63,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void createSamlUser(UserDto userInfo) throws DataAccessException, UniqueConstraintViolationException {
+        createUser(userInfo, "");
+    }
+
+    @Override
     public void updateUser(UserDto userInfo, String newPassword, String currentUserEmail) {
         // check user exists
         List<User> users = userRepository.findByEmail(userInfo.getEmail().toLowerCase());
@@ -140,6 +145,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUser(String user) {
         // there should not be several users with one email
+        if(userRepository.findByEmail(user.toLowerCase()).isEmpty()){
+            return null;
+        }
         return userRepository.findByEmail(user.toLowerCase()).get(0);
     }
 
