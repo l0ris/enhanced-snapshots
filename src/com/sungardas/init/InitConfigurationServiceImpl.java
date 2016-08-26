@@ -712,14 +712,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
 
     private void saveFileOnServer(String fileName, MultipartFile fileToSave) throws IOException {
-        byte[] bytes = fileToSave.getBytes();
-
-        // Create the file on server
-        Path path = Files.createFile(Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, fileName));
-        BufferedOutputStream stream = new BufferedOutputStream(
-                new FileOutputStream(path.toFile()));
-        stream.write(bytes);
-        stream.close();
+        fileToSave.transferTo(Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, fileName).toFile());
     }
 
     // there is bug at US_EAST_1 AWS S3 endpoint, we should not check buckets existence with it

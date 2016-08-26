@@ -102,20 +102,13 @@ class InitController {
     }
 
     /**
-     * Upload saml sp certificate
+     * Upload idp metadata & saml sp certificate
      */
-    @RequestMapping(value = "/configuration/uploadSPCert", method = RequestMethod.POST)
-    public @ResponseBody ResponseEntity<String> uploadSPCert(@RequestParam("file") MultipartFile file) throws Exception {
-        initConfigurationService.saveSamlSPCertificate(file);
-        return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
-    }
-
-    /**
-     * Upload idp metadata
-     */
-    @RequestMapping(value = "/configuration/uploadIDPMetadata", method = RequestMethod.POST)
-    public @ResponseBody ResponseEntity<String> uploadIDPMetadata(@RequestParam("file") MultipartFile file) throws Exception {
-        initConfigurationService.saveIdpMetadata(file);
+    @RequestMapping(value = "/configuration/uploadFiles", method = RequestMethod.POST)
+    public @ResponseBody ResponseEntity<String> uploadIDPMetadata(@RequestParam("name") String name[],
+                                                                  @RequestParam("file") MultipartFile[] file) throws Exception {
+        initConfigurationService.saveSamlSPCertificate(file[0]);
+        initConfigurationService.saveIdpMetadata(file[1]);
         return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
     }
 
