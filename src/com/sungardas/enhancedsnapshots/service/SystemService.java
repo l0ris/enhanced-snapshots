@@ -15,11 +15,6 @@ public interface SystemService {
     void backup(String taskId);
 
     /**
-     * Restore system state from backup {@link #backup(String)}
-     */
-    void restore();
-
-    /**
      * Get current system configuration from DB
      *
      * @return system configuration {@link SystemConfiguration}

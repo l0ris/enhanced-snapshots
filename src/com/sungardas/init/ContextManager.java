@@ -35,7 +35,7 @@ public class ContextManager {
     }
 
     public void refreshContext(boolean ssoMode, String entityId) {
-        LOG.info("Context refresh process started.");
+        LOG.info("Context refresh process started. SSO mode: {}", ssoMode);
         CONTEXT_REFRESH_IN_PROCESS = true;
         //for sso
         if(ssoMode) {

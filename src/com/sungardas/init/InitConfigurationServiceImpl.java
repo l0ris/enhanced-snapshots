@@ -182,6 +182,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private ResourceLoader resourceLoader;
     @Autowired
     private ContextManager contextManager;
+    @Autowired
+    private SystemRestoreService systemRestoreService;
 
     private AWSCredentialsProvider credentialsProvider;
     private AmazonDynamoDB amazonDynamoDB;
@@ -223,7 +225,15 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         if (systemIsConfigured()){
             syncSettingsInDbAndConfigFile();
             Configuration conf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
-            contextManager.refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
+            refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
+            return;
+        }
+        if (getBucketsWithSdfsMetadata().stream().filter(b -> b.getBucketName().equals(config.getBucketName())).count() > 0) {
+            createDbStructure();
+            systemRestoreService.restore(config.getBucketName());
+            Configuration conf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+            storePropertiesEditableFromConfigFile();
+            refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
             return;
         }
         if (!requiredTablesExist()) {
@@ -249,8 +259,12 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
         storePropertiesEditableFromConfigFile();
         createDBAndStoreSettings(config);
+        refreshContext(config.isSsoMode(), config.getSpEntityId());
+    }
+
+    private void refreshContext(boolean ssoMode, String entityId){
         try {
-            contextManager.refreshContext(config.isSsoMode(), config.getSpEntityId());
+            contextManager.refreshContext(ssoMode, entityId);
         } catch (Exception e) {
             LOG.warn("Failed to refresh context: {}", e);
             removeProperties();

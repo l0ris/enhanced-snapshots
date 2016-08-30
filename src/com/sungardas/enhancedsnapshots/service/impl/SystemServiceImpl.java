@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import javax.annotation.PostConstruct;
@@ -20,19 +19,15 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
@@ -41,7 +36,6 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
-import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -87,16 +81,10 @@ public class SystemServiceImpl implements SystemService {
     private IDynamoDBMapper dynamoDBMapper;
 
     @Autowired
-    private SystemUpgrade systemUpgrade;
-
-    @Autowired
     private AmazonS3 amazonS3;
 
     @Autowired
     private ConfigurationRepository configurationRepository;
-
-    @Autowired
-    private BackupRepository backupRepository;
 
     @Autowired
     private ConfigurationMediatorImpl configurationMediator;
@@ -157,59 +145,6 @@ public class SystemServiceImpl implements SystemService {
         }
     }
 
-    @Override
-    public void restore() {
-        try {
-            LOG.info("System restore started");
-            Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
-            LOG.info("Download from S3");
-            downloadFromS3(tempDirectory);
-            LOG.info("Upgrade");
-            systemUpgrade.upgrade(tempDirectory, getBackupVersion(tempDirectory));
-            LOG.info("Restore SDFS state");
-            restoreSDFS(tempDirectory);
-            LOG.info("Restore files");
-            restoreFiles(tempDirectory);
-            LOG.info("Restore DB");
-            restoreDB(tempDirectory);
-            // restore SSO files if exist
-            if(currentConfiguration.isSsoLoginMode()) {
-                restoreSSOFiles(tempDirectory);
-            }
-            syncBackupsInDBWithExistingOnes();
-        } catch (IOException e) {
-            LOG.error("System restore failed");
-            LOG.error(e);
-            throw new EnhancedSnapshotsException(e);
-        }
-    }
-
-    /**
-     * Method for defining application version, which created system backup
-     *
-     * @param tempDirectory directory to which was unzipped system backup
-     * @return application version
-     */
-    private String getBackupVersion(final Path tempDirectory) {
-        Path infoFile = Paths.get(tempDirectory.toString(), INFO_FILE_NAME);
-        if (infoFile.toFile().exists()) {
-            try (FileInputStream fileInputStream = new FileInputStream(infoFile.toFile())) {
-                HashMap<String, String> info = objectMapper.readValue(fileInputStream, HashMap.class);
-                if (info.containsKey(VERSION_KEY)) {
-                    return info.get(VERSION_KEY);
-                } else {
-                    LOG.error("Invalid info file formant");
-                    throw new EnhancedSnapshotsException("Invalid info file formant");
-                }
-            } catch (IOException e) {
-                LOG.error("Failed to parse info file");
-                LOG.error(e);
-                throw new EnhancedSnapshotsException(e);
-            }
-        }
-        return "0.0.1";
-    }
-
     /**
      * Adding metainfo to system backup
      * @param tempDirectory directory where system backup is stored
@@ -235,41 +170,6 @@ public class SystemServiceImpl implements SystemService {
         storeTable(User.class, tempDirectory);
     }
 
-    /**
-     * There can be situations when user removed/added backups after system backup and than decided
-     * to migrate to another instance, in this case backups will not be in consistent state
-     */
-    private void syncBackupsInDBWithExistingOnes() {
-        List<BackupEntry> realBackups = sdfsStateService.getBackupsFromSDFSMountPoint();
-        List<BackupEntry> backupEntries = backupRepository.findAll();
-
-        // removing non existing backups from DB
-        List<BackupEntry> toRemove =  new ArrayList<>();
-        backupEntries.stream().filter(b -> !realBackups.contains(b))
-                .peek(b -> LOG.info("Backup {} of volume {} does not exist any more. Removing related data from DB", b.getFileName(), b.getVolumeId()))
-                .forEach(toRemove::add);
-        backupRepository.delete(toRemove);
-
-        // adding backups which are not stored in DB
-        List<BackupEntry> toAdd =  new ArrayList<>();
-        realBackups.stream().filter(rb -> !backupEntries.contains(rb))
-                .peek(rb -> LOG.info("Adding backup {} info to DB", rb.getFileName())).forEach(toAdd::add);
-        backupRepository.save(toAdd);
-    }
-
-    private void restoreDB(Path tempDirectory) throws IOException {
-        restoreConfiguration(tempDirectory);
-        // TODO: sync backups with real data from /mnt/awspool
-        restoreTable(BackupEntry.class, tempDirectory);
-        restoreTable(RetentionEntry.class, tempDirectory);
-        truncateTable(SnapshotEntry.class);
-        restoreTable(SnapshotEntry.class, tempDirectory);
-        restoreTable(User.class, tempDirectory);
-        truncateTable(TaskEntry.class);
-        currentConfiguration = dynamoDBMapper.load(Configuration.class, getInstanceId());
-        configurationMediator.setCurrentConfiguration(currentConfiguration);
-    }
-
     private void backupSDFS(final Path tempDirectory, final String taskId) throws IOException {
         notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 15);
         copyToDirectory(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
@@ -283,36 +183,11 @@ public class SystemServiceImpl implements SystemService {
         copyToDirectory(Paths.get(System.getProperty("catalina.home"), samlIdpMetadata), tempDirectory);
     }
 
-    private void restoreSDFS(final Path tempDirectory) throws IOException {
-        restoreFile(tempDirectory, Paths.get(currentConfiguration.getSdfsConfigPath()));
-        sdfsStateService.restoreSDFS();
-    }
-
-
     private void storeFiles(Path tempDirectory) {
         //nginx certificates
         try {
             copyToDirectory(Paths.get(currentConfiguration.getNginxCertPath()), tempDirectory);
             copyToDirectory(Paths.get(currentConfiguration.getNginxKeyPath()), tempDirectory);
-        } catch (IOException e) {
-            LOG.warn("Nginx certificate not found");
-        }
-    }
-
-    private void restoreFiles(Path tempDirectory) {
-        //nginx certificates
-        try {
-            restoreFile(tempDirectory, Paths.get(currentConfiguration.getNginxCertPath()));
-            restoreFile(tempDirectory, Paths.get(currentConfiguration.getNginxKeyPath()));
-        } catch (IOException e) {
-            LOG.warn("Nginx certificate not found");
-        }
-    }
-
-    private void restoreSSOFiles(Path tempDirectory) {
-        try {
-            restoreFile(tempDirectory, Paths.get(System.getProperty("catalina.home"), samlCertJks));
-            restoreFile(tempDirectory, Paths.get(System.getProperty("catalina.home"), samlIdpMetadata));
         } catch (IOException e) {
             LOG.warn("Nginx certificate not found");
         }
@@ -341,38 +216,7 @@ public class SystemServiceImpl implements SystemService {
         zipFile.toFile().delete();
     }
 
-    private void downloadFromS3(Path tempDirectory) throws IOException {
-        // download
-        LOG.info("-Download");
-        GetObjectRequest getObjectRequest = new GetObjectRequest(configurationMediator.getS3Bucket(),
-                configurationMediator.getSdfsBackupFileName());
-        S3Object s3object = amazonS3.getObject(getObjectRequest);
 
-        Path tempFile = Files.createTempFile(TEMP_DIRECTORY_PREFIX, TEMP_FILE_SUFFIX);
-        Files.copy(s3object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-
-        LOG.info("  -Unzip");
-        //unzip
-        try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile());
-             ZipInputStream zipInputStream = new ZipInputStream(fileInputStream)) {
-            ZipEntry entry;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-                // in case entry is directory system backup relates to version 0.0.1
-                // copy /etc/sdfs/awspool-volume-cfg.xml to temp dir
-                if(entry.isDirectory()){
-                    zipInputStream.getNextEntry();
-                    zipInputStream.getNextEntry();
-                    Path dest = Paths.get(tempDirectory.toString(), "awspool-volume-cfg.xml");
-                    Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
-                    break;
-                }
-                Path dest = Paths.get(tempDirectory.toString(), entry.getName());
-                Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-        //cleanup
-        tempFile.toFile().delete();
-    }
 
     private void storeTable(Class tableClass, Path tempDirectory) throws IOException {
         LOG.info("Backup DB table: {}", tableClass.getSimpleName());
@@ -393,21 +237,6 @@ public class SystemServiceImpl implements SystemService {
         try (FileInputStream fileInputStream = new FileInputStream(src)) {
             ArrayList data = objectMapper.readValue(fileInputStream,
                     objectMapper.getTypeFactory().constructCollectionType(List.class, tableClass));
-            dynamoDBMapper.batchSave(data);
-        } catch (IOException e) {
-            LOG.warn("Table restore failed: {}", e.getLocalizedMessage());
-        }
-    }
-
-    private void restoreConfiguration(final Path tempDirectory) {
-        File src = Paths.get(tempDirectory.toString(), Configuration.class.getName()).toFile();
-        try (FileInputStream fileInputStream = new FileInputStream(src)) {
-            ArrayList<Configuration> data = objectMapper.readValue(fileInputStream,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, Configuration.class));
-            if (!data.isEmpty()) {
-                Configuration configuration = data.get(0);
-                configuration.setConfigurationId(getInstanceId());
-            }
             dynamoDBMapper.batchSave(data);
         } catch (IOException e) {
             LOG.warn("Table restore failed: {}", e.getLocalizedMessage());
@@ -529,11 +358,6 @@ public class SystemServiceImpl implements SystemService {
         } else {
             return null;
         }
-    }
-
-    private void restoreFile(Path tempDirectory, Path destPath) throws IOException {
-        Path fileName = destPath.getFileName();
-        Files.copy(Paths.get(tempDirectory.toString(), fileName.toString()), destPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     private void copyToDirectory(Path src, Path dest) throws IOException {

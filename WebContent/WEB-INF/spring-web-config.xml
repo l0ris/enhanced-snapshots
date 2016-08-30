@@ -29,7 +29,7 @@
 
     <beans profile="prod">
         <bean id = "CreateAppConfiguration" class="com.sungardas.enhancedsnapshots.service.impl.CreateAppConfigurationImpl"/>
-      <bean id="SystemService" class="com.sungardas.enhancedsnapshots.service.impl.SystemServiceImpl"/>
+        <bean id="SystemService" class="com.sungardas.enhancedsnapshots.service.impl.SystemServiceImpl"/>
     </beans>
 
     <beans profile="dev">

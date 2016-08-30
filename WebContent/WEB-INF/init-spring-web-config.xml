@@ -22,12 +22,14 @@
     <bean class="com.sungardas.init.ContextManager"/>
 
     <beans profile="dev">
+        <bean class="com.sungardas.init.SystemRestoreServiceDev"/>
         <bean class="com.sungardas.init.InitConfigurationServiceDev"/>
         <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
 
     <beans profile="prod">
         <bean class="com.sungardas.init.InitConfigurationServiceImpl"/>
+        <bean class="com.sungardas.init.SystemRestoreService"/>
         <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
 </beans>
