@@ -1,14 +1,11 @@
 package com.sungardas.init;
 
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.PostConstruct;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
@@ -106,8 +105,13 @@ class InitController {
      * Upload idp metadata & saml sp certificate
      */
     @RequestMapping(value = "/configuration/uploadFiles", method = RequestMethod.POST)
-    public @ResponseBody ResponseEntity<String> uploadIDPMetadata(@RequestParam("name") String name[],
-                                                                  @RequestParam("file") MultipartFile[] file) throws Exception {
+    public
+    @ResponseBody
+    ResponseEntity<String> uploadSSOFiles(@RequestParam("name") String name[],
+                                          @RequestParam("file") MultipartFile[] file) throws Exception {
+        if (name.length != 2 && file.length != name.length) {
+            return new ResponseEntity<>("Failed to upload files. Saml certificate and IDP metadata should be provided", HttpStatus.BAD_REQUEST);
+        }
         if(name[0].equals(idpMetadata) && name[1].equals(samlCertPem)){
             initConfigurationService.saveIdpMetadata(file[0]);
             initConfigurationService.saveSamlSPCertificate(file[1]);
