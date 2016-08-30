@@ -212,11 +212,15 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
+    protected Configuration getConfiguration(){
+        return mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+    }
+
     @Override
     public void configureSystem(ConfigDto config) {
         if (systemIsConfigured()){
             syncSettingsInDbAndConfigFile();
-            Configuration conf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+            Configuration conf = getConfiguration();
             refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
             return;
         }

@@ -20,6 +20,15 @@
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
     <bean class="com.sungardas.init.ContextManager"/>
+    <bean id="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- max upload size in bytes -->
+        <property name="maxUploadSize" value="20971520" /> <!-- 20MB -->
+
+        <!-- max size of file in memory (in bytes) -->
+        <property name="maxInMemorySize" value="1048576" /> <!-- 1MB -->
+
+    </bean>
 
     <beans profile="dev">
         <bean class="com.sungardas.init.SystemRestoreServiceDev"/>
@@ -29,7 +38,7 @@
 
     <beans profile="prod">
         <bean class="com.sungardas.init.InitConfigurationServiceImpl"/>
-        <bean class="com.sungardas.init.SystemRestoreService"/>
+        <bean class="com.sungardas.init.SystemRestoreServiceImpl"/>
         <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
 </beans>

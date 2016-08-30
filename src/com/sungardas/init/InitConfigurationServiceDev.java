@@ -19,6 +19,7 @@ import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProviderDEV;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
@@ -137,7 +138,11 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     @Override
     public boolean systemIsConfigured() {
-        return false;
+        return true;
+    }
+
+    protected Configuration getConfiguration(){
+        return mapper.load(Configuration.class, "DEV");
     }
 
     @Override
