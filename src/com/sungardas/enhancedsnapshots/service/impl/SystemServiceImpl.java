@@ -172,6 +172,10 @@ public class SystemServiceImpl implements SystemService {
             restoreFiles(tempDirectory);
             LOG.info("Restore DB");
             restoreDB(tempDirectory);
+            // restore SSO files if exist
+            if(Files.exists(Paths.get(tempDirectory.toString(), samlIdpMetadata))) {
+                restoreSSOFiles(tempDirectory);
+            }
             syncBackupsInDBWithExistingOnes();
         } catch (IOException e) {
             LOG.error("System restore failed");
@@ -275,8 +279,8 @@ public class SystemServiceImpl implements SystemService {
     }
 
     private void backupSamlFiles(final Path tempDirectory) throws IOException {
-        copyToDirectory(Paths.get(System.getProperty("catalina.home"), "conf", samlCertJks), tempDirectory);
-        copyToDirectory(Paths.get(System.getProperty("catalina.home"), "conf", samlIdpMetadata), tempDirectory);
+        copyToDirectory(Paths.get(System.getProperty("catalina.home"), samlCertJks), tempDirectory);
+        copyToDirectory(Paths.get(System.getProperty("catalina.home"), samlIdpMetadata), tempDirectory);
     }
 
     private void restoreSDFS(final Path tempDirectory) throws IOException {
@@ -300,6 +304,15 @@ public class SystemServiceImpl implements SystemService {
         try {
             restoreFile(tempDirectory, Paths.get(currentConfiguration.getNginxCertPath()));
             restoreFile(tempDirectory, Paths.get(currentConfiguration.getNginxKeyPath()));
+        } catch (IOException e) {
+            LOG.warn("Nginx certificate not found");
+        }
+    }
+
+    private void restoreSSOFiles(Path tempDirectory) {
+        try {
+            restoreFile(tempDirectory, Paths.get(System.getProperty("catalina.home"), samlCertJks));
+            restoreFile(tempDirectory, Paths.get(System.getProperty("catalina.home"), samlIdpMetadata));
         } catch (IOException e) {
             LOG.warn("Nginx certificate not found");
         }
@@ -357,7 +370,6 @@ public class SystemServiceImpl implements SystemService {
                 Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
             }
         }
-
         //cleanup
         tempFile.toFile().delete();
     }

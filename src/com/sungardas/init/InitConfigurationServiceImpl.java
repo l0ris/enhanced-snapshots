@@ -2,7 +2,6 @@ package com.sungardas.init;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -225,6 +224,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             syncSettingsInDbAndConfigFile();
             Configuration conf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
             contextManager.refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
+            return;
         }
         if (!requiredTablesExist()) {
             if (config.getUser() == null) {
