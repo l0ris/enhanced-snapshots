@@ -155,6 +155,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${enhancedsnapshots.default.snapshot.store}")
     private boolean storeSnapshot;
 
+    @Value("${CUSTOM_BUCKET_NAME:}")
+    private String customBucketName;
+
     @Autowired
     private AmazonS3 amazonS3;
 
@@ -182,6 +185,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
                 withTableNamePrefix(dbPrefix)).build();
         mapper = new DynamoDBMapper(amazonDynamoDB, config);
         tablesWithPrefix = Arrays.stream(tables).map(s -> dbPrefix.concat(s)).collect(Collectors.toList());
+        if (customBucketName.isEmpty() && !validateBucketName(customBucketName).isValid()) {
+            customBucketName = null;
+        }
     }
 
     @Override
@@ -390,6 +396,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
         try {
             List<Bucket> allBuckets = amazonS3.listBuckets();
+            if (customBucketName != null) {
+                result.add(new InitConfigurationDto.S3(customBucketName, false));
+            }
             String bucketName = enhancedSnapshotBucketPrefix002 + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
 
