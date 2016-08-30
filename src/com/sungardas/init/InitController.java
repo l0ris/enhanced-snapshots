@@ -12,7 +12,6 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +26,8 @@ class InitController {
 
     private static final Logger LOG = LogManager.getLogger(InitController.class);
 
+    private String idpMetadata = "idp_metadata.xml";
+    private String samlCertPem = "saml_sp_cert.pem";
     @Autowired
     private InitConfigurationService initConfigurationService;
     @Autowired
@@ -107,8 +108,15 @@ class InitController {
     @RequestMapping(value = "/configuration/uploadFiles", method = RequestMethod.POST)
     public @ResponseBody ResponseEntity<String> uploadIDPMetadata(@RequestParam("name") String name[],
                                                                   @RequestParam("file") MultipartFile[] file) throws Exception {
-        initConfigurationService.saveSamlSPCertificate(file[0]);
-        initConfigurationService.saveIdpMetadata(file[1]);
+        if(name[0].equals(idpMetadata) && name[1].equals(samlCertPem)){
+            initConfigurationService.saveIdpMetadata(file[0]);
+            initConfigurationService.saveSamlSPCertificate(file[1]);
+        } else if (name[0].equals(samlCertPem) && name[0].equals(idpMetadata)) {
+            initConfigurationService.saveSamlSPCertificate(file[0]);
+            initConfigurationService.saveIdpMetadata(file[1]);
+        } else{
+            return new ResponseEntity<>("Failed to upload files. Saml certificate and IDP metadata should be provided", HttpStatus.BAD_REQUEST);
+        }
         return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
     }
 

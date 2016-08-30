@@ -173,7 +173,7 @@ public class SystemServiceImpl implements SystemService {
             LOG.info("Restore DB");
             restoreDB(tempDirectory);
             // restore SSO files if exist
-            if(Files.exists(Paths.get(tempDirectory.toString(), samlIdpMetadata))) {
+            if(currentConfiguration.isSsoLoginMode()) {
                 restoreSSOFiles(tempDirectory);
             }
             syncBackupsInDBWithExistingOnes();
