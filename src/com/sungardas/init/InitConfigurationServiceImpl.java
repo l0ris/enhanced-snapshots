@@ -267,7 +267,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
         storePropertiesEditableFromConfigFile();
         createDBAndStoreSettings(config);
-        refreshContext(config.isSsoMode(), config.getSpEntityId());
+        // TODO: temp solution for dev mode
+        Configuration conf = getConfiguration();
+        refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
         LOG.info("System is successfully configured");
     }
 
@@ -527,7 +529,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         return DEFAULT_LOGIN.equals(login.toLowerCase()) && password.equals(instanceId);
     }
 
-    private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
+    protected List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
 
         try {

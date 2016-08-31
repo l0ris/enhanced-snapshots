@@ -86,6 +86,11 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     public void removeProperties() {
     }
 
+    protected List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
+        ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
+        return result;
+    }
+
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
     private DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
@@ -209,6 +214,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         configuration.setSdfsSize(500);
         configuration.setSdfsVolumeName("awspool");
         configuration.setSdfsMountPoint("/mnt/awspool");
+        configuration.setSsoLoginMode(true);
 
         return configuration;
     }
