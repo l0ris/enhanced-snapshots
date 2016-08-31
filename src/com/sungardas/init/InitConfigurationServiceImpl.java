@@ -235,7 +235,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
             return;
         }
-        if (getBucketsWithSdfsMetadata().stream().filter(b -> b.getBucketName().equals(config.getBucketName())).count() > 0) {
+        if (EnhancedSnapshotSystemMetadataUtil.containsSdfsMetadata(config.getBucketName(), sdfsStateBackupFileName, amazonS3)) {
             LOG.info("Restoring system  from bucket {}", config.getBucketName());
             createDbStructure();
             systemRestoreService.restore(config.getBucketName());
@@ -267,9 +267,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
         storePropertiesEditableFromConfigFile();
         createDBAndStoreSettings(config);
-        // TODO: temp solution for dev mode
-        Configuration conf = getConfiguration();
-        refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
+        refreshContext(config.isSsoMode(), config.getSpEntityId());
         LOG.info("System is successfully configured");
     }
 
@@ -756,7 +754,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
 
     private void saveFileOnServer(String fileName, MultipartFile fileToSave) throws IOException {
-        fileToSave.transferTo(Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, fileName).toFile());
+        fileToSave.transferTo(Paths.get(System.getProperty(catalinaHomeEnvPropName), fileName).toFile());
     }
 
     public InitConfigurationDto.DB containsMetadata(final String bucketName) {

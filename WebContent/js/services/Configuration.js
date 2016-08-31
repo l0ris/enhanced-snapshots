@@ -18,9 +18,16 @@ angular.module('web')
         };
 
         var _send = function (type, item, timeout, files) {
-            if (files) { _sendFiles(item, files) }
-
             var deferred = $q.defer();
+
+            if (files) {
+                _sendFiles(item, files).then(function (result) {
+                    console.info("Files uploaded successfully");
+                }, function () {
+                    return deferred.reject()
+                })
+            }
+
             var request = {
                 url: url + "/" + type,
                 method: "POST",
@@ -56,7 +63,7 @@ angular.module('web')
             }).then(function (response) {
                 filesDeferred.resolve()
             }, function (error) {
-                console.warn(error);
+                console.warn(error.data);
                 filesDeferred.reject();
             });
 

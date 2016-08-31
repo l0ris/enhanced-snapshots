@@ -28,6 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -139,7 +140,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     @Override
     public boolean systemIsConfigured() {
-        return false;
+        return true;
     }
 
     protected Configuration getConfiguration(){
@@ -280,6 +281,10 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         } catch (IllegalArgumentException e) {
             return new BucketNameValidationDTO(false, e.getMessage());
         }
+    }
+
+    public void saveAndProcessSAMLFiles(MultipartFile spCertificate, MultipartFile idpMetadata) {
+
     }
 
     protected void createBucket(String bucketName) {

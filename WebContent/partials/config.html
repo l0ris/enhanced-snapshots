@@ -123,7 +123,7 @@
 
                                     <div ng-if="isSSO" class="SSO">
                                         <form name="sso">
-                                            <p> <strong>SAML2 Web SSO Configuration:</strong> </p>
+                                            <p><strong>SAML2 Web SSO Configuration:</strong></p>
 
                                             <p class="text-muted">1. Upload identity provider metadata</p>
                                             <input type="file" uploaded-file="settings.sso.idMetadata" name="idMetadata" accept=".xml" ng-required="isSSO">
@@ -132,10 +132,10 @@
                                             <input type="file" uploaded-file="settings.sso.x509certificate" name="file" accept=".pem" ng-required="isSSO">
 
                                             <p class="text-muted">3. Entity ID</p>
-                                            <input type="text" class="form-control" ng-model="entityID" name="file" ng-required="isSSO">
+                                            <input type="text" class="form-control" ng-model="$parent.entityId" name="entityId" ng-required="isSSO">
 
                                             <p class="text-muted">4. Administrator E-mail</p>
-                                            <input type="email" class="form-control" ng-model="adminEmail" name="adminEmail" ng-required="isSSO">
+                                            <input type="email" class="form-control" ng-model="$parent.adminEmail" name="adminEmail" ng-required="isSSO">
                                         </form>
                                     </div>
 

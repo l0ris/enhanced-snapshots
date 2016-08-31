@@ -90,7 +90,9 @@ angular.module('web')
 
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
-                volumeSize: volumeSize
+                volumeSize: volumeSize,
+                ssoMode: $scope.isSSO,
+                spEntityId: $scope.entityId
             };
 
             if (!$scope.settings.db.hasAdmin) {
@@ -107,6 +109,7 @@ angular.module('web')
 
                 userModalInstance.result.then(function () {
                     settings.user = $scope.userToEdit;
+
                     delete settings.user.isNew;
 
                     $scope.progressState = 'running';
@@ -120,6 +123,11 @@ angular.module('web')
 
                 });
             } else {
+
+                if (settings.ssoMode) {
+                    settings.user = {email: $scope.adminEmail}
+                }
+
                 $scope.progressState = 'running';
 
                     Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
