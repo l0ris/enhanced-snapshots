@@ -134,7 +134,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     @Override
     public boolean systemIsConfigured() {
-        return true;
+        return false;
     }
 
     protected Configuration getConfiguration(){

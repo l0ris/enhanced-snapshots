@@ -229,25 +229,27 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Override
     public void configureSystem(ConfigDto config) {
         if (systemIsConfigured()){
+            LOG.info("System is already configured");
             syncSettingsInDbAndConfigFile();
             Configuration conf = getConfiguration();
             refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
             return;
         }
         if (getBucketsWithSdfsMetadata().stream().filter(b -> b.getBucketName().equals(config.getBucketName())).count() > 0) {
+            LOG.info("Restoring system  from bucket {}", config.getBucketName());
             createDbStructure();
             systemRestoreService.restore(config.getBucketName());
             Configuration conf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
             storePropertiesEditableFromConfigFile();
             refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
+            LOG.info("System is successfully restored.");
             return;
         }
-        if (!requiredTablesExist()) {
-            if (config.getUser() == null) {
-                throw new ConfigurationException("Please create default user");
-            }
+        LOG.info("Configuring system");
+        if (!requiredTablesExist() && config.getUser() == null) {
+            LOG.warn("No user info was provided");
+            throw new ConfigurationException("Please create default user");
         }
-        setUser(config.getUser());
 
         if (config.getUser() != null) {
             setUser(config.getUser());
@@ -266,6 +268,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         storePropertiesEditableFromConfigFile();
         createDBAndStoreSettings(config);
         refreshContext(config.isSsoMode(), config.getSpEntityId());
+        LOG.info("System is successfully configured");
     }
 
     private void refreshContext(boolean ssoMode, String entityId){
@@ -288,6 +291,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     protected void configureSSO(String spEntityID) {
+        LOG.info("Configuring SSO");
         // check whether all necessary files exists
         if(!Files.exists(Paths.get(System.getProperty("catalina.home"), samlCertPem))){
             throw new ConfigurationException("Certificate for service provider is not uploaded");
@@ -297,6 +301,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
         try {
             // convert pem to jks
+            File jksCert = Paths.get(System.getProperty(catalinaHomeEnvPropName), samlCertJks).toFile();
+            // delete previous jks if exists
+            if (jksCert.exists()) {
+                jksCert.delete();
+            }
             File convertScript = resourceLoader.getResource(pemToJksScript).getFile();
             convertScript.setExecutable(true);
             String[] parameters = new String[]{convertScript.getAbsolutePath(), samlCertAlias, spEntityID,
@@ -613,7 +622,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
                 .withFilterConditionEntry("instanceId",
                         new Condition().withComparisonOperator(EQ.toString()).withAttributeValueList(new AttributeValue(instanceId)));
         List<User> users = mapper.scan(User.class, expression);
-
         return !users.isEmpty();
     }
 
@@ -643,6 +651,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         int min = Integer.parseInt(minVolumeSize);
         int max = SDFSStateService.getMaxVolumeSize(systemReservedRam, volumeSizePerGbOfRam,  sdfsReservedRam);
         if (volumeSize < min || volumeSize > max) {
+            LOG.warn("Invalid volume size: {}", volumeSize);
             throw new ConfigurationException("Invalid volume size");
         }
     }
@@ -716,13 +725,14 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             Document document = builder.parse(idpMetadata.getInputStream());
             document.normalizeDocument();
             saveFileOnServer(samlIdpMetadata, idpMetadata);
+            LOG.info("IDP metadata successfully stored");
         } catch (ParserConfigurationException | SAXException | IOException e) {
             LOG.error("IDP metadata processing failed", e);
             throw new ConfigurationException(e);
         }
-
         try {
             saveFileOnServer(samlCertPem, spCertificate);
+            LOG.info("SP certificate successfully stored");
         } catch (IOException e) {
             LOG.error("SP certificate processing failed", e);
             throw new ConfigurationException(e);

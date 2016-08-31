@@ -117,7 +117,7 @@ class InitController {
         } else if (name[0].equals(samlCertPem) && name[0].equals(idpMetadata)) {
             initConfigurationService.saveAndProcessSAMLFiles(file[0], file[1]);
         } else{
-            return new ResponseEntity<>("Failed to upload files. Saml certificate and IDP metadata should be provided", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Failed to upload SAML files. Saml certificate and IDP metadata should be provided", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
     }
@@ -126,7 +126,6 @@ class InitController {
     public ResponseEntity<BucketNameValidationDTO> validateBucketName(@PathVariable("name") String bucketName) {
         return new ResponseEntity<>(initConfigurationService.validateBucketName(bucketName), HttpStatus.OK);
     }
-
 
     @RequestMapping(value = "/configuration/bucket/{name:.+}/metadata", method = RequestMethod.GET)
     public ResponseEntity<BucketNameValidationDTO> containsMetadata(@PathVariable("name") String bucketName) {
