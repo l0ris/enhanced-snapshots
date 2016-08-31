@@ -4,8 +4,6 @@ import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-
 
 interface InitConfigurationService {
 
@@ -19,10 +17,6 @@ interface InitConfigurationService {
 
     BucketNameValidationDTO validateBucketName(String bucketName);
 
-    void saveSamlSPCertificate(MultipartFile file) throws IOException;
-
-    void saveIdpMetadata(MultipartFile file) throws IOException;
-
     /**
      * Check if it is possible to restore DB from S3 bucket
      *
@@ -30,4 +24,13 @@ interface InitConfigurationService {
      * @return information about DB
      */
     InitConfigurationDto.DB containsMetadata(String bucketName);
+
+    /**
+     * Validate and convert SAML 2.0 related files
+     *
+     * @param spCertificate Service provider certificate (pem file)
+     * @param idpMetadata   Identity provider metadata (xml file)
+     */
+    void saveAndProcessSAMLFiles(MultipartFile spCertificate, MultipartFile idpMetadata);
+
 }

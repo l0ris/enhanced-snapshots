@@ -27,7 +27,6 @@ import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
-import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -710,6 +709,26 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
+    @Override
+    public void saveAndProcessSAMLFiles(MultipartFile spCertificate, MultipartFile idpMetadata) {
+        try {
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document document = builder.parse(idpMetadata.getInputStream());
+            document.normalizeDocument();
+            saveFileOnServer(samlIdpMetadata, idpMetadata);
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            LOG.error("IDP metadata processing failed", e);
+            throw new ConfigurationException(e);
+        }
+
+        try {
+            saveFileOnServer(samlCertPem, spCertificate);
+        } catch (IOException e) {
+            LOG.error("SP certificate processing failed", e);
+            throw new ConfigurationException(e);
+        }
+    }
+
 
     protected void createBucket(String bucketName) {
         if (!bucketExists(bucketName)) {
@@ -721,25 +740,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             }
             amazonS3.createBucket(bucketName, region.getName());
         }
-    }
-
-    @Override
-    public void saveSamlSPCertificate(MultipartFile file) throws IOException {
-        saveFileOnServer(samlCertPem, file);
-    }
-
-    @Override
-    public void saveIdpMetadata(MultipartFile file) throws IOException {
-        try {
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document document = builder.parse(file.getInputStream());
-            document.normalizeDocument();
-        } catch (ParserConfigurationException | SAXException e) {
-            LOG.error(e);
-            throw new EnhancedSnapshotsException(e);
-        }
-
-        saveFileOnServer(samlIdpMetadata, file);
     }
 
 
