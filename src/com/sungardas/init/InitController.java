@@ -129,12 +129,16 @@ class InitController {
         return new ResponseEntity<>(initConfigurationService.validateBucketName(bucketName), HttpStatus.OK);
     }
 
+
+    @RequestMapping(value = "/configuration/bucket/{name:.+}/metadata", method = RequestMethod.GET)
+    public ResponseEntity<BucketNameValidationDTO> containsMetadata(@PathVariable("name") String bucketName) {
+        return new ResponseEntity(initConfigurationService.containsMetadata(bucketName), HttpStatus.OK);
+    }
+
     private InitConfigurationDto getInitConfigurationDTO() {
         if (configurationDto == null) {
             configurationDto = initConfigurationService.getInitConfigurationDto();
         }
         return configurationDto;
     }
-
-
 }

@@ -7,7 +7,6 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ public class DeleteFakeTaskExecutor implements TaskExecutor {
     @Override
     public void execute(TaskEntry taskEntry) {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'running'");
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Delete task started", 0);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Delete task started", 0);
         taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
 
@@ -48,10 +47,10 @@ public class DeleteFakeTaskExecutor implements TaskExecutor {
         backupEntry.setFileName(taskEntry.getOptions());
 
         try {
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting", 50);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting", 50);
             backupRepository.delete(backupEntry);
             taskService.complete(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Delete complete", 100);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Delete complete", 100);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
         } catch (DataAccessException e){
             LOG.error(e);

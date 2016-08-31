@@ -22,4 +22,12 @@ interface InitConfigurationService {
     void saveSamlSPCertificate(MultipartFile file) throws IOException;
 
     void saveIdpMetadata(MultipartFile file) throws IOException;
+
+    /**
+     * Check if it is possible to restore DB from S3 bucket
+     *
+     * @param bucketName bucket name
+     * @return information about DB
+     */
+    InitConfigurationDto.DB containsMetadata(String bucketName);
 }

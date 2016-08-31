@@ -85,7 +85,7 @@
     </bean>
 
     <!-- Entry point to initialize authentication, default values taken from properties file -->
-    <bean id="samlEntryPoint" class="org.springframework.security.saml.SAMLEntryPoint">
+    <bean id="samlEntryPoint" class="com.sungardas.enhancedsnapshots.security.XhrSAMLEntryPoint">
         <property name="defaultProfileOptions">
             <bean class="org.springframework.security.saml.websso.WebSSOProfileOptions">
                 <property name="includeScoping" value="false"/>

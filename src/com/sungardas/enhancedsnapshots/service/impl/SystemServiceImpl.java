@@ -1,9 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,18 +17,16 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
+
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.EC2MetadataUtils;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
-import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
@@ -45,6 +41,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.PropertySource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
+
 
 /**
  * Implementation for {@link SystemService}
@@ -87,7 +84,8 @@ public class SystemServiceImpl implements SystemService {
     private ConfigurationRepository configurationRepository;
 
     @Autowired
-    private ConfigurationMediatorImpl configurationMediator;
+    private ConfigurationMediatorConfigurator configurationMediator;
+
 
     @Autowired
     private SDFSStateService sdfsStateService;
@@ -103,38 +101,36 @@ public class SystemServiceImpl implements SystemService {
     private XmlWebApplicationContext applicationContext;
 
 
-
     @PostConstruct
     private void init() {
         currentConfiguration = dynamoDBMapper.load(Configuration.class, getInstanceId());
         configurationMediator.setCurrentConfiguration(currentConfiguration);
     }
 
-
     @Override
     public void backup(final String taskId) {
         try {
             LOG.info("System backup started");
-            notificationService.notifyAboutTaskProgress(taskId, "System backup started", 0);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "System backup started", 0);
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
             LOG.info("Add info file");
-            notificationService.notifyAboutTaskProgress(taskId, "System information backup", 5);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "System information backup", 5);
             addInfo(tempDirectory);
             LOG.info("Backup SDFS state");
-            notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 10);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 10);
             backupSDFS(tempDirectory, taskId);
-            notificationService.notifyAboutTaskProgress(taskId, "Backup system files", 55);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup system files", 55);
             LOG.info("Backup files");
             storeFiles(tempDirectory);
             LOG.info("Backup db");
-            notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 60);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 60);
             backupDB(tempDirectory, taskId);
             if (configurationMediator.isSsoLoginMode()){
                 LOG.info("Backup up saml certificate and ipd metadata", 90);
                 backupSamlFiles(tempDirectory);
             }
             LOG.info("Upload to S3");
-            notificationService.notifyAboutTaskProgress(taskId, "Upload to S3", 95);
+            notificationService.notifyAboutRunningTaskProgress(taskId, "Upload to S3", 95);
             uploadToS3(tempDirectory);
             tempDirectory.toFile().delete();
             LOG.info("System backup finished");
@@ -158,24 +154,25 @@ public class SystemServiceImpl implements SystemService {
     }
 
     private void backupDB(final Path tempDirectory, final String taskId) throws IOException {
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 65);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 65);
         storeTable(BackupEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 70);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 70);
         storeTable(Configuration.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 75);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 75);
         storeTable(RetentionEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 80);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 80);
         storeTable(SnapshotEntry.class, tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 85);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 85);
         storeTable(User.class, tempDirectory);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup DB", 90);
     }
 
     private void backupSDFS(final Path tempDirectory, final String taskId) throws IOException {
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 15);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 15);
         copyToDirectory(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 20);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 20);
         sdfsStateService.cloudSync();
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 45);
+        notificationService.notifyAboutRunningTaskProgress(taskId, "Backup SDFS state", 45);
     }
 
     private void backupSamlFiles(final Path tempDirectory) throws IOException {
@@ -216,31 +213,11 @@ public class SystemServiceImpl implements SystemService {
         zipFile.toFile().delete();
     }
 
-
-
     private void storeTable(Class tableClass, Path tempDirectory) throws IOException {
         LOG.info("Backup DB table: {}", tableClass.getSimpleName());
         File dest = Paths.get(tempDirectory.toString(), tableClass.getName()).toFile();
         List result = dynamoDBMapper.scan(tableClass, new DynamoDBScanExpression());
         objectMapper.writeValue(dest, result);
-    }
-
-    private void truncateTable(final Class tableClass) {
-        LOG.info("  -Truncate table: {}", tableClass.getSimpleName());
-        List result = dynamoDBMapper.scan(tableClass, new DynamoDBScanExpression());
-        dynamoDBMapper.batchDelete(result);
-    }
-
-    private void restoreTable(Class tableClass, Path tempDirectory) throws IOException {
-        LOG.info("  -Restore table: {}", tableClass.getSimpleName());
-        File src = Paths.get(tempDirectory.toString(), tableClass.getName()).toFile();
-        try (FileInputStream fileInputStream = new FileInputStream(src)) {
-            ArrayList data = objectMapper.readValue(fileInputStream,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, tableClass));
-            dynamoDBMapper.batchSave(data);
-        } catch (IOException e) {
-            LOG.warn("Table restore failed: {}", e.getLocalizedMessage());
-        }
     }
 
     @Override
@@ -262,7 +239,6 @@ public class SystemServiceImpl implements SystemService {
         configuration.getSdfs().setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace(systemReservedStorage) + configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
         configuration.getSdfs().setMinSdfsLocalCacheSize(configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
 
-
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
         configuration.getEc2Instance().setInstanceID(getInstanceId());
 
@@ -279,6 +255,8 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setAmazonRetryCount(configurationMediator.getAmazonRetryCount());
         systemProperties.setAmazonRetrySleep(configurationMediator.getAmazonRetrySleep());
         systemProperties.setMaxQueueSize(configurationMediator.getMaxQueueSize());
+        systemProperties.setStoreSnapshots(configurationMediator.isStoreSnapshot());
+        systemProperties.setTaskHistoryTTS(configurationMediator.getTaskHistoryTTS());
         configuration.setSystemProperties(systemProperties);
         configuration.setSsoMode(configurationMediator.isSsoLoginMode());
         return configuration;
@@ -295,6 +273,8 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setAmazonRetryCount(configuration.getSystemProperties().getAmazonRetryCount());
         currentConfiguration.setAmazonRetrySleep(configuration.getSystemProperties().getAmazonRetrySleep());
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
+        currentConfiguration.setStoreSnapshot(configuration.getSystemProperties().isStoreSnapshots());
+        currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
 
         // update sdfs setting
         currentConfiguration.setSdfsSize(configuration.getSdfs().getVolumeSize());

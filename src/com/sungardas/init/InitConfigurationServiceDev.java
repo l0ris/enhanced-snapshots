@@ -1,12 +1,9 @@
 package com.sungardas.init;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.amazonaws.auth.AWSCredentialsProvider;
-
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
+
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -16,10 +13,10 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProviderDEV;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
@@ -31,9 +28,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ResourceLoader;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
 
 class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
@@ -91,8 +89,6 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
     private DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
-    @Autowired
-    private ResourceLoader resourceLoader;
 
     @PostConstruct
     protected void init() {
@@ -292,5 +288,13 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
             LOG.info("Removing bucket {} in {}", bucketName, "us-west-2");
             amazonS3.deleteBucket(bucketName);
         }
+    }
+
+    @Override
+    public InitConfigurationDto.DB containsMetadata(final String bucketName) {
+        InitConfigurationDto.DB db = new InitConfigurationDto.DB();
+        db.setValid(true);
+        db.setAdminExist(true);
+        return db;
     }
 }

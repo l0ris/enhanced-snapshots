@@ -22,6 +22,8 @@ public class Configuration {
     private int waitTimeBeforeNewSyncWithAWS;
     private int maxWaitTimeToDetachVolume;
     private boolean ssoLoginMode;
+    //time to show
+    private int taskHistoryTTS;
 
     // sdfs settings
     private String sdfsVolumeName;
@@ -38,6 +40,7 @@ public class Configuration {
     // Nginx
     private String nginxCertPath;
     private String nginxKeyPath;
+    private boolean storeSnapshot;
 
     // saml settings
     private String entityId;
@@ -221,6 +224,7 @@ public class Configuration {
         this.nginxKeyPath = nginxKeyPath;
     }
 
+
     public String getEntityId() {
         return entityId;
     }
@@ -235,5 +239,21 @@ public class Configuration {
 
     public void setSsoLoginMode(boolean ssoLoginMode) {
         this.ssoLoginMode = ssoLoginMode;
+    }
+
+    public boolean isStoreSnapshot() {
+        return storeSnapshot;
+    }
+
+    public void setStoreSnapshot(boolean storeSnapshot) {
+        this.storeSnapshot = storeSnapshot;
+    }
+
+    public int getTaskHistoryTTS() {
+        return taskHistoryTTS;
+    }
+
+    public void setTaskHistoryTTS(int taskHistoryTTS) {
+        this.taskHistoryTTS = taskHistoryTTS;
     }
 }

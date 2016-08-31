@@ -61,7 +61,8 @@ public class UserController {
 	@RequestMapping(value = "/currentUser", method = RequestMethod.GET)
 	public ResponseEntity getCurrentUser(Principal principal) {
 		try {
-			return new ResponseEntity<>("{ \"role\":\"" + "\"ROLE_ADMIN\""
+			String role = "ROLE_"+ userService.getUser(principal.getName()).getRole().toUpperCase();
+			return new ResponseEntity<>("{ \"role\":\"" + role
 					+ "\", \"email\":\"" + principal.getName() + "\" }", HttpStatus.OK);
 		} catch (DataAccessException e) {
 			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.NOT_ACCEPTABLE);

@@ -29,6 +29,7 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
@@ -56,6 +57,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
@@ -167,6 +173,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private String pemToJksScript;
     @Value("${enhancedsnapshots.saml.sp.cert.alias}")
     private String samlCertAlias;
+    @Value("${enhancedsnapshots.system.task.history.tts}")
+    private int taskHistoryTTS;
+    @Value("${enhancedsnapshots.default.snapshot.store}")
+    private boolean storeSnapshot;
+
 
     @Autowired
     private AmazonS3 amazonS3;
@@ -442,6 +453,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setMaxWaitTimeToDetachVolume(defaultMaxWaitTimeToDetachVolume);
         configuration.setNginxCertPath(nginxCertPath);
         configuration.setNginxKeyPath(nginxKeyPath);
+        configuration.setTaskHistoryTTS(taskHistoryTTS);
+        configuration.setStoreSnapshot(storeSnapshot);
         // saving configuration to DB
         mapper.save(configuration);
     }
@@ -732,6 +745,22 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private void saveFileOnServer(String fileName, MultipartFile fileToSave) throws IOException {
         fileToSave.transferTo(Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, fileName).toFile());
+    }
+
+    public InitConfigurationDto.DB containsMetadata(final String bucketName) {
+        final InitConfigurationDto.DB db = new InitConfigurationDto.DB();
+        if (EnhancedSnapshotSystemMetadataUtil.isBucketExits(bucketName, amazonS3)) {
+            String version = EnhancedSnapshotSystemMetadataUtil.getBackupVersion(bucketName, sdfsStateBackupFileName, amazonS3);
+            if (version == null || "0.0.1".equals(version)) {
+                return db;
+            } else {
+                db.setAdminExist(true);
+            }
+            return db;
+        } else {
+            return db;
+        }
+
     }
 
     // there is bug at US_EAST_1 AWS S3 endpoint, we should not check buckets existence with it
