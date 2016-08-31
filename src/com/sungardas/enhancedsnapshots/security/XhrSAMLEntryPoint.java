@@ -17,7 +17,9 @@ public class XhrSAMLEntryPoint extends SAMLEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException e) throws IOException, ServletException {
         if (isXmlHttpRequest(request) && e instanceof InsufficientAuthenticationException) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "SSO");
+            response.setContentType("application/json;charset=UTF-8");
+            response.setStatus(401);
+            response.getWriter().write("{\"loginMode\":\"SSO\"}");
             return;
         }
         super.commence(request, response, e);
