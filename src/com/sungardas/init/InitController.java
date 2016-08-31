@@ -113,11 +113,9 @@ class InitController {
             return new ResponseEntity<>("Failed to upload files. Saml certificate and IDP metadata should be provided", HttpStatus.BAD_REQUEST);
         }
         if(name[0].equals(idpMetadata) && name[1].equals(samlCertPem)){
-            initConfigurationService.saveIdpMetadata(file[0]);
-            initConfigurationService.saveSamlSPCertificate(file[1]);
+            initConfigurationService.saveAndProcessSAMLFiles(file[1], file[0]);
         } else if (name[0].equals(samlCertPem) && name[0].equals(idpMetadata)) {
-            initConfigurationService.saveSamlSPCertificate(file[0]);
-            initConfigurationService.saveIdpMetadata(file[1]);
+            initConfigurationService.saveAndProcessSAMLFiles(file[0], file[1]);
         } else{
             return new ResponseEntity<>("Failed to upload files. Saml certificate and IDP metadata should be provided", HttpStatus.BAD_REQUEST);
         }
