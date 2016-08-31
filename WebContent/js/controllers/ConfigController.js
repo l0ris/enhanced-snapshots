@@ -110,7 +110,7 @@ angular.module('web')
                     delete settings.user.isNew;
 
                     $scope.progressState = 'running';
-                    Configuration.send('current', settings, DELAYTIME).then(function () {
+                    Configuration.send('current', settings, DELAYTIME, $scope.settings.sso).then(function () {
                         $scope.progressState = 'success';
                     }, function () {
                         $scope.progressState = 'failed';
@@ -122,13 +122,13 @@ angular.module('web')
             } else {
                 $scope.progressState = 'running';
 
-                Configuration.send('current', settings).then(function () {
-                    $scope.progressState = 'success';
-                }, function (data, status) {
-                    $scope.progressState = 'failed';
-                });
+                    Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
+                        $scope.progressState = 'success';
+                    }, function (data, status) {
+                        $scope.progressState = 'failed';
+                    });
 
-                wizardCreationProgress();
+                    wizardCreationProgress();
             }
         };
 

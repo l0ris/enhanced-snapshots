@@ -17,8 +17,9 @@ angular.module('web')
             return deferred.promise;
         };
 
+        var _send = function (type, item, timeout, files) {
+            if (files) { _sendFiles(item, files) }
 
-        var _send = function (type, item, timeout) {
             var deferred = $q.defer();
             var request = {
                 url: url + "/" + type,
@@ -35,12 +36,43 @@ angular.module('web')
             return deferred.promise;
         };
 
+        var _sendFiles = function (item, files) {
+            var filesDeferred = $q.defer();
+            var formData = new FormData();
+            var namesArray = [];
+
+            for (var key in files) {
+                formData.append('file', files[key]);
+                namesArray.push(files[key].name);
+            }
+
+            formData.append('name', namesArray);
+
+            $http({
+                url: url + "/uploadFiles",
+                method: "POST",
+                data: formData,
+                headers: {'Content-Type': undefined}
+            }).then(function (response) {
+                filesDeferred.resolve()
+            }, function (error) {
+                console.warn(error);
+                filesDeferred.reject();
+            });
+
+            //files are sent separately from other setting. That's why
+            //they should be removed from settings collection before the later is sent
+            delete item.sso;
+
+            return filesDeferred.promise;
+        };
+
         return {
             get: function (type) {
                 return _get(type);
             },
-            send: function (type, item, timeout) {
-                return _send(type, item, timeout);
+            send: function (type, item, timeout, files) {
+                return _send(type, item, timeout, files);
             }
         }
     });
