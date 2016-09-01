@@ -44,7 +44,7 @@ angular.module('web')
         };
 
         var _sendFiles = function (item, files) {
-            var filesDeferred = $q.defer();
+            var deferred = $q.defer();
             var formData = new FormData();
             var namesArray = [];
 
@@ -59,19 +59,21 @@ angular.module('web')
                 url: url + "/uploadFiles",
                 method: "POST",
                 data: formData,
+                transformRequest: angular.identity,
+                transformResponse: angular.identity,
                 headers: {'Content-Type': undefined}
-            }).then(function (response) {
-                filesDeferred.resolve()
+            }).then(function () {
+                deferred.resolve()
             }, function (error) {
                 console.warn(error.data);
-                filesDeferred.reject();
+                deferred.reject();
             });
 
             //files are sent separately from other setting. That's why
             //they should be removed from settings collection before the later is sent
             delete item.sso;
 
-            return filesDeferred.promise;
+            return deferred.promise;
         };
 
         return {
