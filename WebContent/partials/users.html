@@ -38,7 +38,7 @@
                                             ng-show="isAdmin || isCurrentUser(user.email)"><span
                                             class="glyphicon glyphicon-pencil icon"></span>&nbsp; Edit</a>
                                 </div>
-                                <div class="flex-1 flex-center row-menu" ng-show="isAdmin && !isCurrentUser(user.email)">
+                                <div class="flex-1 flex-center row-menu" ng-show="isAdmin && !isCurrentUser(user.email) && !ssoMode">
                                     <a href="" title="Delete user" ng-click="deleteUser(user)"><span
                                             class="glyphicon glyphicon-remove icon"
                                             ng-disabled="isCurrentUser(user.email)"></span>&nbsp; Delete</a>
@@ -64,7 +64,7 @@
             <h2>No users to display...</h2>
         </div>
 
-        <div class="pull-right" ng-show="isAdmin">
+        <div class="pull-right" ng-show="isAdmin && !ssoMode">
             <button type="button" class="btn btn-success" ng-click="addUser()">
                 <span class="glyphicon glyphicon-plus-sign" title="Add new user"></span> Add User
             </button>

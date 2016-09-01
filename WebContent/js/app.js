@@ -19,6 +19,21 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         return true;
     }];
 
+    var ssoMode = ['System', '$q', '$rootScope', function (System, $q, $rootScope) {
+        $rootScope.isLoading = true;
+        var deferred = $q.defer();
+
+        System.get().then(function (data) {
+            $rootScope.isLoading = false;
+            deferred.resolve(data);
+        }, function () {
+            $rootScope.isLoading = false;
+            deferred.reject(false);
+        });
+
+        return deferred.promise;
+    }];
+
     $stateProvider
         .state('app', {
             abstract: true,
@@ -80,7 +95,10 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         .state('app.users', {
             url: "/users",
             templateUrl: "partials/users.html",
-            controller: "UserController"
+            controller: "UserController",
+            resolve: {
+                ssoMode: ssoMode
+            }
         })
         .state('config', {
             url: "/config",

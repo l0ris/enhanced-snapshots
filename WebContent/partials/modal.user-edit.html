@@ -12,7 +12,7 @@
 
             <div class="col-sm-8">
                 <input type="email" id="email" name="modalUserEmail" class="form-control" ng-model="userToEdit.email"
-                       ng-disabled="!userToEdit.isNew"
+                       ng-disabled="!userToEdit.isNew || ssoMode"
                        ng-required="userToEdit.isNew">
             </div>
         </div>
@@ -28,7 +28,7 @@
             <label for="firstname" class="control-label col-sm-4">First name:</label>
 
             <div class="col-sm-8">
-                <input type="text" id="firstname" class="form-control" ng-model="userToEdit.firstName">
+                <input type="text" id="firstname" class="form-control" ng-model="userToEdit.firstName" ng-disabled="ssoMode">
             </div>
         </div>
 
@@ -37,7 +37,7 @@
 
             <div class="col-sm-8">
                 <input type="text" id="modalUserLastName" autocomplete="off" class="form-control col-sm-8"
-                       ng-model="userToEdit.lastName">
+                       ng-model="userToEdit.lastName" ng-disabled="ssoMode">
             </div>
         </div>
 
@@ -51,6 +51,7 @@
                        autocomplete="off"
                        complex-password
                        ng-model="userToEdit.password"
+                       ng-disabled="ssoMode"
                        ng-required="userToEdit.isNew">
             </div>
         </div>
@@ -69,6 +70,7 @@
                 <input type="password" id="password2" class="form-control col-sm-8" name="modalUserPassword2"
                        autocomplete="off"
                        check-password="password"
+                       ng-disabled="ssoMode"
                        ng-model="userToEdit.password2"
                        ng-required="userToEdit.isNew">
             </div>

@@ -56,6 +56,7 @@ angular.module('web')
         var wizardCreationProgress = function () {
             var modalInstance = $modal.open({
                 animation: true,
+                backdrop: false,
                 templateUrl: './partials/modal.wizard-progress.html',
                 scope: $scope
             });
