@@ -1,8 +1,5 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
@@ -13,24 +10,27 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
+import com.sungardas.enhancedsnapshots.dto.TaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
-
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
+
 
 @Service("awsRestoreVolumeTaskExecutor")
 @Profile("prod")
-public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
+public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     public static final String RESTORED_NAME_PREFIX = "Restore of ";
     private static final Logger LOG = LogManager.getLogger(AWSRestoreVolumeTaskExecutor.class);
     @Autowired
@@ -62,11 +62,11 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         if (Thread.interrupted()) {
             throw new EnhancedSnapshotsInterruptedException("Task interrupted");
         }
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting restore", 0);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting restore", 0);
         String sourceFile = taskEntry.getSourceFileName();
         changeTaskStatusToRunning(taskEntry);
         try {
-            if (sourceFile == null || sourceFile.isEmpty()) {
+            if (snapshotService.getSnapshotIdByVolumeId(taskEntry.getVolume()) != null && (sourceFile == null || sourceFile.isEmpty())) {
                 LOG.info("Task was defined as restore from snapshot.");
                 restoreFromSnapshot(taskEntry);
             } else {
@@ -89,47 +89,57 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
     }
 
     private void completeTask(TaskEntry taskEntry) {
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore complete", 100);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Restore complete", 100);
         taskService.complete(taskEntry);
         LOG.info("{} task {} was completed", taskEntry.getType(), taskEntry.getId());
     }
 
     private void restoreFromSnapshot(TaskEntry taskEntry) {
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from snapshot", 20);
-        String targetZone = taskEntry.getAvailabilityZone();
+        try {
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Restore from snapshot", 20);
+            String targetZone = taskEntry.getAvailabilityZone();
 
-        String volumeId = taskEntry.getVolume();
-        String snapshotId = snapshotService.getSnapshotIdByVolumeId(volumeId);
-        // check that snapshot exists
-        if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
-            LOG.error("Failed to find snapshot for volume {} ", volumeId);
-            throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
+            String volumeId = taskEntry.getVolume();
+            String snapshotId = snapshotService.getSnapshotIdByVolumeId(volumeId);
+            // check that snapshot exists
+            if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
+                LOG.error("Failed to find snapshot for volume {} ", volumeId);
+                throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
+            }
+
+            checkThreadInterruption(taskEntry);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Creating volume from snapshot", 50);
+
+            Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone, VolumeType.fromValue(taskEntry.getRestoreVolumeType()),
+                    taskEntry.getRestoreVolumeIopsPerGb());
+            awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + taskEntry.getVolume());
+            awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
+        } catch (EnhancedSnapshotsTaskInterruptedException e) {
+            LOG.info("Restore task was canceled");
+            taskRepository.delete(taskEntry);
         }
-
-        checkThreadInterruption(taskEntry);
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume from snapshot", 50);
-
-        Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone, VolumeType.fromValue(taskEntry.getRestoreVolumeType()),
-                taskEntry.getRestoreVolumeIopsPerGb());
-        awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + taskEntry.getVolume());
-        awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
     }
 
-    //TODO: in case availability zone is the same we do not need temp volume
-    // add logic to handle this situation
     private void restoreFromBackupFile(TaskEntry taskEntry) {
         Volume tempVolume = null;
         Snapshot tempSnapshot = null;
         try {
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Restore from file", 10);
 
-            BackupEntry backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            BackupEntry backupentry = null;
+            if (taskEntry.getSourceFileName() != null && !taskEntry.getSourceFileName().isEmpty()) {
+                backupentry = backupRepository.findOne(taskEntry.getSourceFileName());
+            } else {
+                backupentry = backupRepository.findByVolumeId(taskEntry.getVolume())
+                        .stream().sorted((e1, e2) -> e2.getTimeCreated().compareTo(e1.getTimeCreated()))
+                        .findFirst().get();
+            }
             LOG.info("Used backup record: {}", backupentry.getFileName());
             Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
             int size = Integer.parseInt(backupentry.getSizeGiB());
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume...", 15);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Creating volume...", 15);
             // creating temporary volume
             if (taskEntry.getTempVolumeType().equals(VolumeType.Io1.toString())) {
                 tempVolume = awsCommunication.createIO1Volume(size, taskEntry.getTempVolumeIopsPerGb());
@@ -138,7 +148,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             }
             LOG.info("Created {} volume:{}", taskEntry.getTempVolumeType(), tempVolume.toString());
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Attaching volume...", 20);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Attaching volume...", 20);
             awsCommunication.createTemporaryTag(tempVolume.getVolumeId(), backupentry.getFileName());
             awsCommunication.waitForAvailableState(tempVolume);
             awsCommunication.attachVolume(instance, tempVolume);
@@ -150,7 +160,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             }
             LOG.info("Trying to attach volume to instance {}", instance.getInstanceId());
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Synchronizing volume...", 25);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Synchronizing volume...", 25);
 
             //wait for attached state
             while (tempVolume.getAttachments().size() == 0) {
@@ -162,7 +172,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             LOG.info("Volume was attached as device: " + attachedDeviceName);
             try {
                 CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 25, 80, Long.parseLong(backupentry.getSizeGiB()));
-                storageService.copyData(configurationMediator.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
+                storageService.copyData(configurationMediator.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto, taskEntry.getId());
             } catch (IOException | InterruptedException e) {
                 LOG.fatal("Restore of volume {} failed", tempVolume);
                 taskEntry.setStatus("error");
@@ -170,40 +180,59 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             }
 
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Detaching volume...", 85);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Detaching volume...", 85);
 
             awsCommunication.detachVolume(tempVolume);
             LOG.info("Detaching volume after restoring data: " + tempVolume.toString());
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 90);
-            tempSnapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(tempVolume));
 
-            checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 95);
+            Volume volumeToRestore = null;
+            if (!tempVolume.getAvailabilityZone().equals(taskEntry.getAvailabilityZone())) {
+                //move to target availability zone
+                notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Moving into target zone...", 90);
+                tempSnapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(tempVolume));
 
-            Volume volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), taskEntry.getAvailabilityZone(),
-                    VolumeType.fromValue(taskEntry.getRestoreVolumeType()), taskEntry.getRestoreVolumeIopsPerGb());
-            checkThreadInterruption(taskEntry);
+                checkThreadInterruption(taskEntry);
+                notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Moving into target zone...", 95);
 
-            awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
-            awsCommunication.deleteVolume(tempVolume);
-            awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
-            awsCommunication.addTag(volumeToRestore.getVolumeId(), "Created by", "Enhanced Snapshots");
-        } catch (Exception e) {
-            // TODO: add user notification about task failure
-            LOG.error("Failed to restore backup.", e);
-            // clean up
-            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
-                tempVolume = awsCommunication.syncVolume(tempVolume);
-                if (tempVolume.getAttachments().size() != 0) {
-                    awsCommunication.detachVolume(tempVolume);
-                }
+                volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), taskEntry.getAvailabilityZone(),
+                        VolumeType.fromValue(taskEntry.getRestoreVolumeType()), taskEntry.getRestoreVolumeIopsPerGb());
                 awsCommunication.deleteVolume(tempVolume);
+                awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
+            } else {
+                //in case availability zone is the same we do not need temp volume
+                volumeToRestore = tempVolume;
+                awsCommunication.deleteTemporaryTag(tempVolume.getVolumeId());
             }
+            awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
+
+            awsCommunication.addTag(volumeToRestore.getVolumeId(), "Created by", "Enhanced Snapshots");
+        } catch (EnhancedSnapshotsTaskInterruptedException e) {
+            TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Canceling", 20, CANCELED);
+            notificationService.notifyAboutTaskProgress(dto);
+            LOG.info("Restore task was canceled");
+
+            deleteTempVolume(tempVolume, dto);
             if (tempSnapshot != null && awsCommunication.snapshotExists(tempSnapshot.getSnapshotId())) {
                 awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
             }
-            throw e;
+            dto.setMessage("Done");
+            dto.setProgress(100);
+            notificationService.notifyAboutTaskProgress(dto);
+        } catch (Exception e) {
+            taskEntry.setStatus(ERROR.toString());
+            taskRepository.save(taskEntry);
+            TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Error", 20, ERROR);
+            notificationService.notifyAboutTaskProgress(dto);
+
+            LOG.error("Failed to restore backup.", e);
+            deleteTempVolume(tempVolume, dto);
+            if (tempSnapshot != null && awsCommunication.snapshotExists(tempSnapshot.getSnapshotId())) {
+                dto.setMessage("Deleting snapshot");
+                dto.addProgress(20);
+                notificationService.notifyAboutTaskProgress(dto);
+                awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
+            }
         }
     }
 
@@ -212,13 +241,6 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void checkThreadInterruption(TaskEntry taskEntry) {
-        if (Thread.interrupted()) {
-            LOG.info("Restore task {} was interrupted.", taskEntry.getId());
-            throw new EnhancedSnapshotsInterruptedException("Task interrupted");
         }
     }
 }

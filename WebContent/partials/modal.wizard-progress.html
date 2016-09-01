@@ -17,7 +17,10 @@
     </div>
 
     <div ng-show="progressState === 'success'">
-        <h2>Congratulations!  Your configurations are complete.  Please login with your provided user credentials.</h2>
+        <h2>Congratulations! Your configurations are complete.
+            <span ng-show="isSSO"><a href="#">Click here to download</a> your service provider metadata. You will be able to log in  as soon as your service provider will be registered with the Identity provider.</span>
+            <span ng-hide="isSSO">Please login with your provided user credentials.</span>
+        </h2>
     </div>
 
     <div ng-show="progressState === 'failed'">

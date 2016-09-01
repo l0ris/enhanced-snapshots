@@ -6,7 +6,9 @@ import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryType.SYSTEM_BACKUP;
 
@@ -62,5 +64,10 @@ public class TaskDtoConverter {
 			dtos.add(convert(task));
 		}
 		return dtos;
+	}
+
+	public static List<TaskDto> convert(Collection<TaskEntry>... taskEntries) {
+		return Arrays.stream(taskEntries).flatMap(s -> s.stream()).parallel()
+				.map(TaskDtoConverter::convert).collect(Collectors.toList());
 	}
 }

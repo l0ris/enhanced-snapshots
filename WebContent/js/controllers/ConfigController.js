@@ -44,11 +44,19 @@ angular.module('web')
         $scope.isValidInstance = true;
         $scope.selectBucket = function (bucket) {
             $scope.selectedBucket = bucket;
+            Configuration.get('bucket/' + encodeURIComponent(bucket.bucketName) + '/metadata').then(function (result) {
+                //property settings.db.hasAdmin is a legacy code which should be changed. Currently this field is replaced
+                // with value from result.data.hasAdmin of this function. Speak to Kostya for more details
+                $scope.settings.db.hasAdmin = result.data.hasAdmin;
+            }, function (err) {
+                console.warn(err);
+            });
         };
 
         var wizardCreationProgress = function () {
             var modalInstance = $modal.open({
                 animation: true,
+                backdrop: false,
                 templateUrl: './partials/modal.wizard-progress.html',
                 scope: $scope
             });
@@ -83,10 +91,12 @@ angular.module('web')
 
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
-                volumeSize: volumeSize
+                volumeSize: volumeSize,
+                ssoMode: $scope.isSSO,
+                spEntityId: $scope.entityId
             };
 
-            if (!$scope.settings.db.hasAdmin) {
+            if (!$scope.settings.db.hasAdmin && !$scope.isSSO) {
                 $scope.userToEdit = {
                     isNew: true,
                     admin: true
@@ -100,10 +110,11 @@ angular.module('web')
 
                 userModalInstance.result.then(function () {
                     settings.user = $scope.userToEdit;
+
                     delete settings.user.isNew;
 
                     $scope.progressState = 'running';
-                    Configuration.send('current', settings, DELAYTIME).then(function () {
+                    Configuration.send('current', settings, DELAYTIME, $scope.settings.sso).then(function () {
                         $scope.progressState = 'success';
                     }, function () {
                         $scope.progressState = 'failed';
@@ -113,15 +124,20 @@ angular.module('web')
 
                 });
             } else {
+
+                if (settings.ssoMode) {
+                    settings.user = {email: $scope.adminEmail}
+                }
+
                 $scope.progressState = 'running';
 
-                Configuration.send('current', settings).then(function () {
-                    $scope.progressState = 'success';
-                }, function (data, status) {
-                    $scope.progressState = 'failed';
-                });
+                    Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
+                        $scope.progressState = 'success';
+                    }, function (data, status) {
+                        $scope.progressState = 'failed';
+                    });
 
-                wizardCreationProgress();
+                    wizardCreationProgress();
             }
         };
 
@@ -132,6 +148,4 @@ angular.module('web')
             }, function (data, status) {
             });
         };
-
-
     });

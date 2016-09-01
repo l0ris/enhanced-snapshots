@@ -1,17 +1,9 @@
 package com.sungardas.enhancedsnapshots.rest;
 
-import java.util.Map;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
-import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
-import com.sungardas.enhancedsnapshots.rest.utils.Constants;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
-import com.sungardas.enhancedsnapshots.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,17 +14,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 
+import javax.annotation.security.RolesAllowed;
+
+
 @RestController
 @RequestMapping("/system")
 public class SystemController {
-    @Autowired
-    private FilterProxy filterProxy;
-
-    @Autowired
-    private HttpServletRequest servletRequest;
-
-    @Autowired
-    private ServletContext context;
 
     @Autowired
     private SDFSStateService sdfsStateService;
@@ -40,32 +27,27 @@ public class SystemController {
     @Autowired
     private SystemService systemService;
 
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private ConfigurationMediator configurationMediator;
 
+    @RolesAllowed("ROLE_ADMIN")
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody RemoveAppDTO removeAppDTO) {
-        String session = servletRequest.getSession().getId();
-        String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
-        if (!userService.isAdmin(currentUser)) {
-            return new ResponseEntity<>("{\"msg\":\"Only admin can delete service\"}", HttpStatus.FORBIDDEN);
-        }
         if (!configurationMediator.getConfigurationId().equals(removeAppDTO.getInstanceId())) {
             return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
-        filterProxy.setFilter(null);
         systemService.systemUninstall(removeAppDTO.removeS3Bucket);
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<SystemConfiguration> getSystem() {
         return new ResponseEntity<>(systemService.getSystemConfiguration(), HttpStatus.OK);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<String> updateSystemProperties(@RequestBody SystemConfiguration newConfiguration) {
         SystemConfiguration currentConfiguration = systemService.getSystemConfiguration();
@@ -77,6 +59,9 @@ public class SystemController {
         }
         if (newConfiguration.getSdfs().getSdfsLocalCacheSize() > currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize()) {
             return new ResponseEntity<>("Local cache size can not be more than " + currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize(), HttpStatus.BAD_REQUEST);
+        }
+        if (newConfiguration.getSystemProperties().getTaskHistoryTTS() <= 0) {
+            return new ResponseEntity<>("Task history TTS should be greater than 0", HttpStatus.BAD_REQUEST);
         }
         boolean needToReconfigureSdfs = false;
 
@@ -95,6 +80,7 @@ public class SystemController {
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/backup", method = RequestMethod.GET)
     public ResponseEntity<SystemBackupDto> getConfiguration() {
         return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);

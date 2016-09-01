@@ -44,6 +44,20 @@ angular.module('web')
             return Storage.get('currentUser')
         };
 
+        var refreshCurrentUser = function () {
+            var deferred = $q.defer();
+            $http({
+                url: url + "/currentUser",
+                method: 'GET',
+            }).then(function (result) {
+                Storage.save('currentUser', result.data);
+                deferred.resolve(result.data);
+            },function (e) {
+                deferred.reject(e);
+            });
+            return deferred.promise;
+        };
+
         var remove = function (email) {
             return $http({
                 url: url + "/" + email,
@@ -67,6 +81,11 @@ angular.module('web')
             getCurrent: function () {
                 return getCurrentUser();
             },
+
+            refreshCurrent: function () {
+                return refreshCurrentUser();
+            },
+
             getAll: function () {
                 return getUsers().then(function (data) {
                     return data;

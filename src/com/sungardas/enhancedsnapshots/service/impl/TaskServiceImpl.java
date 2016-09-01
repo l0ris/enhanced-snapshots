@@ -1,13 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -24,17 +16,22 @@ import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeTaskExecutor;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
 
 @Service
 public class TaskServiceImpl implements TaskService {
 
     private static final Logger LOG = LogManager.getLogger(TaskServiceImpl.class);
-    private static final long TTL = 300000;
 
     @Autowired
     private TaskRepository taskRepository;
@@ -51,21 +48,21 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private NotificationService notificationService;
 
+    private Set<String> canceledTasks = new HashSet<>();
+
     @PostConstruct
     private void init() {
         schedulerService.addTask(new Task() {
             @Override
             public String getId() {
-                return "taskRetentionPolicy";
+                return "canceledTaskCheck";
             }
 
             @Override
             public void run() {
-                long currentTime = System.currentTimeMillis();
-                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqual(currentTime + "");
-                taskRepository.delete(list);
+                updateCanceledTasks();
             }
-        }, "*/5 * * * *");
+        }, new CronTrigger("*/5 * * * * *"));
     }
 
     @Override
@@ -143,7 +140,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDto> getAllTasks() {
         try {
-            return TaskDtoConverter.convert(taskRepository.findByRegular(Boolean.FALSE.toString()));
+            return TaskDtoConverter.convert(taskRepository.findByStatusNotAndRegular(TaskEntry.TaskEntryStatus.COMPLETE.toString(), Boolean.FALSE.toString()),
+                    taskRepository.findByRegularAndCompleteTimeGreaterThanEqual(Boolean.FALSE.toString(), System.currentTimeMillis() - configurationMediator.getTaskHistoryTTS()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -165,8 +163,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void complete(TaskEntry taskEntry) {
-        long expirationDate = System.currentTimeMillis() + TTL;
-        taskEntry.setExpirationDate(expirationDate + "");
+        taskEntry.setCompleteTime(System.currentTimeMillis());
         taskEntry.setStatus(TaskEntry.TaskEntryStatus.COMPLETE.getStatus());
         taskRepository.save(taskEntry);
     }
@@ -174,6 +171,11 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public boolean isQueueFull() {
         return getTasksInQueue() > configurationMediator.getMaxQueueSize();
+    }
+
+    @Override
+    public boolean isCanceled(final String taskId) {
+        return canceledTasks.remove(taskId);
     }
 
     @Override
@@ -193,7 +195,12 @@ public class TaskServiceImpl implements TaskService {
         if (taskRepository.exists(id)) {
             TaskEntry taskEntry = taskRepository.findOne(id);
             if (TaskEntry.TaskEntryStatus.RUNNING.getStatus().equals(taskEntry.getStatus())) {
-                throw new EnhancedSnapshotsException("Can`t remove task " + id + ", task in status: " + taskEntry.getStatus());
+                taskEntry.setStatus(CANCELED.toString());
+                taskRepository.save(taskEntry);
+                canceledTasks.add(id);
+                updateCanceledTasks();
+                notificationService.notifyAboutTaskProgress(id, "Canceling...", 0, CANCELED);
+                return;
             }
             taskRepository.delete(id);
             if (Boolean.valueOf(taskEntry.getRegular())) {
@@ -206,8 +213,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public boolean isCanceled(String id) {
-        return !taskRepository.exists(id);
+    public boolean exists(String id) {
+        return taskRepository.exists(id);
     }
 
     @Override
@@ -239,5 +246,10 @@ public class TaskServiceImpl implements TaskService {
                 taskEntry.setRestoreVolumeIopsPerGb(configurationMediator.getRestoreVolumeIopsPerGb());
             }
         }
+    }
+
+    private void updateCanceledTasks() {
+        canceledTasks = taskRepository.findByStatusAndRegular(CANCELED.toString(), Boolean.FALSE.toString())
+                .stream().map(t -> t.getId()).collect(Collectors.toSet());
     }
 }

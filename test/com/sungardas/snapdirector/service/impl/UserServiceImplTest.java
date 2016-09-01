@@ -1,6 +1,7 @@
-package com.sungardas.enhancedsnapshots.service.impl;
+package com.sungardas.snapdirector.service.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.Roles;
@@ -12,6 +13,7 @@ import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.OperationNotAllowedException;
 import com.sungardas.enhancedsnapshots.exception.UniqueConstraintViolationException;
 
+import com.sungardas.enhancedsnapshots.service.impl.UserServiceImpl;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,19 +51,11 @@ public class UserServiceImplTest {
     @Test
     public void adminCanCreateNewUsers() {
         User newUser = createUser(userEmail);
-        userService.createUser(createUserDto(userEmail), psw, adminEmail);
+        userService.createUser(createUserDto(userEmail), psw);
 
         // email should be converted to lowercase before user saving in DB
         newUser.setEmail(newUser.getEmail().toLowerCase());
         verify(userRepository, times(1)).save(newUser);
-    }
-
-    /**
-     * Not admins are not allowed to create new user accounts
-     */
-    @Test(expected = OperationNotAllowedException.class)
-    public void notAdminCanNotCreateNewUsers() {
-        userService.createUser(createUserDto(userEmail), psw, userEmail);
     }
 
     /**
@@ -70,7 +64,7 @@ public class UserServiceImplTest {
     @Test
     public void adminCanCreateAnotherAdminAccount() {
         User newAdmin = createAdmin("new@admin");
-        userService.createUser(createAdminDto("new@admin"), psw, adminEmail);
+        userService.createUser(createAdminDto("new@admin"), psw);
         verify(userRepository, times(1)).save(newAdmin);
     }
 
@@ -80,8 +74,8 @@ public class UserServiceImplTest {
      */
     @Test(expected = UniqueConstraintViolationException.class)
     public void thereCanNotBeSeveralUsersWithTheSameAccount() {
-        when(userRepository.exists(createUserDto(userEmail).getEmail().toLowerCase())).thenReturn(true);
-        userService.createUser(createUserDto(userEmail), psw, adminEmail);
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(createUser(userEmail)));
+        userService.createUser(createUserDto(userEmail), psw);
     }
 
 
@@ -90,9 +84,9 @@ public class UserServiceImplTest {
      */
     @Test
     public void adminCanRemoveUserAccount() {
-        when(userRepository.exists(userEmail)).thenReturn(true);
-        userService.removeUser(userEmail, adminEmail);
-        verify(userRepository, times(1)).delete(userEmail);
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(createUser(userEmail)));
+        userService.removeUser(userEmail);
+        verify(userRepository, times(1)).delete(Arrays.asList(createUser(userEmail)));
     }
 
     /**
@@ -100,16 +94,7 @@ public class UserServiceImplTest {
      */
     @Test(expected = DataAccessException.class)
     public void nonExistingAccountCanNotBeRemoved() {
-        userService.removeUser("nonExistingUser", adminEmail);
-    }
-
-    /**
-     * Users are not allowed to remove other user accounts
-     */
-    @Test(expected = OperationNotAllowedException.class)
-    public void userCanNotRemoveUserAccount() {
-        when(userRepository.exists("someuser@com")).thenReturn(true);
-        userService.removeUser("someUser@com", userEmail);
+        userService.removeUser("nonExistingUser");
     }
 
     /**
@@ -118,12 +103,12 @@ public class UserServiceImplTest {
     @Test
     public void adminCanRemoveAnotherAdminAccount() {
         String email = "some@admin";
-        when(userRepository.exists(email)).thenReturn(true);
         User admin = createAdmin(email);
+        when(userRepository.findByEmail(email)).thenReturn(Arrays.asList(admin));
         when(userRepository.findOne(email)).thenReturn(admin);
 
-        userService.removeUser(email, adminEmail);
-        verify(userRepository, times(1)).delete(email);
+        userService.removeUser(email);
+        verify(userRepository, times(1)).delete(Arrays.asList(admin));
     }
 
     /**
@@ -131,7 +116,8 @@ public class UserServiceImplTest {
      */
     @Test
     public void adminCanUpdateUserAccount() {
-        when(userRepository.exists(createUserDto(userEmail).getEmail().toLowerCase())).thenReturn(true);
+        when(userRepository.findByEmail(adminEmail)).thenReturn(Arrays.asList(createAdmin(adminEmail)));
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(createUser(userEmail)));
 
         // updating password
         userService.updateUser(createUserDto(userEmail), "newPassword", adminEmail);
@@ -146,7 +132,8 @@ public class UserServiceImplTest {
      */
     @Test(expected = OperationNotAllowedException.class)
     public void userCanNotUpdateAnotherUserAccount() {
-        when(userRepository.exists(createUserDto("user2@user2").getEmail().toLowerCase())).thenReturn(true);
+        when(userRepository.findByEmail("user2@user2")).thenReturn(Arrays.asList(createUser("user2@user2")));
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(createUser(userEmail)));
         // updating password
         userService.updateUser(createUserDto("user2@user2"), "newPassword", userEmail);
     }
@@ -156,7 +143,7 @@ public class UserServiceImplTest {
      */
     @Test
     public void userCanUpdateHisAccount() {
-        when(userRepository.exists(createUserDto(userEmail).getEmail().toLowerCase())).thenReturn(true);
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(createUser(userEmail)));
 
         // updating password
         userService.updateUser(createUserDto(userEmail), "newPassword", userEmail);
@@ -180,12 +167,14 @@ public class UserServiceImplTest {
      */
     @Test
     public void adminCanUpdateAnotherAdminAccount() {
-        User user = createAdmin("another@admin");
-        when(userRepository.exists(createUserDto("another@admin").getEmail())).thenReturn(true);
-        when(userRepository.findOne(createUserDto("another@admin").getEmail())).thenReturn(user);
+        String anotherAdminEmail = "another@admin";
+        User user = createAdmin(anotherAdminEmail);
+        when(userRepository.findByEmail(adminEmail)).thenReturn(Arrays.asList(createAdmin(adminEmail)));
+        when(userRepository.findByEmail(anotherAdminEmail)).thenReturn(Arrays.asList(user));
+//        when(userRepository.findOne(createUserDto(anotherAdminEmail).getEmail())).thenReturn(user);
 
         // updating password
-        userService.updateUser(createAdminDto("another@admin"), "newPassword", adminEmail);
+        userService.updateUser(createAdminDto(anotherAdminEmail), "newPassword", adminEmail);
         user.setPassword(DigestUtils.sha512Hex("newPassword"));
         verify(userRepository, times(1)).save(user);
     }
@@ -195,12 +184,12 @@ public class UserServiceImplTest {
      */
     @Test(expected = OperationNotAllowedException.class)
     public void lastAdminCanNotBeRemoved() {
-        when(userRepository.exists(adminEmail)).thenReturn(true);
+        when(userRepository.findByEmail(adminEmail)).thenReturn(Arrays.asList(createAdmin(adminEmail)));
         List<User> admins = new ArrayList<>();
         admins.add(UserDtoConverter.convert(createAdminDto(adminEmail)));
         when(userRepository.findByRole(Roles.ADMIN.getName())).thenReturn(admins);
 
-        userService.removeUser(adminEmail, adminEmail);
+        userService.removeUser(adminEmail);
     }
 
     /**
@@ -208,7 +197,7 @@ public class UserServiceImplTest {
      */
     @Test(expected = OperationNotAllowedException.class)
     public void lastAdminCanNotChangeHisRoleToUser() {
-        when(userRepository.exists(adminEmail)).thenReturn(true);
+        when(userRepository.findByEmail(adminEmail)).thenReturn(Arrays.asList(createAdmin(adminEmail)));
         List<User> admins = new ArrayList<>();
         admins.add(UserDtoConverter.convert(createAdminDto(adminEmail)));
         when(userRepository.findByRole(Roles.ADMIN.getName())).thenReturn(admins);
@@ -223,7 +212,7 @@ public class UserServiceImplTest {
      */
     @Test(expected = OperationNotAllowedException.class)
     public void userCanNotChangHisRoleToAdmin() {
-        when(userRepository.exists(createUserDto(userEmail).getEmail().toLowerCase())).thenReturn(true);
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(createUser(adminEmail)));
         UserDto dto = createAdminDto(userEmail);
         dto.setAdmin(true);
         userService.updateUser(dto, "777", userEmail);
@@ -234,9 +223,9 @@ public class UserServiceImplTest {
      */
     @Test
     public void useOldPasswordInCaseItWasNotProvided() {
-        when(userRepository.exists(userEmail)).thenReturn(true);
-
         User user = createUser(userEmail);
+        when(userRepository.findByEmail(adminEmail)).thenReturn(Arrays.asList(createAdmin(adminEmail)));
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(user));
         user.setPassword("777");
         when(userRepository.findOne(userEmail)).thenReturn(user);
 
@@ -251,8 +240,8 @@ public class UserServiceImplTest {
     public void emailsShouldBeCaseInsensitive() {
         UserDto userDto = createUserDto(userEmail);
         userDto.setEmail(userDto.getEmail().toUpperCase());
-        when(userRepository.exists(userEmail)).thenReturn(true);
-        userService.createUser(userDto, psw, adminEmail);
+        when(userRepository.findByEmail(userEmail)).thenReturn(Arrays.asList(createUser(userEmail)));
+        userService.createUser(userDto, psw);
     }
 
 
@@ -287,6 +276,4 @@ public class UserServiceImplTest {
         user.setPassword(DigestUtils.sha512Hex(psw));
         return user;
     }
-
-
 }

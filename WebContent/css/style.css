@@ -18,7 +18,7 @@ body > .container {
     padding: 100px 15px 60px;
     min-height: 100%;
 }
-.container.app{
+.container.app {
     padding-top: 140px;
     padding-bottom: 20px;
 }
@@ -27,7 +27,7 @@ body > .container {
     clear: right;
 }
 
-.no-margin{
+.no-margin {
     margin: 0;
 }
 
@@ -52,7 +52,7 @@ body > .container {
     padding-top: 200px;
 }
 
-.spin{
+.spin {
     -webkit-transform-origin: 50% 50%;
     transform-origin:50% 50%;
     -ms-transform-origin:50% 50%; /* IE 9 */
@@ -88,6 +88,7 @@ body > .container {
         transform: rotate(360deg);
     }
 }
+
 .dropdown-menu. li{
     cursor: pointer;
 }
@@ -523,7 +524,7 @@ div.tr.state-removed {
     border-radius: 5px;
     background-color: #ffffff;
     box-shadow: rgba(0,0,0,0.3) 5px 5px 10px -5px;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     position: relative;
 }
 
@@ -554,7 +555,7 @@ div.tr.state-removed {
 }
 
 .snap .card .card-content {
-    padding: 20px 0;
+    padding: 15px 0;
 }
 
 .snap .card .card-content .label {
@@ -584,6 +585,7 @@ div.tr.state-removed {
 .snap .card.status-waiting > div,
 .snap .card.status-queued > div,
 .snap .card.status-running > div,
+.snap .card.status-canceled > div,
 .snap .card.status-error > div {
     background-color: rgba(255,255,255,.6);
     border-radius: 4px;
@@ -615,12 +617,11 @@ div.tr.state-removed {
 }
 
 .snap .card.status-error {
-    background-color: #cc2130;
+    background-color: #e62e00;
 }
 
-
-.snap .card.status-running .show-on-hover a{
-    display: none;
+.snap .card.status-canceled {
+    background-color: #99e6ff;
 }
 
 /* end of card statuses */
@@ -661,13 +662,15 @@ div.tr.state-removed {
 
 .chb.checked {
     background-color: #009f65;
-    color: white;
+    /*color: white;*/
     border: none;
 }
 
 .chb.checked:hover {
     background-color: #007b4e;
 }
+
+
 /* end of Checkbox */
 
 

@@ -1,19 +1,20 @@
 package com.sungardas.enhancedsnapshots.components.impl;
 
-import javax.annotation.PostConstruct;
-
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
-import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
-
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
 
 import static com.sungardas.enhancedsnapshots.service.SystemService.VOLUME_SIZE_UNIT;
 
 /**
- * implementation for {@link ConfigurationMediator}
+ * implementation for {@link ConfigurationMediatorConfigurator}
  */
+
+
 @Service
-public class ConfigurationMediatorImpl implements ConfigurationMediator {
+public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigurator {
 
     private Configuration currentConfiguration;
 
@@ -136,6 +137,12 @@ public class ConfigurationMediatorImpl implements ConfigurationMediator {
         return currentConfiguration.getMaxWaitTimeToDetachVolume();
     }
 
+    @Override
+    public int getTaskHistoryTTS() {
+        return currentConfiguration.getTaskHistoryTTS();
+    }
+
+    @Override
     public void setCurrentConfiguration(final Configuration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
     }
@@ -143,5 +150,18 @@ public class ConfigurationMediatorImpl implements ConfigurationMediator {
     @Override
     public String getVolumeSizeUnit() {
         return VOLUME_SIZE_UNIT;
+    }
+
+    public boolean isSsoLoginMode() {
+        return this.currentConfiguration.isSsoLoginMode();
+    }
+
+    public String getSamlEntityId() {
+        return this.currentConfiguration.getEntityId();
+    }
+
+    @Override
+    public boolean isStoreSnapshot() {
+        return currentConfiguration.isStoreSnapshot();
     }
 }

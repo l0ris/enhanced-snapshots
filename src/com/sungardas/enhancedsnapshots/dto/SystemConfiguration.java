@@ -10,6 +10,7 @@ public class SystemConfiguration {
     private SystemProperties systemProperties;
     private String currentVersion;
     private String latestVersion;
+    private boolean ssoMode;
 
 
     public String getCurrentVersion() {
@@ -68,6 +69,15 @@ public class SystemConfiguration {
     public void setLastBackup(Long lastBackup) {
         this.lastBackup = lastBackup;
     }
+
+    public boolean isSsoMode() {
+        return ssoMode;
+    }
+
+    public void setSsoMode(boolean ssoMode) {
+        this.ssoMode = ssoMode;
+    }
+
 
     public static class S3 {
         private String bucketName;
@@ -182,6 +192,8 @@ public class SystemConfiguration {
         private int amazonRetryCount;
         private int amazonRetrySleep;
         private int maxQueueSize;
+        private int taskHistoryTTS;
+        private boolean storeSnapshots;
 
         public int getAmazonRetryCount() {
             return amazonRetryCount;
@@ -245,6 +257,22 @@ public class SystemConfiguration {
 
         public void setVolumeTypeOptions(String[] volumeTypeOptions) {
             this.volumeTypeOptions = volumeTypeOptions;
+        }
+
+        public int getTaskHistoryTTS() {
+            return taskHistoryTTS;
+        }
+
+        public void setTaskHistoryTTS(int taskHistoryTTS) {
+            this.taskHistoryTTS = taskHistoryTTS;
+        }
+
+        public boolean isStoreSnapshots() {
+            return storeSnapshots;
+        }
+
+        public void setStoreSnapshots(boolean storeSnapshots) {
+            this.storeSnapshots = storeSnapshots;
         }
     }
 }

@@ -11,11 +11,6 @@ public class SystemServiceDev extends SystemServiceImpl {
     }
 
     @Override
-    public void restore() {
-
-    }
-
-    @Override
     protected String getInstanceId() {
         return "DEV";
     }

@@ -4,6 +4,10 @@
          version="3.1">
     <display-name>enhancedsnapshots</display-name>
 
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>/WEB-INF/spring-security.xml</param-value>
+    </context-param>
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
@@ -11,14 +15,15 @@
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
+    <!-- Spring Security -->
     <filter>
-        <filter-name>filterProxy</filter-name>
-        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <filter-class>com.sungardas.enhancedsnapshots.security.RefreshingDelegatingFilterProxy</filter-class>
     </filter>
 
     <filter-mapping>
-        <filter-name>filterProxy</filter-name>
-        <url-pattern>/rest/*</url-pattern>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <url-pattern>/*</url-pattern>
     </filter-mapping>
 
     <!-- For web context -->
@@ -29,7 +34,9 @@
         </servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
-            <param-value>/WEB-INF/init-spring-web-config.xml</param-value>
+            <param-value>
+                /WEB-INF/init-spring-web-config.xml
+            </param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
@@ -41,7 +48,7 @@
 
     <context-param>
         <param-name>spring.profiles.active</param-name>
-        <param-value>prod</param-value>
+        <param-value>dev</param-value>
     </context-param>
 
 </web-app>
