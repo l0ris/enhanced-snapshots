@@ -95,7 +95,7 @@ angular.module('web')
                 spEntityId: $scope.entityId
             };
 
-            if (!$scope.settings.db.hasAdmin) {
+            if (!$scope.settings.db.hasAdmin && !$scope.isSSO) {
                 $scope.userToEdit = {
                     isNew: true,
                     admin: true
