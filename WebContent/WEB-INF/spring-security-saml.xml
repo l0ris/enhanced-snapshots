@@ -46,7 +46,7 @@
 
     <!-- Handler deciding where to redirect user after successful login -->
     <bean id="successRedirectHandler"
-          class="org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler">
+          class="org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler">
         <property name="defaultTargetUrl" value="/"/>
     </bean>
 
@@ -60,7 +60,7 @@
     <!-- Handler for successful logout -->
     <bean id="successLogoutHandler"
           class="org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler">
-        <property name="defaultTargetUrl" value="/logout.jsp"/>
+        <property name="defaultTargetUrl" value="/saml/login"/>
     </bean>
 
     <security:authentication-manager alias="authenticationManager">
