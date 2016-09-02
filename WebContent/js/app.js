@@ -124,7 +124,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                         toastr.error(err.message, err.title);
                     });
                     $rootScope.taskListener = $stomp.subscribe('/task', function (msg) {
-                        Storage.save('lastTaskStatus', msg);
+                        Storage.save('lastTaskStatus_' + msg.taskId, msg);
                         $rootScope.$broadcast("task-status-changed", msg);
                     });
                 }, function (e) {

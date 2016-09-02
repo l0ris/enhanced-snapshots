@@ -43,7 +43,7 @@ angular.module('web')
             $rootScope.isLoading = true;
             Tasks.get($scope.volumeId).then(function (data) {
                 $scope.tasks = data;
-                updateTaskStatus(false);
+                applyTaskStatuses();
                 $rootScope.isLoading = false;
             }, function () {
                 $rootScope.isLoading = false;
@@ -55,10 +55,16 @@ angular.module('web')
             updateTaskStatus(d);
         });
 
-        var updateTaskStatus = function (msg) {
-            if (!msg) {
-                msg = Storage.get('lastTaskStatus') || {};
+        var applyTaskStatuses = function () {
+            for (var i = 0; i < $scope.tasks.length; i++) {
+                var task = $scope.tasks[i];
+                var msg = Storage.get('lastTaskStatus_' + task.id) || {};
+                task.progress = msg.progress;
+                task.message = msg.message;
             }
+        };
+
+        var updateTaskStatus = function (msg) {
             var task = $scope.tasks.filter(function (t) {
                 return t.id == msg.taskId && msg.status != "COMPLETE";
             })[0];
@@ -73,7 +79,7 @@ angular.module('web')
                     }, 0);
 
                     if (msg.progress == 100) {
-                        Storage.remove('lastTaskStatus');
+                        Storage.remove('lastTaskStatus_' + task.id);
                         $scope.refresh();
                     }
                 }
