@@ -31,7 +31,7 @@
 
 
                 <div class="tr" ng-repeat="user in displayedUsers">
-                        <div class="row-hover">
+                        <div class="row-hover" ng-show="isAdmin || (isCurrentUser(user.email) && !ssoMode)">
                             <div class="flex-container data-container">
                                 <div class="flex-1 flex-center row-menu">
                                     <a href="" title="Edit user" ng-click="editUser(user)"
