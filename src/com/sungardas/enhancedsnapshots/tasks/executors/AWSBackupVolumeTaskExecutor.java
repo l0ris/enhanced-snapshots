@@ -1,9 +1,6 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.ec2.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -293,8 +290,9 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
 
         // create volume
         String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
-        Volume volumeDest = awsCommunication.waitForAvailableState(awsCommunication.createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                instanceAvailabilityZone, VolumeType.fromValue(taskEntry.getTempVolumeType()), taskEntry.getTempVolumeIopsPerGb()));
+        Volume volumeDest = awsCommunication.waitForVolumeState(awsCommunication.createVolumeFromSnapshot(snapshot.getSnapshotId(),
+                instanceAvailabilityZone, VolumeType.fromValue(taskEntry.getTempVolumeType()), taskEntry.getTempVolumeIopsPerGb()),
+                VolumeState.Available);
         LOG.info("Volume created: {}", volumeDest.toString());
 
         // create temporary tag

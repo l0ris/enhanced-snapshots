@@ -14,10 +14,6 @@ public class TaskProgressDto implements Dto {
     public TaskProgressDto() {
     }
 
-    public TaskProgressDto(String taskId, String message, double progress) {
-        this(taskId, message, progress, TaskEntryStatus.WAITING);
-    }
-
     public TaskProgressDto(String taskId, String message, double progress, TaskEntryStatus status) {
         this.taskId = taskId;
         this.message = message;

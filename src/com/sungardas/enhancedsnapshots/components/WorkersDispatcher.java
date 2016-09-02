@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
@@ -27,8 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
 
 
 @Service
@@ -67,10 +67,17 @@ public class WorkersDispatcher {
 
     private ExecutorService executor;
 
+    private ExecutorService backupExecutor;
+
+    @Value("${enhancedsnapshots.default.backup.threadPool.size}")
+    private int backupThreadPoolSize;
+
     @PostConstruct
     private void init() {
         executor = Executors.newSingleThreadExecutor();
         executor.execute(new TaskWorker());
+
+        backupExecutor = Executors.newFixedThreadPool(backupThreadPoolSize);
     }
 
     @PreDestroy
@@ -111,7 +118,10 @@ public class WorkersDispatcher {
                                             break;
                                         }
                                         LOGtw.info("Task was identified as backup");
-                                        awsBackupVolumeTaskExecutor.execute(entry);
+                                        entry.setStatus(WAITING.getStatus());
+                                        taskRepository.save(entry);
+                                        TaskEntry t = entry;
+                                        backupExecutor.submit(() -> awsBackupVolumeTaskExecutor.execute(t));
                                         break;
                                     case DELETE: {
                                         LOGtw.info("Task was identified as delete backup");
