@@ -1,16 +1,9 @@
 package com.sungardas.enhancedsnapshots.rest;
 
-import java.io.IOException;
-import java.security.Principal;
-import java.util.Collections;
-
-import javax.annotation.security.RolesAllowed;
-
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.UserService;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.DeserializationConfig;
@@ -19,14 +12,12 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.security.RolesAllowed;
+import java.io.IOException;
+import java.security.Principal;
+import java.util.Collections;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -61,7 +52,7 @@ public class UserController {
 	@RequestMapping(value = "/currentUser", method = RequestMethod.GET)
 	public ResponseEntity getCurrentUser(Principal principal) {
 		try {
-			String role = "ROLE_"+ userService.getUser(principal.getName()).getRole().toUpperCase();
+			String role = userService.getUser(principal.getName()).getRole();
 			return new ResponseEntity<>("{ \"role\":\"" + role
 					+ "\", \"email\":\"" + principal.getName() + "\" }", HttpStatus.OK);
 		} catch (DataAccessException e) {
