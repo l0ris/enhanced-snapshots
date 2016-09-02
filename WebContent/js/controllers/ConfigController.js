@@ -52,8 +52,10 @@ angular.module('web')
                 console.warn(err);
             });
         };
-
-        var wizardCreationProgress = function () {
+		
+		if (angular.isUndefined($scope.isSSO)) { $scope.isSSO = false; } 
+        
+		var wizardCreationProgress = function () {
             var modalInstance = $modal.open({
                 animation: true,
                 backdrop: false,
@@ -133,7 +135,7 @@ angular.module('web')
 
                     Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
                         $scope.progressState = 'success';
-                        Storage.save("ssoMode", {ssoMode: true});
+                    	Storage.save("ssoMode", {ssoMode: $scope.isSSO});
                     }, function (data, status) {
                         $scope.progressState = 'failed';
                     });
