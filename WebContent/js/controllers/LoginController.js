@@ -1,18 +1,27 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr) {
-
+    .controller('LoginController', function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr, $window) {
         if ($stateParams.err && $stateParams.err == 'session') {
             toastr.warning('You were logged out. Please re-login', 'Session expired.');
         }
-
+    
         if (angular.isDefined(Storage.get("currentUser"))) {
-            Auth.logOut();
+            
+            if (Storage.get("ssoMode") && Storage.get("ssoMode").ssoMode) {
+                $window.location.href = "/saml/logout"
+            } else {
+                Auth.logOut();    
+            }
+            
         }
 
         if (Storage.get("currentUser") && Storage.get("currentUser").length > 1) {
-            Auth.logOut();
+            if (Storage.get("ssoMode") && Storage.get("ssoMode").ssoMode) {
+                $window.location.href = "/saml/logout"
+            } else {
+                Auth.logOut();    
+            }
         }
 
         $scope.clearErr = function () {

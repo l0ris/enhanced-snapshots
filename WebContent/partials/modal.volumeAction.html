@@ -20,10 +20,11 @@
 
         <!-- cron-->
         <div class="form-group">
-            <label>Schedule:</label>
+            <label>Schedule </label> &nbsp;<span>(in timezone of amazon instance)</span><strong>:</strong>
             <jq-cron class="form-control" ng-model="schedule.cron"></jq-cron>
             Cron: <code>"{{schedule.cron}}"</code>
         </div>
+        
         <!-- cron end-->
 
         <!-- enabled-->

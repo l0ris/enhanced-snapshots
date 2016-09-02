@@ -46,11 +46,10 @@ angular.module('web')
         var _sendFiles = function (item, files) {
             var deferred = $q.defer();
             var formData = new FormData();
-            var namesArray = [];
+            var namesArray = ["idp_metadata.xml", "saml_sp_cert.pem"];
 
             for (var key in files) {
                 formData.append('file', files[key]);
-                namesArray.push(files[key].name);
             }
 
             formData.append('name', namesArray);

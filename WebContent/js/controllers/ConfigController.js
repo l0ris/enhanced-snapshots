@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
+    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
         var DELAYTIME = 600*1000;
         $scope.STRINGS = {
             s3: {
@@ -114,7 +114,7 @@ angular.module('web')
                     delete settings.user.isNew;
 
                     $scope.progressState = 'running';
-                    Configuration.send('current', settings, DELAYTIME, $scope.settings.sso).then(function () {
+                    Configuration.send('current', settings, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
                     }, function () {
                         $scope.progressState = 'failed';
@@ -133,6 +133,7 @@ angular.module('web')
 
                     Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
                         $scope.progressState = 'success';
+                        Storage.save("ssoMode", {ssoMode: true});
                     }, function (data, status) {
                         $scope.progressState = 'failed';
                     });
