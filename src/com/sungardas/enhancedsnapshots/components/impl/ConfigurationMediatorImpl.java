@@ -11,6 +11,8 @@ import static com.sungardas.enhancedsnapshots.service.SystemService.VOLUME_SIZE_
 /**
  * implementation for {@link ConfigurationMediatorConfigurator}
  */
+
+
 @Service
 public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigurator {
 
@@ -148,6 +150,14 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     @Override
     public String getVolumeSizeUnit() {
         return VOLUME_SIZE_UNIT;
+    }
+
+    public boolean isSsoLoginMode() {
+        return this.currentConfiguration.isSsoLoginMode();
+    }
+
+    public String getSamlEntityId() {
+        return this.currentConfiguration.getEntityId();
     }
 
     @Override

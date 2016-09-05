@@ -52,5 +52,10 @@ public interface ConfigurationMediator {
 
     String getVolumeSizeUnit();
 
+    boolean isSsoLoginMode();
+
+    String getSamlEntityId();
+
     boolean isStoreSnapshot();
+
 }

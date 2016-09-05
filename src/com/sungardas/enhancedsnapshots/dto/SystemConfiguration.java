@@ -10,6 +10,7 @@ public class SystemConfiguration {
     private SystemProperties systemProperties;
     private String currentVersion;
     private String latestVersion;
+    private boolean ssoMode;
 
 
     public String getCurrentVersion() {
@@ -68,6 +69,15 @@ public class SystemConfiguration {
     public void setLastBackup(Long lastBackup) {
         this.lastBackup = lastBackup;
     }
+
+    public boolean isSsoMode() {
+        return ssoMode;
+    }
+
+    public void setSsoMode(boolean ssoMode) {
+        this.ssoMode = ssoMode;
+    }
+
 
     public static class S3 {
         private String bucketName;

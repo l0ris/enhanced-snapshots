@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.security.RolesAllowed;
+
 
 @RestController
 @RequestMapping("/volume")
@@ -23,6 +25,7 @@ public class VolumeController {
     @Autowired
     private VolumeService volumeService;
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity getAllVolumes() {
         try {
@@ -33,6 +36,7 @@ public class VolumeController {
         }
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/{regionId}", method = RequestMethod.GET)
     public ResponseEntity getVolumesByRegion(@PathVariable("regionId") String region) {
         try {

@@ -131,4 +131,9 @@ public class AmazonConfigProviderDEV {
         }
         return amazonS3;
     }
+
+
+    public static String getDynamoDbPrefix(String instanceId) {
+        return "ENHANCEDSNAPSHOTS_" + instanceId + "_";
+    }
 }

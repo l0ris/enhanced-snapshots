@@ -1,10 +1,11 @@
 'use strict';
 
 angular.module('web')
-    .controller('UserController', function ($scope, $rootScope, Users, Storage, toastr, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
+    .controller('UserController', function ($scope, $rootScope, Users, ssoMode, Storage, toastr, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
         $scope.users = [];
+        $scope.ssoMode = ssoMode.ssoMode;
 
         var currentUser = Users.getCurrent();
         $scope.isAdmin = currentUser.role === "admin";
@@ -13,14 +14,14 @@ angular.module('web')
         };
 
         var updateCurrentUser = function () {
-            if($scope.isCurrentUser($scope.userToEdit.email)) {
+            if ($scope.isCurrentUser($scope.userToEdit.email)) {
                 var user = angular.copy($scope.userToEdit);
                 delete user.isNew;
                 delete user.password;
                 delete user.admin;
                 user.role = $scope.userToEdit.admin ? 'admin' : 'user';
                 Storage.save("currentUser", user);
-            };
+            }
         };
 
         $scope.editUser = function (user) {

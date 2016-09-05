@@ -1,7 +1,8 @@
-package com.sungardas.enhancedsnapshots.dto.converter;
+package com.sungardas.snapdirector.dto.converter;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
+import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,7 +22,7 @@ public class UserDtoConverterTest {
     @Test
     public void convertUserToUserDto() {
         // with user role
-        User user = new User(EMAIL, PSW, USER_ROLE, FIRST_NAME, LAST_NAME, "");
+        User user = new User(EMAIL, PSW, USER_ROLE, FIRST_NAME, LAST_NAME);
         UserDto userDto = UserDtoConverter.convert(user);
         Assert.assertTrue(userDto.getEmail().equals(EMAIL));
         Assert.assertTrue(userDto.getFirstName().equals(FIRST_NAME));
@@ -50,8 +51,8 @@ public class UserDtoConverterTest {
 
     @Test
     public void convertUsersToUserDtos() {
-        User user_first = new User(EMAIL, PSW, USER_ROLE, FIRST_NAME, LAST_NAME, "");
-        User user_second = new User(EMAIL + "_2", PSW + "_2", ADMIN_ROLE, FIRST_NAME + "_2", LAST_NAME + "_2", "");
+        User user_first = new User(EMAIL, PSW, USER_ROLE, FIRST_NAME, LAST_NAME);
+        User user_second = new User(EMAIL + "_2", PSW + "_2", ADMIN_ROLE, FIRST_NAME + "_2", LAST_NAME + "_2");
         List<User> users = new ArrayList<>();
         users.add(user_first);
         users.add(user_second);

@@ -2,7 +2,11 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-        http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
 
     <bean class="com.sungardas.init.InitController"/>
 
@@ -15,14 +19,26 @@
     <context:property-placeholder location="classpath:/defaultEnhancedSnapshots.properties,file:${catalina.home}/conf/EnhancedSnapshots.properties" ignore-resource-not-found="true"/>
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
+    <bean class="com.sungardas.init.ContextManager"/>
+    <bean id="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- max upload size in bytes -->
+        <property name="maxUploadSize" value="20971520" /> <!-- 20MB -->
+
+        <!-- max size of file in memory (in bytes) -->
+        <property name="maxInMemorySize" value="1048576" /> <!-- 1MB -->
+
+    </bean>
 
     <beans profile="dev">
+        <bean class="com.sungardas.init.SystemRestoreServiceDev"/>
         <bean class="com.sungardas.init.InitConfigurationServiceDev"/>
         <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
 
     <beans profile="prod">
         <bean class="com.sungardas.init.InitConfigurationServiceImpl"/>
+        <bean class="com.sungardas.init.SystemRestoreServiceImpl"/>
         <bean class="com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl"/>
     </beans>
 </beans>

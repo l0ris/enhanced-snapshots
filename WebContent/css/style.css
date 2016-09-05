@@ -524,7 +524,7 @@ div.tr.state-removed {
     border-radius: 5px;
     background-color: #ffffff;
     box-shadow: rgba(0,0,0,0.3) 5px 5px 10px -5px;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     position: relative;
 }
 
@@ -555,7 +555,7 @@ div.tr.state-removed {
 }
 
 .snap .card .card-content {
-    padding: 20px 0;
+    padding: 15px 0;
 }
 
 .snap .card .card-content .label {
@@ -662,13 +662,15 @@ div.tr.state-removed {
 
 .chb.checked {
     background-color: #009f65;
-    color: white;
+    /*color: white;*/
     border: none;
 }
 
 .chb.checked:hover {
     background-color: #007b4e;
 }
+
+
 /* end of Checkbox */
 
 
