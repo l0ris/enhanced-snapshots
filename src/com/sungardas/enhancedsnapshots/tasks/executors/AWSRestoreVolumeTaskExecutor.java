@@ -1,9 +1,6 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.ec2.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
@@ -150,7 +147,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Attaching volume...", 20);
             awsCommunication.createTemporaryTag(tempVolume.getVolumeId(), backupentry.getFileName());
-            awsCommunication.waitForAvailableState(tempVolume);
+            awsCommunication.waitForVolumeState(tempVolume, VolumeState.Available);
             awsCommunication.attachVolume(instance, tempVolume);
 
             try {
