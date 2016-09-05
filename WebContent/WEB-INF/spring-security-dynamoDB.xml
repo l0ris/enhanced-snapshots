@@ -1,0 +1,16 @@
+<b:beans xmlns="http://www.springframework.org/schema/security"
+         xmlns:b="http://www.springframework.org/schema/beans"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+        <b:bean id="authProvider" class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+            <b:property name="userDetailsService" ref="userServiceDynamoDb" />
+            <b:property name="passwordEncoder" ref="encoder" />
+        </b:bean>
+
+        <b:bean id="userServiceDynamoDb" class="com.sungardas.enhancedsnapshots.security.DynamoDbUserDetailsService"></b:bean>
+        <b:bean id="encoder" class="com.sungardas.enhancedsnapshots.security.Sha512HexPasswordEncoder"></b:bean>
+
+</b:beans>
+

@@ -39,6 +39,9 @@ public class EnhancedSnapshotSystemMetadataUtil {
      * Return true when S3 bucket contains SDFS backup, false otherwise
      */
     public static boolean containsSdfsMetadata(String sBucket, String sdfsBackupFileName, AmazonS3 amazonS3) {
+        if(!isBucketExits(sBucket, amazonS3)){
+            return false;
+        }
         ListObjectsRequest request = new ListObjectsRequest().withBucketName(sBucket).withPrefix(sdfsBackupFileName);
         return amazonS3.listObjects(request).getObjectSummaries().size() > 0;
     }

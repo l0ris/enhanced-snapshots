@@ -55,7 +55,7 @@ public class CreateAppConfigurationDev {
         Configuration configuration = getDevConf();
         mapper.save(configuration);
 
-        User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev", "DEV");
+        User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev");
         user.setId("DEV");
         mapper.save(user);
     }
@@ -85,6 +85,7 @@ public class CreateAppConfigurationDev {
         configuration.setSdfsVolumeName("awspool");
         configuration.setSdfsMountPoint("/mnt/awspool");
         configuration.setTaskHistoryTTS(300000);
+        configuration.setSsoLoginMode(true);
 
         return configuration;
     }

@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void createUser(UserDto userInfo, String password, String currentUserEmail) throws DataAccessException, UniqueConstraintViolationException {
+    public void createUser(UserDto userInfo, String password) throws DataAccessException, UniqueConstraintViolationException {
         // check whether user with the same email already exists
         if (!userRepository.findByEmail(userInfo.getEmail().toLowerCase()).isEmpty()) {
             UniqueConstraintViolationException e = new UniqueConstraintViolationException("User with such email already exists: " + userInfo.getEmail());
@@ -47,26 +47,24 @@ public class UserServiceImpl implements UserService {
             throw e;
         }
         try {
-            // check whether current user has permission to create new users
-            if (isAdmin(currentUserEmail)) {
-                User newUser = UserDtoConverter.convert(userInfo);
-                newUser.setPassword(DigestUtils.sha512Hex(password));
+            User newUser = UserDtoConverter.convert(userInfo);
+            newUser.setPassword(DigestUtils.sha512Hex(password));
 
-                // convert user email to lowercase
-                newUser.setEmail(newUser.getEmail().toLowerCase());
-                if (newUser.getRole().isEmpty()) {
-                    newUser.setRole(Roles.USER.getName());
-                }
-                userRepository.save(newUser);
-            } else {
-                OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can create new user.");
-                LOG.info("Failed to register user.", e);
-                throw e;
+            // convert user email to lowercase
+            newUser.setEmail(newUser.getEmail().toLowerCase());
+            if (newUser.getRole().isEmpty()) {
+                newUser.setRole(Roles.USER.getName());
             }
+            userRepository.save(newUser);
         } catch (RuntimeException e) {
             LOG.error("Failed to register user.", e);
             throw e;
         }
+    }
+
+    @Override
+    public void createSamlUser(UserDto userInfo) throws DataAccessException, UniqueConstraintViolationException {
+        createUser(userInfo, "");
     }
 
     @Override
@@ -121,7 +119,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void removeUser(String userEmail, String currentUserEmail) {
+    public void removeUser(String userEmail) {
         // check user exists
         if (userRepository.findByEmail(userEmail.toLowerCase()).isEmpty()) {
             DataAccessException e = new DataAccessException("User with such email does not exist: " + userEmail);
@@ -129,20 +127,13 @@ public class UserServiceImpl implements UserService {
             throw e;
         }
         try {
-            // check whether current user has permission to remove existing users and it is not last admin in system
-            if (isAdmin(currentUserEmail)) {
-                // in case it's last admin in system, it can not be removed
-                if (isAdmin(userEmail) && isLastAdmin()) {
-                    OperationNotAllowedException e = new OperationNotAllowedException("Admin user can not be removed in case it is the last admin in system.");
-                    LOG.debug("Admin user can not be removed in case it's last admin in system.", e);
-                    throw e;
-                } else {
-                    userRepository.delete(userRepository.findByEmail(userEmail));
-                }
-            } else {
-                OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can remove users.");
-                LOG.info("Failed to remove user.", e);
+            // in case it's last admin in system, it can not be removed
+            if (isAdmin(userEmail) && isLastAdmin()) {
+                OperationNotAllowedException e = new OperationNotAllowedException("Admin user can not be removed in case it is the last admin in system.");
+                LOG.debug("Admin user can not be removed in case it's last admin in system.", e);
                 throw e;
+            } else {
+                userRepository.delete(userRepository.findByEmail(userEmail));
             }
         } catch (RuntimeException e) {
             LOG.error("Failed to remove user.", e);
@@ -152,13 +143,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUser(String user, String password) {
-        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPassword(user.toLowerCase(), DigestUtils.sha512Hex(password)));
-        if (list.isEmpty()) {
+    public User getUser(String user) {
+        // there should not be several users with one email
+        if(userRepository.findByEmail(user.toLowerCase()).isEmpty()){
             return null;
-        } else {
-            return list.get(0);
         }
+        return userRepository.findByEmail(user.toLowerCase()).get(0);
     }
 
     public boolean isAdmin(String userEmail) {

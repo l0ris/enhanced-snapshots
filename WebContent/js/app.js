@@ -19,6 +19,21 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         return true;
     }];
 
+    var ssoMode = ['System', '$q', '$rootScope', function (System, $q, $rootScope) {
+        $rootScope.isLoading = true;
+        var deferred = $q.defer();
+
+        System.get().then(function (data) {
+            $rootScope.isLoading = false;
+            deferred.resolve(data);
+        }, function () {
+            $rootScope.isLoading = false;
+            deferred.reject(false);
+        });
+
+        return deferred.promise;
+    }];
+
     $stateProvider
         .state('app', {
             abstract: true,
@@ -80,7 +95,10 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         .state('app.users', {
             url: "/users",
             templateUrl: "partials/users.html",
-            controller: "UserController"
+            controller: "UserController",
+            resolve: {
+                ssoMode: ssoMode
+            }
         })
         .state('config', {
             url: "/config",
@@ -101,9 +119,14 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             controller: "RegistrationController"
         });
 
+    $httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
     $httpProvider.interceptors.push('Interceptor');
 })
-    .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage) {
+    .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users) {
+        Users.refreshCurrent().then(function (user) {
+            $rootScope.isLoading = false;
+        });
+
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
         };
@@ -132,7 +155,6 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 });
         };
 
-        $rootScope.isLoading = false;
 
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.security.RolesAllowed;
+
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -40,13 +42,14 @@ public class RetentionController {
         LOG.error(e);
     }
 
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(method = POST)
     public ResponseEntity<Void> modifyRetentionPolicy(@RequestBody RetentionDto retentionDto){
         retentionService.putRetention(retentionDto);
         return new ResponseEntity(HttpStatus.OK);
     }
 
-
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
     @RequestMapping(value = "/{volumeId}", method = GET)
     public ResponseEntity<RetentionDto> getRetention(@PathVariable String volumeId){
         return new ResponseEntity<>(retentionService.getRetentionDto(volumeId), HttpStatus.OK);

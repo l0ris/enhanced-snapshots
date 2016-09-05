@@ -1,42 +1,21 @@
 package com.sungardas.init;
 
-
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
+import org.springframework.web.multipart.MultipartFile;
+
 
 interface InitConfigurationService {
 
-    void removeProperties();
-
     InitConfigurationDto getInitConfigurationDto();
 
-    boolean propertyFileExists();
+    boolean systemIsConfigured();
 
     boolean checkDefaultUser(String login, String password);
 
-    String getInstanceId();
-
-    void configureAWSLogAgent();
-
-    void storePropertiesEditableFromConfigFile();
-
-    void setUser(User user);
-
-    void createDBAndStoreSettings(final InitController.ConfigDto config);
-
-    void syncSettingsInDbAndConfigFile();
-
-    void validateVolumeSize(int volumeSize);
+    void configureSystem(ConfigDto configDto);
 
     BucketNameValidationDTO validateBucketName(String bucketName);
-
-    /**
-     * Create bucket in current region in case it does not exist
-     * throws IllegalArgumentException in case invalid bucketName was provided
-     * @param bucketName
-     */
-    void createBucket(String bucketName);
 
     /**
      * Check if it is possible to restore DB from S3 bucket
@@ -45,4 +24,13 @@ interface InitConfigurationService {
      * @return information about DB
      */
     InitConfigurationDto.DB containsMetadata(String bucketName);
+
+    /**
+     * Validate and convert SAML 2.0 related files
+     *
+     * @param spCertificate Service provider certificate (pem file)
+     * @param idpMetadata   Identity provider metadata (xml file)
+     */
+    void saveAndProcessSAMLFiles(MultipartFile spCertificate, MultipartFile idpMetadata);
+
 }

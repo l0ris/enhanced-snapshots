@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
+    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
         var DELAYTIME = 600*1000;
         $scope.STRINGS = {
             s3: {
@@ -52,10 +52,13 @@ angular.module('web')
                 console.warn(err);
             });
         };
-
-        var wizardCreationProgress = function () {
+		
+		if (angular.isUndefined($scope.isSSO)) { $scope.isSSO = false; } 
+        
+		var wizardCreationProgress = function () {
             var modalInstance = $modal.open({
                 animation: true,
+                backdrop: false,
                 templateUrl: './partials/modal.wizard-progress.html',
                 scope: $scope
             });
@@ -90,10 +93,12 @@ angular.module('web')
 
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
-                volumeSize: volumeSize
+                volumeSize: volumeSize,
+                ssoMode: $scope.isSSO,
+                spEntityId: $scope.entityId
             };
 
-            if (!$scope.settings.db.hasAdmin) {
+            if (!$scope.settings.db.hasAdmin && !$scope.isSSO) {
                 $scope.userToEdit = {
                     isNew: true,
                     admin: true
@@ -107,6 +112,7 @@ angular.module('web')
 
                 userModalInstance.result.then(function () {
                     settings.user = $scope.userToEdit;
+
                     delete settings.user.isNew;
 
                     $scope.progressState = 'running';
@@ -120,15 +126,21 @@ angular.module('web')
 
                 });
             } else {
+
+                if (settings.ssoMode) {
+                    settings.user = {email: $scope.adminEmail}
+                }
+
                 $scope.progressState = 'running';
 
-                Configuration.send('current', settings).then(function () {
-                    $scope.progressState = 'success';
-                }, function (data, status) {
-                    $scope.progressState = 'failed';
-                });
+                    Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
+                        $scope.progressState = 'success';
+                    	Storage.save("ssoMode", {ssoMode: $scope.isSSO});
+                    }, function (data, status) {
+                        $scope.progressState = 'failed';
+                    });
 
-                wizardCreationProgress();
+                    wizardCreationProgress();
             }
         };
 
