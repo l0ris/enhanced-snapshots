@@ -68,9 +68,13 @@ public class WorkersDispatcher {
     private ExecutorService executor;
 
     private ExecutorService backupExecutor;
+    private ExecutorService restoreExecutor;
 
     @Value("${enhancedsnapshots.default.backup.threadPool.size}")
     private int backupThreadPoolSize;
+
+    @Value("${enhancedsnapshots.default.restore.threadPool.size}")
+    private int restoreThreadPoolSize;
 
     @PostConstruct
     private void init() {
@@ -78,11 +82,14 @@ public class WorkersDispatcher {
         executor.execute(new TaskWorker());
 
         backupExecutor = Executors.newFixedThreadPool(backupThreadPoolSize);
+        restoreExecutor = Executors.newFixedThreadPool(backupThreadPoolSize);
     }
 
     @PreDestroy
     public void destroy() {
         executor.shutdownNow();
+        backupExecutor.shutdownNow();
+        restoreExecutor.shutdownNow();
     }
 
     private Set<TaskEntry> sortByTimeAndPriority(List<TaskEntry> list) {
@@ -120,8 +127,8 @@ public class WorkersDispatcher {
                                         LOGtw.info("Task was identified as backup");
                                         entry.setStatus(WAITING.getStatus());
                                         taskRepository.save(entry);
-                                        TaskEntry t = entry;
-                                        backupExecutor.submit(() -> awsBackupVolumeTaskExecutor.execute(t));
+                                        TaskEntry backupTask = entry;
+                                        backupExecutor.submit(() -> awsBackupVolumeTaskExecutor.execute(backupTask));
                                         break;
                                     case DELETE: {
                                         LOGtw.info("Task was identified as delete backup");
@@ -133,7 +140,10 @@ public class WorkersDispatcher {
                                             break;
                                         }
                                         LOGtw.info("Task was identified as restore");
-                                        awsRestoreVolumeTaskExecutor.execute(entry);
+                                        entry.setStatus(WAITING.getStatus());
+                                        taskRepository.save(entry);
+                                        TaskEntry restoreTask = entry;
+                                        restoreExecutor.submit(() -> awsRestoreVolumeTaskExecutor.execute(restoreTask));
                                         break;
                                     case SYSTEM_BACKUP: {
                                         LOGtw.info("Task was identified as system backup");

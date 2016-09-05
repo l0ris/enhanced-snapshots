@@ -1,5 +1,16 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -16,15 +27,12 @@ import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeTaskExecutor;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
 
@@ -225,7 +233,9 @@ public class TaskServiceImpl implements TaskService {
 
     private int getTasksInQueue() {
         return (int) (taskRepository.countByRegularAndTypeAndStatus(Boolean.FALSE.toString(), TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
-                taskRepository.countByRegularAndTypeAndStatus(Boolean.FALSE.toString(), TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()));
+                taskRepository.countByRegularAndTypeAndStatus(Boolean.FALSE.toString(), TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
+                taskRepository.countByRegularAndTypeAndStatus(Boolean.FALSE.toString(), TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.WAITING.getStatus()) +
+                taskRepository.countByRegularAndTypeAndStatus(Boolean.FALSE.toString(), TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.WAITING.getStatus()));
     }
 
     // for restore and backup tasks we should specify temp volume type
