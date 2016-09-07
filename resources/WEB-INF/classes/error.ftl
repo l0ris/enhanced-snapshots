@@ -47,7 +47,7 @@
             <td style="padding: 9px; text-align: right">
                 <div>
                     <a href="http://www.linkedin.com/companies/1873?goback=.nmp_%2a1_%2a1&trk=NUS_CO-logo"><img
-                            src="${data.domain}/img/linkedin.png"></a>
+                            src="${domain}/img/linkedin.png"></a>
                     <a href="http://www.facebook.com/SunGardAS"><img src="${domain}/img/facebook.png"></a>
                     <a href="http://twitter.com/SunGardAS"><img src="${domain}/img/twitter.png"></a>
                     <a href="http://www.youtube.com/user/SunGardAS"><img src="${domain}/img/youtube.png"></a>
