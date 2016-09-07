@@ -3,6 +3,7 @@ package com.sungardas.init;
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
@@ -98,6 +99,13 @@ class InitController {
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
         initConfigurationService.configureSystem(config);
+        return new ResponseEntity<>("", HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/configuration/mail", method = RequestMethod.POST)
+    public ResponseEntity<String> setConfiguration(@RequestBody MailConfigurationDto dto) {
+        initConfigurationService.checkMailConfiguration(dto);
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 

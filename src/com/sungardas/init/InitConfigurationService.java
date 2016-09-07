@@ -1,6 +1,7 @@
 package com.sungardas.init;
 
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -8,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 interface InitConfigurationService {
 
     InitConfigurationDto getInitConfigurationDto();
+
+    void checkMailConfiguration(MailConfigurationDto configuration);
 
     boolean systemIsConfigured();
 

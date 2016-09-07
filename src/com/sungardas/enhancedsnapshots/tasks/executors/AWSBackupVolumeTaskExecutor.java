@@ -62,6 +62,9 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     @Autowired
     private VolumeService volumeService;
 
+    @Autowired
+    private MailService mailService;
+
     public void execute(TaskEntry taskEntry) {
         String volumeId = taskEntry.getVolume();
         Volume tempVolume = null;
@@ -167,6 +170,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
             retentionService.apply();
+            mailService.notifyAboutSuccess(taskEntry);
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
             LOG.info("Backup process for volume {} canceled ", volumeId);
             TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Kill initialization process", 20, CANCELED);
@@ -179,6 +183,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             dto.setMessage("Done");
             dto.setProgress(100);
             notificationService.notifyAboutTaskProgress(dto);
+            mailService.notifyAboutError(taskEntry, e);
         } catch (Exception e) {
             LOG.error("Backup process for volume {} failed ", volumeId, e);
             taskEntry.setStatus(ERROR.toString());
@@ -194,6 +199,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             dto.setMessage("Done");
             dto.setProgress(100);
             notificationService.notifyAboutTaskProgress(dto);
+            mailService.notifyAboutError(taskEntry, e);
         }
     }
 

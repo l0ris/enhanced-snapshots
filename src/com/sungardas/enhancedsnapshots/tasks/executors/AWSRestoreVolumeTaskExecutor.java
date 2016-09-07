@@ -53,6 +53,9 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
     @Autowired
     private TaskService taskService;
 
+    @Autowired
+    private MailService mailService;
+
     @Override
     public void execute(TaskEntry taskEntry) {
         LOG.info("Executing restore task:\n" + taskEntry.toString());
@@ -76,6 +79,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
             LOG.error(e);
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.ERROR.getStatus());
             taskRepository.save(taskEntry);
+            mailService.notifyAboutError(taskEntry, e);
         }
     }
 
@@ -89,6 +93,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
         notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Restore complete", 100);
         taskService.complete(taskEntry);
         LOG.info("{} task {} was completed", taskEntry.getType(), taskEntry.getId());
+        mailService.notifyAboutSuccess(taskEntry);
     }
 
     private void restoreFromSnapshot(TaskEntry taskEntry) {
@@ -216,6 +221,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
             dto.setMessage("Done");
             dto.setProgress(100);
             notificationService.notifyAboutTaskProgress(dto);
+            mailService.notifyAboutError(taskEntry, e);
         } catch (Exception e) {
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
@@ -230,6 +236,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
                 notificationService.notifyAboutTaskProgress(dto);
                 awsCommunication.deleteSnapshot(tempSnapshot.getSnapshotId());
             }
+            mailService.notifyAboutError(taskEntry, e);
         }
     }
 
