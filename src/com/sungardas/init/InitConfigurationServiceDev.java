@@ -3,7 +3,6 @@ package com.sungardas.init;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
-
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -13,7 +12,6 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.Bucket;
@@ -80,6 +78,8 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @Value("${enhancedsnapshots.default.max.wait.time.to.detach.volume}")
     private int defaultMaxWaitTimeToDetachVolume;
 
+    @Value("${enhancedsnapshots.dev.isSystemConfigured:false}")
+    private boolean isSystemConfigured;
 
     private AWSCredentialsProvider credentialsProvider;
     private AmazonS3Client amazonS3;
@@ -140,7 +140,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     @Override
     public boolean systemIsConfigured() {
-        return true;
+        return isSystemConfigured;
     }
 
     protected Configuration getConfiguration(){

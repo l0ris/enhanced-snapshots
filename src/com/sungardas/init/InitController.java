@@ -62,12 +62,6 @@ class InitController {
         return exception;
     }
 
-    //TODO: This should be removed, for dev mode only
-    @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
-    public ResponseEntity<String> getAwsCredentialsInfo() {
-        return new ResponseEntity<>("{\"contains\": true}", HttpStatus.OK);
-    }
-
     @ExceptionHandler(value = {Exception.class, AmazonClientException.class})
     @ResponseBody
     @ResponseStatus(INTERNAL_SERVER_ERROR)
