@@ -16,7 +16,6 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigura
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
-import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
@@ -300,12 +299,8 @@ public class SystemServiceImpl implements SystemService {
             } else {
                 configurationDocument.setPassword(currentConfiguration.getMailConfigurationDocument().getPassword());
             }
-            if (!mailService.checkConfiguration(configurationDocument)) {
-                throw new ConfigurationException("Mail configuration is incorrect");
-            } else {
-                currentConfiguration.setMailConfigurationDocument(configurationDocument);
-                mailReconnect = true;
-            }
+            currentConfiguration.setMailConfigurationDocument(configurationDocument);
+            mailReconnect = true;
         }
         // update system properties
         currentConfiguration.setRestoreVolumeIopsPerGb(configuration.getSystemProperties().getRestoreVolumeIopsPerGb());
@@ -339,7 +334,7 @@ public class SystemServiceImpl implements SystemService {
 
     @Override
     public void systemUninstall(boolean removeS3Bucket) {
-        LOG.info("Uninstaling system. S3 bucket will be removed: {}", removeS3Bucket);
+        LOG.info("Uninstalling system. S3 bucket will be removed: {}", removeS3Bucket);
         applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
         applicationContext.getAutowireCapableBeanFactory().destroyBean(WorkersDispatcher.class);
         new Thread() {

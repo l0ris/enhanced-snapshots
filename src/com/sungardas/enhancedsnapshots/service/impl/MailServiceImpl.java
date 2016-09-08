@@ -3,6 +3,9 @@ package com.sungardas.enhancedsnapshots.service.impl;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.MailConfigurationDocument;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
+import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+import com.sungardas.enhancedsnapshots.exception.EmailNotificationException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
 import com.sungardas.enhancedsnapshots.service.MailService;
 import freemarker.cache.TemplateLoader;
@@ -10,6 +13,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -27,11 +31,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class MailServiceImpl implements MailService {
@@ -125,15 +125,6 @@ public class MailServiceImpl implements MailService {
     }
 
     @Override
-    public boolean checkConfiguration(MailConfigurationDocument configuration) {
-        try {
-            return InetAddress.getByName(configuration.getMailSMTPHost()).isReachable(1000);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @Override
     public void notifyAboutSuccess(TaskEntry taskEntry) {
         if (session != null && configurationMediator.getMailConfiguration().getEvents().isSuccess()) {
             Set<String> recipients = configurationMediator.getMailConfiguration().getRecipients();
@@ -141,7 +132,11 @@ public class MailServiceImpl implements MailService {
                 Map<String, String> data = new HashMap<>();
                 data.put("domain", configurationMediator.getDomain());
                 data.put("message", "Task has been successfully finished");
-                notifyViaEmail(data, successSubject, successTemplate, recipients);
+                try {
+                    notifyViaEmail(data, successSubject, successTemplate, recipients);
+                } catch (EmailNotificationException e) {
+                    LOG.error(e);
+                }
             }
         }
     }
@@ -154,7 +149,11 @@ public class MailServiceImpl implements MailService {
                 Map<String, String> data = new HashMap<>();
                 data.put("domain", configurationMediator.getDomain());
                 data.put("message", "Task has been failed");
-                notifyViaEmail(data, errorSubject, failTemplate, recipients);
+                try {
+                    notifyViaEmail(data, errorSubject, failTemplate, recipients);
+                } catch (EmailNotificationException ex) {
+                    LOG.error(e);
+                }
             }
         }
     }
@@ -167,15 +166,42 @@ public class MailServiceImpl implements MailService {
                 Map<String, String> data = new HashMap<>();
                 data.put("domain", configurationMediator.getDomain());
                 data.put("message", message);
-                notifyViaEmail(data, infoSubject, infoTemplate, recipients);
+                try {
+                    notifyViaEmail(data, infoSubject, infoTemplate, recipients);
+                } catch (EmailNotificationException e) {
+                    LOG.error(e);
+                }
             }
         }
     }
 
+    @Override
+    public void testConfiguration(MailConfigurationDto config, String testEmail, String domain) {
+        try {
+            MailConfigurationDocument document = new MailConfigurationDocument();
+            BeanUtils.copyProperties(config, document);
+            Session session = getSession(document, false);
+            Map<String, String> data = new HashMap<>();
+            data.put("domain", domain);
+            data.put("message", "Test message");
+
+            Set<String> recipients = new HashSet<>();
+            recipients.add(testEmail);
+
+            notifyViaEmail(data, "Test subject", infoTemplate, recipients, session, config.getFromMailAddress());
+        } catch (Exception e) {
+            throw new ConfigurationException("Invalid configuration", e);
+        }
+    }
+
     private void notifyViaEmail(Map<String, String> data, String subject, Template template, Set<String> recipients) {
+        notifyViaEmail(data, subject, template, recipients, session, configurationMediator.getMailConfiguration().getFromMailAddress());
+    }
+
+    private void notifyViaEmail(Map<String, String> data, String subject, Template template, Set<String> recipients, Session session, String senderEmail) {
         try {
             Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(configurationMediator.getMailConfiguration().getFromMailAddress()));
+            message.setFrom(new InternetAddress(senderEmail));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(String.join(",", recipients)));
             message.setSubject(subject);
 
@@ -187,10 +213,15 @@ public class MailServiceImpl implements MailService {
             Transport.send(message);
         } catch (Exception e) {
             LOG.error(e);
+            throw new EmailNotificationException(e);
         }
     }
 
     private Session getSession(MailConfigurationDocument configuration) {
+        return getSession(configuration, true);
+    }
+
+    private Session getSession(MailConfigurationDocument configuration, boolean decryptPassword) {
         if (configuration == null) {
             return null;
         }
@@ -215,8 +246,12 @@ public class MailServiceImpl implements MailService {
             return Session.getDefaultInstance(props,
                     new javax.mail.Authenticator() {
                         protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(configuration.getUserName(),
-                                    cryptoService.decrypt(configurationMediator.getConfigurationId(), configuration.getPassword()));
+                            if (decryptPassword) {
+                                return new PasswordAuthentication(configuration.getUserName(),
+                                        cryptoService.decrypt(configurationMediator.getConfigurationId(), configuration.getPassword()));
+                            } else {
+                                return new PasswordAuthentication(configuration.getUserName(), configuration.getPassword());
+                            }
                         }
                     });
         } catch (RuntimeException e) {
