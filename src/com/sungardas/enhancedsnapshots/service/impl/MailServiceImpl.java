@@ -3,7 +3,6 @@ package com.sungardas.enhancedsnapshots.service.impl;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.MailConfigurationDocument;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
-import com.sungardas.enhancedsnapshots.enumeration.MailNotificationEvent;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
 import com.sungardas.enhancedsnapshots.service.MailService;
 import freemarker.cache.TemplateLoader;
@@ -136,7 +135,7 @@ public class MailServiceImpl implements MailService {
 
     @Override
     public void notifyAboutSuccess(TaskEntry taskEntry) {
-        if (session != null && configurationMediator.getMailConfiguration().getEvents().contains(MailNotificationEvent.SUCCESS)) {
+        if (session != null && configurationMediator.getMailConfiguration().getEvents().isSuccess()) {
             Set<String> recipients = configurationMediator.getMailConfiguration().getRecipients();
             if (recipients != null && !recipients.isEmpty()) {
                 Map<String, String> data = new HashMap<>();
@@ -149,7 +148,7 @@ public class MailServiceImpl implements MailService {
 
     @Override
     public void notifyAboutError(TaskEntry taskEntry, Exception e) {
-        if (session != null && configurationMediator.getMailConfiguration().getEvents().contains(MailNotificationEvent.SUCCESS)) {
+        if (session != null && configurationMediator.getMailConfiguration().getEvents().isError()) {
             Set<String> recipients = configurationMediator.getMailConfiguration().getRecipients();
             if (recipients != null && !recipients.isEmpty()) {
                 Map<String, String> data = new HashMap<>();
@@ -162,7 +161,7 @@ public class MailServiceImpl implements MailService {
 
     @Override
     public void notifyAboutSystemStatus(String message) {
-        if (session != null && configurationMediator.getMailConfiguration().getEvents().contains(MailNotificationEvent.SUCCESS)) {
+        if (session != null && configurationMediator.getMailConfiguration().getEvents().isInfo()) {
             Set<String> recipients = configurationMediator.getMailConfiguration().getRecipients();
             if (recipients != null && !recipients.isEmpty()) {
                 Map<String, String> data = new HashMap<>();
@@ -181,7 +180,7 @@ public class MailServiceImpl implements MailService {
             message.setSubject(subject);
 
             StringWriter stringWriter = new StringWriter();
-            successTemplate.process(data, stringWriter);
+            template.process(data, stringWriter);
 
             message.setContent(stringWriter.toString(), "text/html; charset=utf-8");
 

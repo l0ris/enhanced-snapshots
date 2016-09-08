@@ -4,9 +4,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.MailConnectionTypeMarshaller;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.MailNotificationEventHashSetMarshaller;
 import com.sungardas.enhancedsnapshots.enumeration.MailConnectionType;
-import com.sungardas.enhancedsnapshots.enumeration.MailNotificationEvent;
 
 import java.util.Set;
 
@@ -39,8 +37,7 @@ public class MailConfigurationDocument {
     private MailConnectionType connectionType;
 
     @DynamoDBAttribute
-    @DynamoDBMarshalling(marshallerClass = MailNotificationEventHashSetMarshaller.class)
-    private Set<MailNotificationEvent> events;
+    private MailNotificationEvents events = new MailNotificationEvents();
 
     public String getFromMailAddress() {
         return fromMailAddress;
@@ -103,11 +100,46 @@ public class MailConfigurationDocument {
         this.connectionType = connectionType;
     }
 
-    public Set<MailNotificationEvent> getEvents() {
+    public MailNotificationEvents getEvents() {
         return events;
     }
 
-    public void setEvents(Set<MailNotificationEvent> events) {
+    public void setEvents(MailNotificationEvents events) {
         this.events = events;
+    }
+
+    @DynamoDBDocument
+    public class MailNotificationEvents {
+
+        @DynamoDBAttribute
+        private boolean success;
+        @DynamoDBAttribute
+        private boolean error;
+        @DynamoDBAttribute
+        private boolean info;
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public boolean isError() {
+            return error;
+        }
+
+        public void setError(boolean error) {
+            this.error = error;
+        }
+
+        public boolean isInfo() {
+            return info;
+        }
+
+        public void setInfo(boolean info) {
+            this.info = info;
+        }
     }
 }

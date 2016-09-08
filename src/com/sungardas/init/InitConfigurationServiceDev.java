@@ -4,27 +4,17 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.internal.BucketNameUtils;
-import com.amazonaws.services.s3.model.Bucket;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProviderDEV;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,9 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
-
-
-    private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceDev.class);
 
     @Value("${enhancedsnapshots.bucket.name.prefix.002}")
     private String enhancedSnapshotBucketPrefix;
@@ -91,10 +78,6 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
         return result;
     }
-
-    @Autowired
-    private AmazonDynamoDB amazonDynamoDB;
-    private DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
 
     @PostConstruct
     protected void init() {
@@ -164,19 +147,16 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         }
     }
 
-
+    @Override
     public void storePropertiesEditableFromConfigFile() {
     }
 
-
+    @Override
     public void configureSSO(String spEntityID) {
 
     }
 
-    public void setUser(User user) {
-
-    }
-
+    @Override
     public void createDBAndStoreSettings(final ConfigDto config) {
         createDbStructure();
         storeSettings();
@@ -189,6 +169,10 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev");
         user.setId("DEV");
         mapper.save(user);
+    }
+
+    @Override
+    protected void createBucket(String bucketName) {
     }
 
     private Configuration getDevConf() {
@@ -220,85 +204,17 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         return configuration;
     }
 
-    private void createDbStructure() throws ConfigurationException {
-        createTable(BackupEntry.class);
-        createTable(Configuration.class);
-        createTable(RetentionEntry.class);
-        createTable(TaskEntry.class);
-        createTable(SnapshotEntry.class);
-        createTable(User.class);
-    }
-
-    private void createTable(Class tableClass) {
-        CreateTableRequest createTableRequest = mapper.generateCreateTableRequest(tableClass);
-
-        createTableRequest.setProvisionedThroughput(new ProvisionedThroughput(50L, 20L));
-        if (tableExists(createTableRequest.getTableName())) {
-            LOG.info("Table {} already exists", createTableRequest.getTableName());
-            return;
-        }
-        try {
-            DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
-            Table table = dynamoDB.createTable(createTableRequest);
-            LOG.info("Creating table {} ... ", createTableRequest.getTableName());
-            table.waitForActive();
-            LOG.info("Table {} was created successfully.", createTableRequest.getTableName());
-        } catch (Exception e) {
-            LOG.error("Failed to create table {}. ", createTableRequest.getTableName());
-            LOG.error(e);
-            throw new ConfigurationException("Failed to create table" + createTableRequest.getTableName(), e);
-        }
-    }
-
-    private boolean tableExists(String tableName) {
-        ListTablesResult listResult = amazonDynamoDB.listTables();
-        List<String> tableNames = listResult.getTableNames();
-        return tableNames.contains(tableName);
-    }
-
 
 
     public void syncSettingsInDbAndConfigFile() {
     }
 
     public BucketNameValidationDTO validateBucketName(String bucketName) {
-        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix)) {
-            return new BucketNameValidationDTO(false, "Bucket name should start with " + enhancedSnapshotBucketPrefix);
-        }
-        if (amazonS3.doesBucketExist(bucketName)) {
-            // check whether we own this bucket
-            List<Bucket> buckets = amazonS3.listBuckets();
-            for (Bucket bucket : buckets) {
-                if (bucket.getName().equals(bucketName)) {
-                    return new BucketNameValidationDTO(true, "");
-                }
-            }
-            return new BucketNameValidationDTO(false, "The requested bucket name is not available.Please select a different name.");
-        }
-        try {
-            BucketNameUtils.validateBucketName(bucketName);
-            return new BucketNameValidationDTO(true, "");
-        } catch (IllegalArgumentException e) {
-            return new BucketNameValidationDTO(false, e.getMessage());
-        }
+        return new BucketNameValidationDTO(true, "");
     }
 
     public void saveAndProcessSAMLFiles(MultipartFile spCertificate, MultipartFile idpMetadata) {
 
-    }
-
-    protected void createBucket(String bucketName) {
-        BucketNameValidationDTO validationDTO = validateBucketName(bucketName);
-        if (!validationDTO.isValid()) {
-            throw new IllegalArgumentException(validationDTO.getMessage());
-        }
-        if (!amazonS3.doesBucketExist(bucketName)) {
-            LOG.info("Creating bucket {} in {}", bucketName, "us-west-2");
-            amazonS3.createBucket(bucketName, "us-west-2");
-            // delete created bucket in dev mode, we do not need it
-            LOG.info("Removing bucket {} in {}", bucketName, "us-west-2");
-            amazonS3.deleteBucket(bucketName);
-        }
     }
 
     @Override

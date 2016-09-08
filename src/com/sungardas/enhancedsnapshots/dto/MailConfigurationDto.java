@@ -1,7 +1,6 @@
 package com.sungardas.enhancedsnapshots.dto;
 
 import com.sungardas.enhancedsnapshots.enumeration.MailConnectionType;
-import com.sungardas.enhancedsnapshots.enumeration.MailNotificationEvent;
 
 import java.util.Set;
 
@@ -21,7 +20,7 @@ public class MailConfigurationDto {
 
     private MailConnectionType connectionType;
 
-    private Set<MailNotificationEvent> events;
+    private MailNotificationEvents events;
 
     public String getFromMailAddress() {
         return fromMailAddress;
@@ -79,11 +78,41 @@ public class MailConfigurationDto {
         this.connectionType = connectionType;
     }
 
-    public Set<MailNotificationEvent> getEvents() {
+    public MailNotificationEvents getEvents() {
         return events;
     }
 
-    public void setEvents(Set<MailNotificationEvent> events) {
+    public void setEvents(MailNotificationEvents events) {
         this.events = events;
+    }
+
+    public class MailNotificationEvents {
+        private boolean success;
+        private boolean error;
+        private boolean info;
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public boolean isError() {
+            return error;
+        }
+
+        public void setError(boolean error) {
+            this.error = error;
+        }
+
+        public boolean isInfo() {
+            return info;
+        }
+
+        public void setInfo(boolean info) {
+            this.info = info;
+        }
     }
 }

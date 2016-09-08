@@ -4,8 +4,6 @@ package com.sungardas.enhancedsnapshots.service.impl;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
@@ -294,6 +292,9 @@ public class SystemServiceImpl implements SystemService {
         } else {
             MailConfigurationDocument configurationDocument = new MailConfigurationDocument();
             BeanUtils.copyProperties(configuration.getMailConfiguration(), configurationDocument);
+            if (configuration.getMailConfiguration().getEvents() != null) {
+                BeanUtils.copyProperties(configuration.getMailConfiguration().getEvents(), configurationDocument.getEvents());
+            }
             if (configurationDocument.getPassword() != null) {
                 configurationDocument.setPassword(cryptoService.encrypt(currentConfiguration.getConfigurationId(), configurationDocument.getPassword()));
             } else {
@@ -316,13 +317,8 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
         currentConfiguration.setStoreSnapshot(configuration.getSystemProperties().isStoreSnapshots());
         currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
-        if (configuration.getDomain() == null && configuration.getDomain().isEmpty()) {
-            List<Reservation> reservations = ec2client.describeInstances(new DescribeInstancesRequest().withInstanceIds(EC2MetadataUtils.getInstanceId())).getReservations();
-            if (reservations.size() != 1) {
-                LOG.error("Unknown public DNS, please specify domain manually");
-                configuration.setDomain("");
-            }
-            currentConfiguration.setDomain(reservations.get(0).getInstances().iterator().next().getPublicDnsName());
+        if (configuration.getDomain() == null) {
+            currentConfiguration.setDomain("");
         }
         currentConfiguration.setDomain(configuration.getDomain());
 

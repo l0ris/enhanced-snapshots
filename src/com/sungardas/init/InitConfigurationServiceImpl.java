@@ -190,8 +190,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private SystemRestoreService systemRestoreService;
 
     private AWSCredentialsProvider credentialsProvider;
-    private AmazonDynamoDB amazonDynamoDB;
-    private DynamoDBMapper mapper;
+    @Autowired
+    protected AmazonDynamoDB amazonDynamoDB;
+    protected DynamoDBMapper mapper;
     private String instanceId;
     private Region region;
 
@@ -207,7 +208,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         credentialsProvider = new InstanceProfileCredentialsProvider();
         instanceId = EC2MetadataUtils.getInstanceId();
         region = Regions.getCurrentRegion();
-        amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
         amazonDynamoDB.setRegion(region);
         dbPrefix = AmazonConfigProvider.getDynamoDbPrefix();
         DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
@@ -410,7 +410,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         storeConfiguration(config);
     }
 
-    private void createDbStructure() throws ConfigurationException {
+    protected void createDbStructure() throws ConfigurationException {
         createTable(BackupEntry.class);
         createTable(Configuration.class);
         createTable(RetentionEntry.class);
