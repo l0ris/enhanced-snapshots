@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('SettingsController', function ($scope, System, Users, $modal) {
+    .controller('SettingsController', function ($scope, System, Users, $modal, Configuration) {
         var currentUser = Users.getCurrent();
         $scope.isAdmin = currentUser.role === "admin";
 
@@ -37,6 +37,16 @@ angular.module('web')
         var loader = progressLoader();
         System.get().then(function (data) {
             $scope.settings = data;
+            if (!$scope.settings.mailConfiguration) {
+                $scope.settings.mailConfiguration = {
+                    events: {
+                        "error": false,
+                        "info": false,
+                        "success": false
+                    }
+                }
+            }
+
             $scope.initialSettings = angular.copy(data);
             $scope.progressState = '';
             loader.dismiss();
@@ -78,6 +88,33 @@ angular.module('web')
                 if ($scope.state == "done") {
                     $scope.initialSettings = angular.copy($scope.settings);
                 }
+            });
+        };
+
+        $scope.emailNotifications = function () {
+            $scope.connectionStatus = null;
+            var emailNotificationsModalInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.email-notifications.html',
+                scope: $scope
+            });
+
+            emailNotificationsModalInstance.result.then(function () {
+            }, function () {
+                $scope.settings = angular.copy($scope.initialSettings);
+            })
+        };
+
+        $scope.testConnection = function () {
+            var testData = {
+                domain: $scope.settings.domain,
+                mailConfiguration: $scope.settings.mailConfiguration
+            };
+
+            Configuration.check(testData).then(function (response) {
+                $scope.connectionStatus = response.status;
+            }, function (error) {
+                $scope.connectionStatus = error.status;
             });
         };
 

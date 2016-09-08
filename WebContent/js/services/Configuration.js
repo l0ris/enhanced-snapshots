@@ -75,12 +75,32 @@ angular.module('web')
             return deferred.promise;
         };
 
+        var _check = function (dumpData) {
+            var deferred = $q.defer();
+
+            var request = {
+                url: "/rest/system/mail/configuration/test",
+                method: "POST",
+                data: dumpData
+            };
+
+            $http(request).then(function (response) {
+                deferred.resolve(response)
+            }, function (data) {
+                deferred.reject(data)
+            });
+            return deferred.promise;
+        };
+
         return {
             get: function (type) {
                 return _get(type);
             },
             send: function (type, item, timeout, files) {
                 return _send(type, item, timeout, files);
+            },
+            check: function (dumpData) {
+                return _check(dumpData)
             }
         }
     });

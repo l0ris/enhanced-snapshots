@@ -1,0 +1,131 @@
+<div class="modal-header bg-primary">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-envelope" aria-hidden="true"> </span>
+    Email Notifications</h3>
+</div>
+
+<div class="modal-body">
+
+    <form name="emailNotifications" autocomplete="off" class="form-horizontal">
+
+        <div class="form-group">
+            <label for="domain" class="control-label col-sm-4">Domain:</label>
+
+            <div class="col-sm-8">
+                <input type="text" id="domain" class="form-control" ng-model="settings.domain" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="fromEmail" class="control-label col-sm-4">Sender Email Address:</label>
+
+            <div class="col-sm-8">
+                <input type="email" id="fromEmail" name="fromEmail" class="form-control"
+                       ng-model="settings.mailConfiguration.fromMailAddress" required>
+            </div>
+        </div>
+
+
+        <div class="form-group error-notification" ng-show="emailNotifications.fromEmail.$error.email">
+            <div class="col-sm-8 col-sm-offset-4">
+            <span class="text-danger">Please enter valid Email</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="userName" class="control-label col-sm-4">User name:</label>
+
+            <div class="col-sm-8">
+                <input type="text" id="userName" class="form-control" ng-model="settings.mailConfiguration.userName" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="password" class="control-label col-sm-4">Password:</label>
+
+            <div class="col-sm-8">
+                <input type="text" id="password" autocomplete="off" class="form-control col-sm-8"
+                       ng-model="settings.mailConfiguration.password" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="mailSMTPHost" class="control-label col-sm-4">Email SMTP Host:</label>
+
+            <div class="col-sm-8">
+                <input type="text" id="mailSMTPHost" class="form-control" ng-model="settings.mailConfiguration.mailSMTPHost" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="mailSMTPPort" class="control-label col-sm-4">Email SMTP Port:</label>
+
+            <div class="col-sm-8">
+                <input type="text" id="mailSMTPPort" class="form-control" ng-model="settings.mailConfiguration.mailSMTPPort" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="connectionType" class="control-label col-sm-4">Connection Type:</label>
+
+            <div class="col-sm-8">
+                <select class="form-control" name="connectionType" id="connectionType"
+                        ng-model="settings.mailConfiguration.connectionType" required>
+                    <option value="">Select Type</option>
+                    <option value="TLS">TLS</option>
+                    <option value="SSL">SSL</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-sm-4">Type(s) of event:</label>
+
+            <div class="col-sm-8">
+                <div class="btn-group btn-group-justified">
+                    <label class="btn btn-default" ng-model="settings.mailConfiguration.events.error"  btn-checkbox>Error</label>
+                    <label class="btn btn-default" ng-model="settings.mailConfiguration.events.info"  btn-checkbox>Info</label>
+                    <label class="btn btn-default" ng-model="settings.mailConfiguration.events.success"  btn-checkbox>Success</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-sm-4">Recipients:</label>
+            <div class="col-sm-8">
+                <textarea name="recipients" placeholder="List of comma separated emails" id="recipients" cols="46" rows="5"></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-sm-4">Check connection:</label>
+
+            <div class="col-sm-8">
+                <button type="button" class="btn btn-primary"
+                        ng-disabled="emailNotifications.$invalid"
+                        ng-click="testConnection()">Click for test
+                </button>
+
+                <span ng-show="connectionStatus === 200">
+                    <strong class="text-success">&nbsp; Successfully</strong>
+                </span>
+
+                <span ng-show="connectionStatus === 500">
+                    <strong class="text-danger">&nbsp; Failed</strong>
+                </span>
+            </div>
+        </div>
+
+        <div class="form-group form-buttons">
+
+            <button class="btn btn-primary"
+                    ng-click="$close()"
+                    ng-disabled="emailNotifications.$invalid">
+                Save Changes
+            </button>
+            <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
+
+        </div>
+    </form>
+
+</div>
+

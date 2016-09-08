@@ -78,6 +78,16 @@ angular.module('web')
             Configuration.get('current').then(function (result, status) {
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
+                if (!$scope.settings.mailConfiguration) {
+                    $scope.settings.mailConfiguration = {
+                        events: {
+                            "error": false,
+                            "info": false,
+                            "success": false
+                        }
+                    }
+                }
+
                 loader.dismiss();
             }, function (data, status) {
                 $scope.isValidInstance = false;
@@ -87,6 +97,27 @@ angular.module('web')
         };
 
         getCurrentConfig();
+
+        $scope.emailNotifications = function () {
+            $scope.connectionStatus = null;
+            var emailNotificationsModalInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.email-notifications.html',
+                scope: $scope
+            });
+
+            emailNotificationsModalInstance.result.then(function () {
+                console.log($scope.settings)
+            })
+        };
+
+        $scope.testConnection = function () {
+            Configuration.check($scope.mailConfiguration).then(function (response) {
+                $scope.connectionStatus = response.status;
+            }, function (error) {
+                $scope.connectionStatus = error.status;
+            });
+        };
 
         $scope.sendSettings = function () {
             var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
