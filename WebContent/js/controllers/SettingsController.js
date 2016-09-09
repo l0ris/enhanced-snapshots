@@ -37,6 +37,7 @@ angular.module('web')
         var loader = progressLoader();
         System.get().then(function (data) {
             $scope.settings = data;
+            $scope.emails = [];
             if (!$scope.settings.mailConfiguration) {
                 $scope.settings.mailConfiguration = {
                     events: {
@@ -100,6 +101,7 @@ angular.module('web')
             });
 
             emailNotificationsModalInstance.result.then(function () {
+                $scope.settings.mailConfiguration.recipients = $scope.emails;
             }, function () {
                 $scope.settings = angular.copy($scope.initialSettings);
             })

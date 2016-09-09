@@ -79,6 +79,7 @@ angular.module('web')
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
                 if (!$scope.settings.mailConfiguration) {
+                    $scope.emails = [];
                     $scope.settings.mailConfiguration = {
                         events: {
                             "error": false,
@@ -87,7 +88,6 @@ angular.module('web')
                         }
                     }
                 }
-
                 loader.dismiss();
             }, function (data, status) {
                 $scope.isValidInstance = false;
@@ -103,11 +103,12 @@ angular.module('web')
             var emailNotificationsModalInstance = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.email-notifications.html',
-                scope: $scope
+                scope: $scope,
+                backdrop: false
             });
 
             emailNotificationsModalInstance.result.then(function () {
-                console.log($scope.settings)
+                $scope.settings.mailConfiguration.recipients = $scope.emails;
             })
         };
 

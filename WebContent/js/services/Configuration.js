@@ -75,13 +75,13 @@ angular.module('web')
             return deferred.promise;
         };
 
-        var _check = function (dumpData) {
+        var _check = function (emailConfig) {
             var deferred = $q.defer();
 
             var request = {
                 url: "/rest/system/mail/configuration/test",
                 method: "POST",
-                data: dumpData
+                data: emailConfig
             };
 
             $http(request).then(function (response) {
@@ -99,8 +99,8 @@ angular.module('web')
             send: function (type, item, timeout, files) {
                 return _send(type, item, timeout, files);
             },
-            check: function (dumpData) {
-                return _check(dumpData)
+            check: function (emailConfig) {
+                return _check(emailConfig)
             }
         }
     });
