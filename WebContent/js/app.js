@@ -123,9 +123,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $httpProvider.interceptors.push('Interceptor');
 })
     .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users) {
-        Users.refreshCurrent().then(function (user) {
-            $rootScope.isLoading = false;
-        });
+        if (Storage.get("currentUser")) {
+            Users.refreshCurrent().then(function (user) {
+                $rootScope.isLoading = false;
+            });
+        }
 
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;

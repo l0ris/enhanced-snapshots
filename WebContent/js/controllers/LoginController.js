@@ -2,27 +2,29 @@
 
 angular.module('web')
     .controller('LoginController', function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr, $window) {
+
+        //LOGING OUT ---------------------
         if ($stateParams.err && $stateParams.err == 'session') {
             toastr.warning('You were logged out. Please re-login', 'Session expired.');
         }
-    
-        if (angular.isDefined(Storage.get("currentUser"))) {
-            
-            if (Storage.get("ssoMode") && Storage.get("ssoMode").ssoMode) {
-                $window.location.href = "/saml/logout"
-            } else {
-                Auth.logOut();    
+
+        var currentUser = Storage.get("currentUser");
+        var ssoMode = Storage.get("ssoMode");
+
+        if (currentUser !== null && currentUser !== undefined) {
+            if (ssoMode && ssoMode.ssoMode) {
+                $window.location.href = "/saml/logout";
             }
-            
+            Auth.logOut();
         }
 
-        if (Storage.get("currentUser") && Storage.get("currentUser").length > 1) {
-            if (Storage.get("ssoMode") && Storage.get("ssoMode").ssoMode) {
-                $window.location.href = "/saml/logout"
-            } else {
-                Auth.logOut();    
+        if (currentUser && currentUser.length > 1) {
+            if (ssoMode && ssoMode.ssoMode) {
+                $window.location.href = "/saml/logout";
             }
+            Auth.logOut();
         }
+        //------------------------------------
 
         $scope.clearErr = function () {
             $scope.error = "";

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalVolumeTypeChangeCtrl', function ($scope, $modalInstance, System, Tasks) {
+    .controller('modalSettingsUpdateCtrl', function ($scope, $modalInstance, System, Tasks) {
         $scope.state = 'ask';
 
         var newSettings = angular.copy($scope.settings);
@@ -15,7 +15,7 @@ angular.module('web')
             }, function (e) {
                 $scope.state = "failed";
             });
-        }
+        };
 
         $scope.updateSettings = function () {
             var isNoRunning = true;

@@ -113,7 +113,14 @@ angular.module('web')
         };
 
         $scope.testConnection = function () {
-            Configuration.check($scope.mailConfiguration).then(function (response) {
+            $scope.settings.mailConfiguration.recipients = $scope.emails;
+            var testData = {
+                testEmail: "test@test",
+                domain: $scope.settings.domain,
+                mailConfiguration: $scope.settings.mailConfiguration
+            };
+
+            Configuration.check(testData).then(function (response) {
                 $scope.connectionStatus = response.status;
             }, function (error) {
                 $scope.connectionStatus = error.status;
@@ -162,10 +169,10 @@ angular.module('web')
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
-
+                settings.mailConfiguration = $scope.settings.mailConfiguration || null;
                 $scope.progressState = 'running';
 
-                    Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
+                    Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
                         $scope.progressState = 'success';
                     	Storage.save("ssoMode", {ssoMode: $scope.isSSO});
                     }, function (data, status) {

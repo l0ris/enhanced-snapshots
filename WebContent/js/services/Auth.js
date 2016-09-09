@@ -23,12 +23,10 @@ angular.module('web')
                     return str.join("&");
                 },
                 data: {email: email, password: pass }
-            }).success(
-                function (data) {
+            }).then(function (data) {
                     Storage.save("currentUser", data);
                     deferred.resolve(data);
-                })
-                .error(function (err, status) {
+                }, function (err, status) {
                     deferred.reject(statuses[status]);
                 });
 

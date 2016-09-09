@@ -82,7 +82,7 @@ angular.module('web')
                 animation: true,
                 scope: $scope,
                 templateUrl: './partials/modal.settings-update.html',
-                controller: 'modalVolumeTypeChangeCtrl'
+                controller: 'modalSettingsUpdateCtrl'
             });
 
             settingsUpdateModal.result.then(function () {
@@ -109,6 +109,7 @@ angular.module('web')
 
         $scope.testConnection = function () {
             var testData = {
+                testEmail: "test@test",
                 domain: $scope.settings.domain,
                 mailConfiguration: $scope.settings.mailConfiguration
             };
