@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalSettingsUpdateCtrl', function ($scope, $modalInstance, System, Tasks) {
+    .controller('modalSettingsUpdateCtrl', function ($scope, $modalInstance, System, Tasks, $rootScope) {
         $scope.state = 'ask';
 
         var newSettings = angular.copy($scope.settings);
@@ -9,11 +9,13 @@ angular.module('web')
         delete newSettings.systemProperties.volumeTypeOptions;
 
         var sendUpdateRequest = function (newSettings) {
-            var data = JSON.stringify(newSettings);
-            System.send(data).then(function () {
+            $rootScope.isLoading = true;
+            System.send(newSettings).then(function () {
                 $scope.state = "done";
+                $rootScope.isLoading = false;
             }, function (e) {
                 $scope.state = "failed";
+                $rootScope.isLoading = false;
             });
         };
 

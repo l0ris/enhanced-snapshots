@@ -21,10 +21,10 @@
 
     <div class="text-right">
         <button class="btn btn-success" ng-show="state === 'ask'" ng-click="updateSettings()">Update</button>
-        <button class="btn btn-default" ng-hide="state === 'ask'" ng-click="$close()"><span
+        <button class="btn btn-default" ng-show="state === 'done'" ng-click="$close()"><span
                 class="glyphicon glyphicon-ok"></span>&nbsp; Done
         </button>
-        <button class="btn btn-default" ng-show="state === 'ask'" ng-click="$dismiss()">Close</button>
+        <button class="btn btn-default" ng-show="state === 'ask' || state === 'failed'" ng-click="$dismiss()">Close</button>
         <button class="btn btn-default" ng-show="state === 'busy'" ng-click="$dismiss()">Ok</button>
     </div>
 </div>
