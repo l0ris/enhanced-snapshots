@@ -275,6 +275,7 @@ public class SystemServiceImpl implements SystemService {
         if (configurationMediator.getMailConfiguration() != null) {
             MailConfigurationDto mailConfigurationDto = new MailConfigurationDto();
             BeanUtils.copyProperties(configurationMediator.getMailConfiguration(), mailConfigurationDto);
+            mailConfigurationDto.setPassword(null);
             configuration.setMailConfiguration(mailConfigurationDto);
         }
         return configuration;
@@ -298,6 +299,10 @@ public class SystemServiceImpl implements SystemService {
                 configurationDocument.setPassword(cryptoService.encrypt(currentConfiguration.getConfigurationId(), configurationDocument.getPassword()));
             } else {
                 configurationDocument.setPassword(currentConfiguration.getMailConfigurationDocument().getPassword());
+            }
+            //DynamoDB does not support empty sets
+            if (configurationDocument.getRecipients().isEmpty()) {
+                configurationDocument.setRecipients(null);
             }
             currentConfiguration.setMailConfigurationDocument(configurationDocument);
             mailReconnect = true;
