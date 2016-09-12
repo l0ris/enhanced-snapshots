@@ -275,6 +275,9 @@ public class SystemServiceImpl implements SystemService {
         if (configurationMediator.getMailConfiguration() != null) {
             MailConfigurationDto mailConfigurationDto = new MailConfigurationDto();
             BeanUtils.copyProperties(configurationMediator.getMailConfiguration(), mailConfigurationDto);
+            MailConfigurationDto.MailNotificationEvents events = new MailConfigurationDto.MailNotificationEvents();
+            BeanUtils.copyProperties(configurationMediator.getMailConfiguration().getEvents(), events);
+            mailConfigurationDto.setEvents(events);
             mailConfigurationDto.setPassword(null);
             configuration.setMailConfiguration(mailConfigurationDto);
         }

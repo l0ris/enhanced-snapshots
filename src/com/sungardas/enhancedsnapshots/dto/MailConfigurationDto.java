@@ -86,7 +86,7 @@ public class MailConfigurationDto {
         this.events = events;
     }
 
-    public class MailNotificationEvents {
+    public static class MailNotificationEvents {
         private boolean success;
         private boolean error;
         private boolean info;
