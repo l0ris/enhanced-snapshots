@@ -8,7 +8,6 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EmailNotificationException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
 import com.sungardas.enhancedsnapshots.service.MailService;
-import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import org.apache.logging.log4j.LogManager;
@@ -16,9 +15,9 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.freemarker.SpringTemplateLoader;
 
 import javax.annotation.PostConstruct;
 import javax.mail.Message;
@@ -28,8 +27,6 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.StringWriter;
 import java.util.*;
 
@@ -63,7 +60,7 @@ public class MailServiceImpl implements MailService {
     private String testMessage;
 
     @Autowired
-    private ApplicationContext applicationContext;
+    private ResourceLoader resourceLoader;
 
     @Autowired
     private ConfigurationMediator configurationMediator;
@@ -82,33 +79,7 @@ public class MailServiceImpl implements MailService {
     @PostConstruct
     private void init() throws IOException {
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_25);
-        cfg.setTemplateLoader(new TemplateLoader() {
-            @Override
-            public Object findTemplateSource(String name) throws IOException {
-                Resource resource = applicationContext.getResource(name);
-                return resource.exists() ? resource : null;
-            }
-
-            @Override
-            public long getLastModified(Object templateSource) {
-                Resource resource = (Resource) templateSource;
-                try {
-                    return resource.lastModified();
-                } catch (IOException e) {
-                    return 0;
-                }
-            }
-
-            @Override
-            public Reader getReader(Object templateSource, String encoding) throws IOException {
-                Resource resource = (Resource) templateSource;
-                return new InputStreamReader(resource.getInputStream());
-            }
-
-            @Override
-            public void closeTemplateSource(Object templateSource) throws IOException {
-            }
-        });
+        cfg.setTemplateLoader(new SpringTemplateLoader(resourceLoader, ""));
 
         successTemplate = cfg.getTemplate(successTemplatePath);
         failTemplate = cfg.getTemplate(failTemplatePath);
@@ -121,11 +92,18 @@ public class MailServiceImpl implements MailService {
     public boolean reconnect() {
         MailConfigurationDocument configuration = configurationMediator.getMailConfiguration();
         session = getSession(configuration);
-        return session != null;
+        if (session == null) {
+            LOG.info("Disconnected from SMTP server");
+            return false;
+        } else {
+            LOG.info("Connected to SMTP server");
+            return true;
+        }
     }
 
     @Override
     public void disconnect() {
+        LOG.info("Disconnected from SMTP server");
         session = null;
     }
 
@@ -202,6 +180,7 @@ public class MailServiceImpl implements MailService {
 
     private void notifyViaEmail(Map data, String subject, Template template, Set<String> recipients) {
         notifyViaEmail(data, subject, template, recipients, session, configurationMediator.getMailConfiguration().getFromMailAddress());
+        LOG.info("Email to {}  was successfully sent", recipients);
     }
 
     private void notifyViaEmail(Map data, String subject, Template template, Set<String> recipients, Session session, String senderEmail) {
