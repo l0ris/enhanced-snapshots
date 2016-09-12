@@ -58,7 +58,7 @@ This tool will be available by launching the AMI from the [enhanced snapshots ma
 
 # Quick start
 - If the "Enhanced Snapshots tool creation stack" is used in the marketplace , the es-admin role will be automatically created.
-But for the single AMI option from the marketplace Create a es-admin role using the cloud formation template as prerequisite [es-admin-role](https://github.com/SungardAS/condensation-particles/blob/master/particles/cftemplates/sungardas_enhanced_snapshots_admin_role.template.json)
+But for the single AMI option from the marketplace Create a es-admin role using the cloud formation template as prerequisite [es-admin-role](https://github.com/SungardAS/particles-enhanced-snapshots/blob/master/particles/cftemplates/xpl_sungardas_enhanced_snapshots_admin_role.template.json)
  To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
 
 * An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?#KeyPairs)
@@ -202,7 +202,7 @@ The following resources are deleted:
 **Note!** It may take several minutes to delete all the resources, especially if backup data has been stored.
 
 # IAM role creation (optional)
-If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM role with the following policy as defined in this template. [es-admin role cloud formation template](https://github.com/SungardAS/condensation-particles/blob/master/particles/cftemplates/sungardas_enhanced_snapshots_admin_role.template.json)
+If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM role with the following policy as defined in this template. [es-admin role cloud formation template](https://github.com/SungardAS/particles-enhanced-snapshots/blob/master/particles/cftemplates/xpl_sungardas_enhanced_snapshots_admin_role.template.json)
 Once the role is created, also create and save an API key, which will be needed to configure Enhanced Snapshots.
 
 Without a properly configured role, the following error message will appear during configuration:

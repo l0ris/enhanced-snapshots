@@ -14,10 +14,11 @@
   ``cd enhanced-snapshots ``
 3. Set  `aws_access_key` and `aws_secret_key` in `snapdirector_ami.json` file if needed.
 4. Change `region`, `ami_name`, `name` and `description` tags in `snapdirector_ami.json` file tags if needed.
-5. Run build process:
+5. There some TRAVIS env variables that are used to specify ami name and direct bucket for automation process. If you are building AMI manually - replace those variables or remove them.
+6. Run build process:
 
   ``packer build snapdirector_ami.json``
-6. In the end of the build new `ami id` will be displayed on the screen.
+7. In the end of the build new `ami id` will be displayed on the screen.
 
 #### How it works
 1. Main tool that is participating in the build process is [packer](https://www.packer.io/intro/).
@@ -81,61 +82,90 @@ regions=( 	#set regions where you want to deploy
 
 ## Travis build process
 
-1. Travis automatically builds application when commits or pull requests are made into `develop` and `master` branches.
-```
-  branches:
-  only:
-  - master
-  - develop
-```
+1. Travis automatically builds application when commits or pull requests are made into `develop` and `master` branches. Also there are allowed builds for tags `beta.*` and `release.*`.
+  ```
+    branches:
+    only:
+    - master
+    - develop
+    - /^(beta|release).+$/
+  ```
 2. Travis uses java 8.
-```
-jdk:
-  - oraclejdk8
-```
-3. Travis prepares build
-```
-before_install:
-  - sudo apt-get update
-  - curl -sL https://deb.nodesource.com/setup | sudo sh
-install:
-    - sudo apt-get install -y nodejs
-```
-4. Travis builds application with following commands:
-```
+  ```
+  jdk:
+    - oraclejdk8
+  ```
+3. Travis uses encrypted AWS id and key env variables to deploy AMI.
+4. Travis prepares build
+  ```
+  before_install:
+    - sudo apt-get update
+    - curl -sL https://deb.nodesource.com/setup | sudo sh
   install:
-    - cd './WebContent'
-    - sudo npm install -g bower
-    - bower install --config.interactive=false
+      - sudo apt-get install -y nodejs
+  ```
+5. Travis builds application with following commands:
+  ```
+    install:
+      - cd './WebContent'
+      - sudo npm install -g bower
+      - bower install --config.interactive=false
 
-  before_script:
-    - cd '..'
+    before_script:
+      - cd '..'
 
-  script:
-    - mvn clean install
+    script:
+      - mvn clean install
+  ```
+6. Travis renames artifact before deployment
+  ```
+  before_deploy:
+    - mkdir build_artifacts
+    - cp target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_latest.war
+    - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.2_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
+  ```
+
+7. Deployment is allowed only after tag commit:
+
+    `release.*` for `master` (e.g. release.3.0)
+
+    `beta.*` for `develop` (e.g. beta.3.0)
+
+  - For `master branch`:  
+    ```
+    on:
+          branch: master
+          tags: true
+          condition: "$TRAVIS_TAG =~ ^release.+$"
+    ```
+     New `enhancedsnapshots_latest.war` will be deployed into `com.sungardas.releases` bucket.
+     ```
+     deploy:
+      provider: s3
+      bucket: "com.sungardas.releases"
+      endpoint: "s3-us-east-1.amazonaws.com"
+      skip_cleanup: true
+      region: "us-east-1"
+      local_dir: build_artifacts
+      upload-dir: "travis-builds"
+      file: "*.war"
+     ```
+  - For `develop branch`:
 ```
-5. Travis renames artifact before deployment
+  on:
+      branch: develop
+      tags: true
+      condition: "$TRAVIS_TAG =~ ^beta.+$"
 ```
-before_deploy:
-  - mkdir build_artifacts
-  - cp target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_latest.war
-  - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.2_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
-```
-6. Deploy is configured `only for master` branch.
-```
-on:
-   branch: master
-```
- New `enhancedsnapshots_latest.war` will be deployed into `com.sungardas.releases` bucket.
- ```
- deploy:
-  provider: s3
-  bucket: "com.sungardas.releases"
-  endpoint: "s3-us-east-1.amazonaws.com"
-  skip_cleanup: true
-  region: "us-east-1"
-  local_dir: build_artifacts
-  upload-dir: "travis-builds"
-  file: "*.war"
- ```
- 7. After build CI sends notifications to recipients.
+New `enhancedsnapshots_latest.war` will be deployed into `com.sungardas.beta` bucket.
+  ```
+    - provider: s3
+      bucket: "com.sungardas.releases.beta"
+      endpoint: "s3-us-east-1.amazonaws.com"
+      skip_cleanup: true
+      region: "us-east-1"
+      local_dir: build_artifacts
+      upload-dir: "travis-builds"
+    file: "*.war"
+  ```
+8. After build CI sends notifications to recipients.
