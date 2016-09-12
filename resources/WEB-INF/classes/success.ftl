@@ -30,9 +30,9 @@
                 <p>Dear user,</p>
 
                 <p>
-                ${message}
+                ${task.type?cap_first} task for volume ${task.volume} was successfully finished.
 
-                    <a href="${domain}">Check result!</a>
+                    <a href="${domain}">Go to the instance</a>
                 </p>
             </td>
         </tr>

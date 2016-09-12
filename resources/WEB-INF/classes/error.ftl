@@ -30,7 +30,12 @@
                 <p>Dear user,</p>
 
                 <p>
-                ${message}
+                <p>
+                ${task.type?cap_first} task for volume ${task.volume} was failed.
+                    Error message is: "${errorMessage}"
+
+                    <a href="${domain}">Go to the instance</a>
+                </p>
                 </p>
             </td>
         </tr>

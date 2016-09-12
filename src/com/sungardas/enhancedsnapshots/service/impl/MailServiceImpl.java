@@ -56,6 +56,11 @@ public class MailServiceImpl implements MailService {
     @Value("${enhancedsnapshots.mail.info.subject}")
     private String infoSubject;
 
+    @Value("${enhancedsnapshots.mail.test.message.subject}")
+    private String testSubject;
+
+    @Value("${enhancedsnapshots.mail.test.message}")
+    private String testMessage;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -129,9 +134,9 @@ public class MailServiceImpl implements MailService {
         if (session != null && configurationMediator.getMailConfiguration().getEvents().isSuccess()) {
             Set<String> recipients = configurationMediator.getMailConfiguration().getRecipients();
             if (recipients != null && !recipients.isEmpty()) {
-                Map<String, String> data = new HashMap<>();
+                Map<String, Object> data = new HashMap<>();
                 data.put("domain", configurationMediator.getDomain());
-                data.put("message", "Task has been successfully finished");
+                data.put("task", taskEntry);
                 try {
                     notifyViaEmail(data, successSubject, successTemplate, recipients);
                 } catch (EmailNotificationException e) {
@@ -146,9 +151,10 @@ public class MailServiceImpl implements MailService {
         if (session != null && configurationMediator.getMailConfiguration().getEvents().isError()) {
             Set<String> recipients = configurationMediator.getMailConfiguration().getRecipients();
             if (recipients != null && !recipients.isEmpty()) {
-                Map<String, String> data = new HashMap<>();
+                Map<String, Object> data = new HashMap<>();
                 data.put("domain", configurationMediator.getDomain());
-                data.put("message", "Task has been failed");
+                data.put("task", taskEntry);
+                data.put("errorMessage", e.getLocalizedMessage());
                 try {
                     notifyViaEmail(data, errorSubject, failTemplate, recipients);
                 } catch (EmailNotificationException ex) {
@@ -183,22 +189,22 @@ public class MailServiceImpl implements MailService {
             Session session = getSession(document, false);
             Map<String, String> data = new HashMap<>();
             data.put("domain", domain);
-            data.put("message", "Test message");
+            data.put("message", testMessage);
 
             Set<String> recipients = new HashSet<>();
             recipients.add(testEmail);
 
-            notifyViaEmail(data, "Test subject", infoTemplate, recipients, session, config.getFromMailAddress());
+            notifyViaEmail(data, testSubject, infoTemplate, recipients, session, config.getFromMailAddress());
         } catch (Exception e) {
             throw new ConfigurationException("Invalid configuration", e);
         }
     }
 
-    private void notifyViaEmail(Map<String, String> data, String subject, Template template, Set<String> recipients) {
+    private void notifyViaEmail(Map data, String subject, Template template, Set<String> recipients) {
         notifyViaEmail(data, subject, template, recipients, session, configurationMediator.getMailConfiguration().getFromMailAddress());
     }
 
-    private void notifyViaEmail(Map<String, String> data, String subject, Template template, Set<String> recipients, Session session, String senderEmail) {
+    private void notifyViaEmail(Map data, String subject, Template template, Set<String> recipients, Session session, String senderEmail) {
         try {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(senderEmail));

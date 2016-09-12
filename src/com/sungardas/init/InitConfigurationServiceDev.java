@@ -1,19 +1,14 @@
 package com.sungardas.init;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProviderDEV;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
-import com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,9 +63,6 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @Value("${enhancedsnapshots.dev.isSystemConfigured:false}")
     private boolean isSystemConfigured;
 
-    private AWSCredentialsProvider credentialsProvider;
-    private AmazonS3Client amazonS3;
-
     public void removeProperties() {
     }
 
@@ -81,10 +73,6 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     @PostConstruct
     protected void init() {
-        String accessKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSAccessKey);
-        String secretKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSSecretKey);
-        credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey));
-        amazonS3 = new AmazonS3Client(credentialsProvider);
         DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
                 withTableNamePrefix(AmazonConfigProviderDEV.getDynamoDbPrefix("DEV"))).build();
         mapper = new DynamoDBMapper(amazonDynamoDB, config);

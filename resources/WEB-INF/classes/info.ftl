@@ -31,6 +31,7 @@
 
                 <p>
                 ${message}
+                    <a href="${domain}">Go to the instance</a>
                 </p>
             </td>
         </tr>
