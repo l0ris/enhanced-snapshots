@@ -87,7 +87,10 @@ angular.module('web')
                             "success": false
                         }
                     }
+                } else {
+                    $scope.emails = $scope.settings.mailConfiguration.recipients;
                 }
+
                 loader.dismiss();
             }, function (data, status) {
                 $scope.isValidInstance = false;

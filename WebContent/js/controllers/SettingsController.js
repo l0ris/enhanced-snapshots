@@ -37,6 +37,7 @@ angular.module('web')
         var loader = progressLoader();
         System.get().then(function (data) {
             $scope.settings = data;
+
             if (!$scope.settings.mailConfiguration) {
                 $scope.emails = [];
                 $scope.settings.mailConfiguration = {
@@ -46,6 +47,8 @@ angular.module('web')
                         "success": false
                     }
                 }
+            } else {
+                $scope.emails = $scope.settings.mailConfiguration.recipients;
             }
 
             $scope.initialSettings = angular.copy(data);
