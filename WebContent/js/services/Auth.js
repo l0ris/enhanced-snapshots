@@ -23,9 +23,9 @@ angular.module('web')
                     return str.join("&");
                 },
                 data: {email: email, password: pass }
-            }).then(function (data) {
-                    Storage.save("currentUser", data);
-                    deferred.resolve(data);
+            }).then(function (response) {
+                    Storage.save("currentUser", response.data);
+                    deferred.resolve(response.data);
                 }, function (err, status) {
                     deferred.reject(statuses[status]);
                 });

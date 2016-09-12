@@ -115,7 +115,7 @@ angular.module('web')
         $scope.testConnection = function () {
             $scope.settings.mailConfiguration.recipients = $scope.emails;
             var testData = {
-                testEmail: "test@test",
+                testEmail: $scope.testEmail,
                 domain: $scope.settings.domain,
                 mailConfiguration: $scope.settings.mailConfiguration
             };

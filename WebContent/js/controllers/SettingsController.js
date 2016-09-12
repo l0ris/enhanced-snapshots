@@ -37,8 +37,8 @@ angular.module('web')
         var loader = progressLoader();
         System.get().then(function (data) {
             $scope.settings = data;
-            $scope.emails = [];
             if (!$scope.settings.mailConfiguration) {
+                $scope.emails = [];
                 $scope.settings.mailConfiguration = {
                     events: {
                         "error": false,
@@ -109,7 +109,7 @@ angular.module('web')
 
         $scope.testConnection = function () {
             var testData = {
-                testEmail: "test@test",
+                testEmail: $scope.testEmail,
                 domain: $scope.settings.domain,
                 mailConfiguration: $scope.settings.mailConfiguration
             };

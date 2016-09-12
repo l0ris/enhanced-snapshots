@@ -100,10 +100,15 @@
             <label class="control-label col-sm-4">Check connection:</label>
 
             <div class="col-sm-8">
-                <button type="button" class="btn btn-primary"
-                        ng-disabled="emailNotifications.$invalid"
-                        ng-click="testConnection()">Click for test
-                </button>
+                <div class="input-group">
+                    <input type="email" class="form-control" placeholder="E-mail address to send test e-mail" ng-model="$parent.testEmail">
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-primary"
+                            ng-disabled="emailNotifications.$invalid"
+                            ng-click="testConnection()">Send
+                        </button>
+                        </span>
+                </div>
 
                 <span ng-show="connectionStatus === 200">
                     <strong class="text-success">&nbsp; Successfully</strong>
