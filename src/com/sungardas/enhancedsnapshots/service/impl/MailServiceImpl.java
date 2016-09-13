@@ -257,7 +257,7 @@ public class MailServiceImpl implements MailService {
             }
 
 
-            return Session.getDefaultInstance(props,
+            return Session.getInstance(props,
                     new javax.mail.Authenticator() {
                         protected PasswordAuthentication getPasswordAuthentication() {
                             if (decryptPassword) {
