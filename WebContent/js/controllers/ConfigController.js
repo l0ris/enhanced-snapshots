@@ -88,7 +88,7 @@ angular.module('web')
                         }
                     }
                 } else {
-                    $scope.emails = $scope.settings.mailConfiguration.recipients;
+                    $scope.emails = $scope.settings.mailConfiguration.recipients || [];
                 }
 
                 loader.dismiss();
