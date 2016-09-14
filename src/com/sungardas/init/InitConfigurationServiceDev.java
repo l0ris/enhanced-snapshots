@@ -80,6 +80,11 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @Value("${enhancedsnapshots.default.max.wait.time.to.detach.volume}")
     private int defaultMaxWaitTimeToDetachVolume;
 
+    @Value("${enhancedsnapshots.logs.buffer.size}")
+    private int bufferSize;
+    @Value("${enhancedsnapshots.logs.file}")
+    private String logFile;
+
 
     private AWSCredentialsProvider credentialsProvider;
     private AmazonS3Client amazonS3;
@@ -140,7 +145,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     @Override
     public boolean systemIsConfigured() {
-        return true;
+        return false;
     }
 
     protected Configuration getConfiguration(){
@@ -216,7 +221,8 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         configuration.setSdfsVolumeName("awspool");
         configuration.setSdfsMountPoint("/mnt/awspool");
         configuration.setSsoLoginMode(true);
-
+        configuration.setLogFile(logFile);
+        configuration.setLogsBufferSize(bufferSize);
         return configuration;
     }
 
