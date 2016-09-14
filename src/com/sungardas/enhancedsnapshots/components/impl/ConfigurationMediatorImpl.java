@@ -164,4 +164,14 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public boolean isStoreSnapshot() {
         return currentConfiguration.isStoreSnapshot();
     }
+
+    @Override
+    public int getLogsBufferSize() {
+        return currentConfiguration.getLogsBufferSize();
+    }
+
+    @Override
+    public String getLogFileName() {
+        return currentConfiguration.getLogFile();
+    }
 }

@@ -45,6 +45,10 @@ public class Configuration {
     // saml settings
     private String entityId;
 
+    // logs watcher settings
+    private int logsBufferSize;
+    private String logFile;
+
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
     }
@@ -256,4 +260,20 @@ public class Configuration {
     public void setTaskHistoryTTS(int taskHistoryTTS) {
         this.taskHistoryTTS = taskHistoryTTS;
     }
+    public int getLogsBufferSize() {
+        return logsBufferSize;
+    }
+
+    public void setLogsBufferSize(int logsBufferSize) {
+        this.logsBufferSize = logsBufferSize;
+    }
+
+    public String getLogFile() {
+        return logFile;
+    }
+
+    public void setLogFile(String logFile) {
+        this.logFile = logFile;
+    }
+
 }

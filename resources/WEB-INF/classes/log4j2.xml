@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="info">
+<Configuration status="debug">
   <Appenders>
     <Console target="SYSTEM_OUT" name="console">
       <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1} - %msg%n"/>
@@ -15,7 +15,7 @@
     </RollingFile>
   </Appenders>
   <Loggers>
-    <logger name="log4j.logger.org.springframework.security.saml" level="info" additivity="false">
+    <logger name="log4j.logger.org.springframework.security.saml" level="debug" additivity="false">
       <AppenderRef ref="console"/>
       <AppenderRef ref="RollingFile"/>
     </logger>

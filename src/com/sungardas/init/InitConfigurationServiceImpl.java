@@ -201,6 +201,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${CUSTOM_BUCKET_NAME:}")
     private String customBucketName;
 
+    @Value("${enhancedsnapshots.logs.buffer.size}")
+    private int bufferSize;
+    @Value("${enhancedsnapshots.logs.file}")
+    private String logFile;
+
     private static final String CUSTOM_BUCKET_NAME_DEFAULT_VALUE = "enhancedsnapshots";
 
     @Autowired
@@ -491,6 +496,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setNginxKeyPath(nginxKeyPath);
         configuration.setTaskHistoryTTS(taskHistoryTTS);
         configuration.setStoreSnapshot(storeSnapshot);
+        configuration.setLogFile(logFile);
+        configuration.setLogsBufferSize(bufferSize);
         // saving configuration to DB
         mapper.save(configuration);
     }
