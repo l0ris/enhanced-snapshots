@@ -47,6 +47,7 @@ public class LogsWatcherService {
         if (tailer != null) {
             tailer.stop();
         }
+        System.out.println("Catalina_home: "+System.getProperty(catalinaHomeEnvPropName));
         tailer = Tailer.create(Paths.get(System.getProperty(catalinaHomeEnvPropName), configurationMediator.getLogFileName()).toFile(), logsTailerListener, 500L, true);
         LOG.info("Logs watcher started. File {} will be tracked for changes.", configurationMediator.getLogFileName());
     }
