@@ -8,8 +8,11 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
+import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+import com.sungardas.enhancedsnapshots.service.CryptoService;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,6 +65,9 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     @Value("${enhancedsnapshots.dev.isSystemConfigured:false}")
     private boolean isSystemConfigured;
+
+    @Autowired
+    private CryptoService cryptoService;
 
     public void removeProperties() {
     }
@@ -147,11 +153,13 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @Override
     public void createDBAndStoreSettings(final ConfigDto config) {
         createDbStructure();
-        storeSettings();
+        storeSettings(config);
     }
 
-    private void storeSettings() {
+    private void storeSettings(final ConfigDto config) {
         Configuration configuration = getDevConf();
+        configuration.setMailConfigurationDocument(MailConfigurationDocumentConverter.toMailConfigurationDocument(config.getMailConfiguration(), cryptoService, "DEV", ""));
+        configuration.setDomain(config.getDomain());
         mapper.save(configuration);
 
         User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev");

@@ -14,14 +14,13 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
-import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
+import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
@@ -272,15 +271,7 @@ public class SystemServiceImpl implements SystemService {
         configuration.setSystemProperties(systemProperties);
         configuration.setSsoMode(configurationMediator.isSsoLoginMode());
         configuration.setDomain(configurationMediator.getDomain());
-        if (configurationMediator.getMailConfiguration() != null) {
-            MailConfigurationDto mailConfigurationDto = new MailConfigurationDto();
-            BeanUtils.copyProperties(configurationMediator.getMailConfiguration(), mailConfigurationDto);
-            MailConfigurationDto.MailNotificationEvents events = new MailConfigurationDto.MailNotificationEvents();
-            BeanUtils.copyProperties(configurationMediator.getMailConfiguration().getEvents(), events);
-            mailConfigurationDto.setEvents(events);
-            mailConfigurationDto.setPassword(null);
-            configuration.setMailConfiguration(mailConfigurationDto);
-        }
+        configuration.setMailConfiguration(MailConfigurationDocumentConverter.toMailConfigurationDto(configurationMediator.getMailConfiguration()));
         return configuration;
     }
 
@@ -293,21 +284,8 @@ public class SystemServiceImpl implements SystemService {
             currentConfiguration.setMailConfigurationDocument(null);
             mailService.disconnect();
         } else {
-            MailConfigurationDocument configurationDocument = new MailConfigurationDocument();
-            BeanUtils.copyProperties(configuration.getMailConfiguration(), configurationDocument);
-            if (configuration.getMailConfiguration().getEvents() != null) {
-                BeanUtils.copyProperties(configuration.getMailConfiguration().getEvents(), configurationDocument.getEvents());
-            }
-            if (configurationDocument.getPassword() != null) {
-                configurationDocument.setPassword(cryptoService.encrypt(currentConfiguration.getConfigurationId(), configurationDocument.getPassword()));
-            } else {
-                configurationDocument.setPassword(currentConfiguration.getMailConfigurationDocument().getPassword());
-            }
-            //DynamoDB does not support empty sets
-            if (configurationDocument.getRecipients().isEmpty()) {
-                configurationDocument.setRecipients(null);
-            }
-            currentConfiguration.setMailConfigurationDocument(configurationDocument);
+            currentConfiguration.setMailConfigurationDocument(MailConfigurationDocumentConverter.toMailConfigurationDocument(configuration.getMailConfiguration(),
+                    cryptoService, currentConfiguration.getConfigurationId(), currentConfiguration.getMailConfigurationDocument().getPassword()));
             mailReconnect = true;
         }
         // update system properties

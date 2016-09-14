@@ -9,6 +9,7 @@ class ConfigDto {
     private int volumeSize;
     private boolean ssoMode;
     private String spEntityId;
+    private String domain;
     private MailConfigurationDto mailConfiguration;
 
     public int getVolumeSize() {
@@ -49,6 +50,14 @@ class ConfigDto {
 
     public void setSpEntityId(String spEntityId) {
         this.spEntityId = spEntityId;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
     public MailConfigurationDto getMailConfiguration() {

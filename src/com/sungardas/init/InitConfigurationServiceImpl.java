@@ -25,9 +25,11 @@ import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
+import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+import com.sungardas.enhancedsnapshots.service.CryptoService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -37,7 +39,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
@@ -188,6 +189,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private ContextManager contextManager;
     @Autowired
     private SystemRestoreService systemRestoreService;
+
+    @Autowired
+    private CryptoService cryptoService;
 
     private AWSCredentialsProvider credentialsProvider;
     @Autowired
@@ -463,11 +467,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setSdfsSize(config.getVolumeSize());
         configuration.setSsoLoginMode(config.isSsoMode());
         configuration.setEntityId(config.getSpEntityId());
-        if (config.getMailConfiguration() != null) {
-            MailConfigurationDocument configurationDocument = new MailConfigurationDocument();
-            BeanUtils.copyProperties(config.getMailConfiguration(), configurationDocument);
-            configuration.setMailConfigurationDocument(configurationDocument);
-        }
+        configuration.setMailConfigurationDocument(MailConfigurationDocumentConverter.toMailConfigurationDocument(config.getMailConfiguration(), cryptoService, configuration.getConfigurationId(), ""));
+        configuration.setDomain(config.getDomain());
         // set default properties
         configuration.setRestoreVolumeIopsPerGb(restoreVolumeIopsPerGb);
         configuration.setRestoreVolumeType(restoreVolumeType);
