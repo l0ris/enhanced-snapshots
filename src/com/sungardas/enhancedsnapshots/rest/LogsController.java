@@ -15,7 +15,7 @@ public class LogsController {
     @SubscribeMapping({"/logs"})
     public void handleLogsSubscription() {
         logsWatcherService.start();
-        logsWatcherService.getLatestLogs();
+//        logsWatcherService.getLatestLogs();
     }
 
 
