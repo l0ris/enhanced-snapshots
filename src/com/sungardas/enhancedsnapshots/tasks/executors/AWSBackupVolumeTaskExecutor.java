@@ -183,7 +183,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             dto.setMessage("Done");
             dto.setProgress(100);
             notificationService.notifyAboutTaskProgress(dto);
-            mailService.notifyAboutError(taskEntry, e);
+            mailService.notifyAboutSystemStatus("Backup task for volume with id: " + taskEntry.getVolume() + " was canceled");
         } catch (Exception e) {
             LOG.error("Backup process for volume {} failed ", volumeId, e);
             taskEntry.setStatus(ERROR.toString());

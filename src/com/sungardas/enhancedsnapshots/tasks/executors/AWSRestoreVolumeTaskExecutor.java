@@ -119,6 +119,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
             LOG.info("Restore task was canceled");
             taskRepository.delete(taskEntry);
+            mailService.notifyAboutSystemStatus("Restore task for volume with id" + taskEntry.getVolume() + " was canceled");
         }
     }
 
@@ -221,7 +222,7 @@ public class AWSRestoreVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor 
             dto.setMessage("Done");
             dto.setProgress(100);
             notificationService.notifyAboutTaskProgress(dto);
-            mailService.notifyAboutError(taskEntry, e);
+            mailService.notifyAboutSystemStatus("Restore task for volume with id: " + taskEntry.getVolume() + " was canceled");
         } catch (Exception e) {
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
