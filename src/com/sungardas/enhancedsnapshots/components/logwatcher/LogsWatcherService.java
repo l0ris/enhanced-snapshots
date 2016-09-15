@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.components.logwatcher;
 
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.commons.io.input.Tailer;
 
 import org.apache.commons.io.input.TailerListener;
@@ -14,7 +15,12 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Collections.*;
 
 
 @Service
@@ -55,7 +61,7 @@ public class LogsWatcherService implements TailerListener {
 
     private File getLogsFile() {
         if (logFile == null) {
-            return Paths.get(catalinaHome, configurationMediator.getLogFileName()).toFile();
+            logFile = Paths.get(catalinaHome, configurationMediator.getLogFileName()).toFile();
         }
         return logFile;
     }
@@ -81,15 +87,19 @@ public class LogsWatcherService implements TailerListener {
         LOG.warn("Failed to read log file {}", configurationMediator.getLogFileName(), ex);
     }
 
-
-//    public synchronized Collection<String> getLatestLogs () {
-//        try {
-//            ReversedLinesFileReader reversedLinesFileReader = new ReversedLinesFileReader(getLogsFile());
-//
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return logs;
-//    }
+    public synchronized List<String> getLatestLogs() {
+        List<String> list = new ArrayList<>();
+        try {
+            ReversedLinesFileReader reader = new ReversedLinesFileReader(getLogsFile());
+            while (list.size() < configurationMediator.getLogsBufferSize()) {
+                list.add(reader.readLine());
+            }
+            reverse(list);
+            return list;
+        } catch (IOException e) {
+            LOG.warn("Failed to read logs {}", e);
+            reverse(list);
+            return list;
+        }
+    }
 }
