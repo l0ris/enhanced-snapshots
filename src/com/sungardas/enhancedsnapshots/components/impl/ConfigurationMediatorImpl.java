@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.components.impl;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.MailConfigurationDocument;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import org.springframework.stereotype.Service;
 
@@ -163,5 +164,15 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     @Override
     public boolean isStoreSnapshot() {
         return currentConfiguration.isStoreSnapshot();
+    }
+
+    @Override
+    public String getDomain() {
+        return currentConfiguration.getDomain();
+    }
+
+    @Override
+    public MailConfigurationDocument getMailConfiguration() {
+        return currentConfiguration.getMailConfigurationDocument();
     }
 }

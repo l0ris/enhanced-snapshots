@@ -78,6 +78,19 @@ angular.module('web')
             Configuration.get('current').then(function (result, status) {
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
+                if (!$scope.settings.mailConfiguration) {
+                    $scope.emails = [];
+                    $scope.settings.mailConfiguration = {
+                        events: {
+                            "error": false,
+                            "info": false,
+                            "success": false
+                        }
+                    }
+                } else {
+                    $scope.emails = $scope.settings.mailConfiguration.recipients || [];
+                }
+
                 loader.dismiss();
             }, function (data, status) {
                 $scope.isValidInstance = false;
@@ -87,6 +100,35 @@ angular.module('web')
         };
 
         getCurrentConfig();
+
+        $scope.emailNotifications = function () {
+            $scope.connectionStatus = null;
+            var emailNotificationsModalInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.email-notifications.html',
+                scope: $scope,
+                backdrop: false
+            });
+
+            emailNotificationsModalInstance.result.then(function () {
+                $scope.settings.mailConfiguration.recipients = $scope.emails;
+            })
+        };
+
+        $scope.testConnection = function () {
+            $scope.settings.mailConfiguration.recipients = $scope.emails;
+            var testData = {
+                testEmail: $scope.testEmail,
+                domain: $scope.settings.domain,
+                mailConfiguration: $scope.settings.mailConfiguration
+            };
+
+            Configuration.check(testData).then(function (response) {
+                $scope.connectionStatus = response.status;
+            }, function (error) {
+                $scope.connectionStatus = error.status;
+            });
+        };
 
         $scope.sendSettings = function () {
             var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
@@ -114,7 +156,8 @@ angular.module('web')
                     settings.user = $scope.userToEdit;
 
                     delete settings.user.isNew;
-
+                    settings.mailConfiguration = $scope.settings.mailConfiguration || null;
+                    settings.domain = $scope.settings.domain;
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
@@ -130,10 +173,11 @@ angular.module('web')
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
-
+                settings.mailConfiguration = $scope.settings.mailConfiguration || null;
+                settings.domain = $scope.settings.domain;
                 $scope.progressState = 'running';
 
-                    Configuration.send('current', settings, undefined, $scope.settings.sso).then(function () {
+                    Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
                         $scope.progressState = 'success';
                     	Storage.save("ssoMode", {ssoMode: $scope.isSSO});
                     }, function (data, status) {

@@ -9,6 +9,7 @@
     <http pattern="/lib/**" security="none"/>
     <http pattern="/css/**" security="none"/>
     <http pattern="/js/**" security="none"/>
+    <http pattern="/img/**" security="none"/>
     <http pattern="/partials/**" security="none"/>
 
     <http name="initFilter" auto-config="false" use-expressions="true" >

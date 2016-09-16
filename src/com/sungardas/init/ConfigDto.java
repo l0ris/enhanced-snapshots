@@ -1,6 +1,7 @@
 package com.sungardas.init;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 
 class ConfigDto {
     private User user;
@@ -8,6 +9,8 @@ class ConfigDto {
     private int volumeSize;
     private boolean ssoMode;
     private String spEntityId;
+    private String domain;
+    private MailConfigurationDto mailConfiguration;
 
     public int getVolumeSize() {
         return volumeSize;
@@ -47,5 +50,21 @@ class ConfigDto {
 
     public void setSpEntityId(String spEntityId) {
         this.spEntityId = spEntityId;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    public MailConfigurationDto getMailConfiguration() {
+        return mailConfiguration;
+    }
+
+    public void setMailConfiguration(MailConfigurationDto mailConfiguration) {
+        this.mailConfiguration = mailConfiguration;
     }
 }

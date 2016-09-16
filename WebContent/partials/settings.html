@@ -223,6 +223,15 @@
                             <div class="settings field-label col-sm-5 text-left">milliseconds</div>
                         </div>
 
+                        <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">Email notifications:</div>
+                            <div class="col-sm-2 text-left">
+                                <button type="button" class="btn btn-success" ng-click="emailNotifications()">
+                                    Edit Email notification </button>
+                            </div>
+                            <div class="settings field-label col-sm-5 text-left"></div>
+                        </div>
+
                         <div class="col-sm-12 text-danger small"
                              ng-show="otherSettings.maxQueueSize.$error.required ||
                              otherSettings.amazonRetryCount.$error.required ||

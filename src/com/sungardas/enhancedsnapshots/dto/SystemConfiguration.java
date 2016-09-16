@@ -1,6 +1,5 @@
 package com.sungardas.enhancedsnapshots.dto;
 
-
 public class SystemConfiguration {
 
     private S3 s3;
@@ -11,6 +10,8 @@ public class SystemConfiguration {
     private String currentVersion;
     private String latestVersion;
     private boolean ssoMode;
+    private String domain;
+    private MailConfigurationDto mailConfiguration;
 
 
     public String getCurrentVersion() {
@@ -78,6 +79,21 @@ public class SystemConfiguration {
         this.ssoMode = ssoMode;
     }
 
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    public MailConfigurationDto getMailConfiguration() {
+        return mailConfiguration;
+    }
+
+    public void setMailConfiguration(MailConfigurationDto mailConfiguration) {
+        this.mailConfiguration = mailConfiguration;
+    }
 
     public static class S3 {
         private String bucketName;

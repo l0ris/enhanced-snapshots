@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.tasks.executors;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.service.MailService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +28,9 @@ public class RestoreFakeTaskExecutor implements TaskExecutor {
 	private TaskService taskService;
 
 
+	@Autowired
+	private MailService mailService;
+
 	@Override
 	public void execute(TaskEntry taskEntry) {
 		notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting restore...", 0);
@@ -49,7 +53,7 @@ public class RestoreFakeTaskExecutor implements TaskExecutor {
 		taskService.complete(taskEntry);
 		LOG.info("Task completed.");
 		notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
-
+		mailService.notifyAboutSystemStatus("Restore complete");
 	}
 
 }

@@ -6,10 +6,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +35,8 @@ public class AWSDeleteTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     @Autowired
     private SnapshotService snapshotService;
 
+    @Autowired
+    private MailService mailService;
     @Override
     public void execute(TaskEntry taskEntry) {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'running'");
@@ -57,11 +56,13 @@ public class AWSDeleteTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             taskService.complete(taskEntry);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
+            mailService.notifyAboutSuccess(taskEntry);
         } catch (EnhancedSnapshotsException e){
             LOG.error(e);
             notificationService.notifyAboutError(new ExceptionDto("Delete task has failed", e.getLocalizedMessage()));
             taskEntry.setStatus(ERROR.getStatus());
             taskRepository.save(taskEntry);
+            mailService.notifyAboutError(taskEntry, e);
         }
     }
 }
