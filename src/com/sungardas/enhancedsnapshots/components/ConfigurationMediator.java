@@ -1,5 +1,7 @@
 package com.sungardas.enhancedsnapshots.components;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.MailConfigurationDocument;
+
 /**
  * Mediator pattern used for simplifying immediate update system properties in all dependant services
  */
@@ -57,5 +59,9 @@ public interface ConfigurationMediator {
     String getSamlEntityId();
 
     boolean isStoreSnapshot();
+
+    String getDomain();
+
+    MailConfigurationDocument getMailConfiguration();
 
 }

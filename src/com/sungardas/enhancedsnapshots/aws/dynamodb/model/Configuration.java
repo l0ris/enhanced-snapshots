@@ -45,6 +45,20 @@ public class Configuration {
     // saml settings
     private String entityId;
 
+    @DynamoDBAttribute
+    private String domain;
+
+    @DynamoDBAttribute
+    private MailConfigurationDocument mailConfigurationDocument;
+
+    public MailConfigurationDocument getMailConfigurationDocument() {
+        return mailConfigurationDocument;
+    }
+
+    public void setMailConfigurationDocument(MailConfigurationDocument mailConfigurationDocument) {
+        this.mailConfigurationDocument = mailConfigurationDocument;
+    }
+
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
     }
@@ -255,5 +269,13 @@ public class Configuration {
 
     public void setTaskHistoryTTS(int taskHistoryTTS) {
         this.taskHistoryTTS = taskHistoryTTS;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 }

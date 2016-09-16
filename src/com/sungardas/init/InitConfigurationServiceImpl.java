@@ -1,16 +1,5 @@
 package com.sungardas.init;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
@@ -23,11 +12,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.Condition;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -35,21 +20,18 @@ import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
+import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+import com.sungardas.enhancedsnapshots.service.CryptoService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
-
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
@@ -71,17 +53,13 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
 
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
@@ -212,9 +190,13 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Autowired
     private SystemRestoreService systemRestoreService;
 
+    @Autowired
+    private CryptoService cryptoService;
+
     private AWSCredentialsProvider credentialsProvider;
-    private AmazonDynamoDB amazonDynamoDB;
-    private DynamoDBMapper mapper;
+    @Autowired
+    protected AmazonDynamoDB amazonDynamoDB;
+    protected DynamoDBMapper mapper;
     private String instanceId;
     private Region region;
 
@@ -230,7 +212,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         credentialsProvider = new InstanceProfileCredentialsProvider();
         instanceId = EC2MetadataUtils.getInstanceId();
         region = Regions.getCurrentRegion();
-        amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
         amazonDynamoDB.setRegion(region);
         dbPrefix = AmazonConfigProvider.getDynamoDbPrefix();
         DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
@@ -273,6 +254,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             LOG.info("System is successfully restored.");
             return;
         }
+
+        if (config.getMailConfiguration() != null) {
+            checkMailConfiguration(config.getMailConfiguration());
+        }
+
         LOG.info("Configuring system");
         if (!requiredTablesExist() && config.getUser() == null) {
             LOG.warn("No user info was provided");
@@ -297,6 +283,16 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         createDBAndStoreSettings(config);
         refreshContext(config.isSsoMode(), config.getSpEntityId());
         LOG.info("System is successfully configured");
+    }
+
+    @Override
+    public void checkMailConfiguration(MailConfigurationDto configuration) {
+        try {
+            InetAddress.getByName(configuration.getMailSMTPHost()).isReachable(1000);
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new ConfigurationException("Mail server is not reachable");
+        }
     }
 
     private void refreshContext(boolean ssoMode, String entityId){
@@ -418,7 +414,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         storeConfiguration(config);
     }
 
-    private void createDbStructure() throws ConfigurationException {
+    protected void createDbStructure() throws ConfigurationException {
         createTable(BackupEntry.class);
         createTable(Configuration.class);
         createTable(RetentionEntry.class);
@@ -471,7 +467,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setSdfsSize(config.getVolumeSize());
         configuration.setSsoLoginMode(config.isSsoMode());
         configuration.setEntityId(config.getSpEntityId());
-
+        configuration.setMailConfigurationDocument(MailConfigurationDocumentConverter.toMailConfigurationDocument(config.getMailConfiguration(), cryptoService, configuration.getConfigurationId(), ""));
+        configuration.setDomain(config.getDomain());
         // set default properties
         configuration.setRestoreVolumeIopsPerGb(restoreVolumeIopsPerGb);
         configuration.setRestoreVolumeType(restoreVolumeType);

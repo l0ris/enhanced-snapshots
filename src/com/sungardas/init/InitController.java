@@ -3,9 +3,11 @@ package com.sungardas.init;
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.MailConfigurationTestDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+import com.sungardas.enhancedsnapshots.service.MailService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +35,8 @@ class InitController {
     private ContextManager contextManager;
     private InitConfigurationDto configurationDto;
 
-
+    @Autowired
+    private MailService mailService;
 
     @PostConstruct
     private void init() {
@@ -59,12 +62,6 @@ class InitController {
     private Exception illegalArg(IllegalArgumentException exception) {
         LOG.error(exception);
         return exception;
-    }
-
-    //TODO: This should be removed, for dev mode only
-    @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
-    public ResponseEntity<String> getAwsCredentialsInfo() {
-        return new ResponseEntity<>("{\"contains\": true}", HttpStatus.OK);
     }
 
     @ExceptionHandler(value = {Exception.class, AmazonClientException.class})
@@ -99,6 +96,13 @@ class InitController {
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
         initConfigurationService.configureSystem(config);
         return new ResponseEntity<>("", HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/system/mail/configuration/test", method = RequestMethod.POST)
+    public ResponseEntity mailConfigurationTest(@RequestBody MailConfigurationTestDto dto) {
+        mailService.testConfiguration(dto.getMailConfiguration(), dto.getTestEmail(), dto.getDomain());
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
