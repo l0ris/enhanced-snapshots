@@ -134,10 +134,10 @@ angular.module('web')
             var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
 
             var getMailConfig = function () {
-                if (!$scope.mailConfiguration.fromMailAddress) {
+                if (!$scope.settings.mailConfiguration.fromMailAddress) {
                     return null;
                 } else {
-                    return $scope.mailConfiguration
+                    return $scope.settings.mailConfiguration
                 }
             };
 
