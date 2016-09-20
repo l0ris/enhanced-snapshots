@@ -48,11 +48,11 @@ angular.module('web')
             var deferred = $q.defer();
             $http({
                 url: url + "/currentUser",
-                method: 'GET',
+                method: 'GET'
             }).then(function (result) {
                 Storage.save('currentUser', result.data);
                 deferred.resolve(result.data);
-            },function (e) {
+            }, function (e) {
                 deferred.reject(e);
             });
             return deferred.promise;

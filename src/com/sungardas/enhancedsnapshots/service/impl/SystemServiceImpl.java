@@ -1,38 +1,23 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 
-import java.io.*;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
+import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
-
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
-
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
+import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SDFSStateService;
-import com.sungardas.enhancedsnapshots.service.SystemService;
-
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -41,6 +26,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.PropertySource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 
 /**
@@ -100,11 +101,21 @@ public class SystemServiceImpl implements SystemService {
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
+    @Autowired
+    private CryptoService cryptoService;
+
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private AmazonEC2 ec2client;
+
 
     @PostConstruct
     private void init() {
         currentConfiguration = dynamoDBMapper.load(Configuration.class, getInstanceId());
         configurationMediator.setCurrentConfiguration(currentConfiguration);
+        mailService.reconnect();
     }
 
     @Override
@@ -259,12 +270,24 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setTaskHistoryTTS(configurationMediator.getTaskHistoryTTS());
         configuration.setSystemProperties(systemProperties);
         configuration.setSsoMode(configurationMediator.isSsoLoginMode());
+        configuration.setDomain(configurationMediator.getDomain());
+        configuration.setMailConfiguration(MailConfigurationDocumentConverter.toMailConfigurationDto(configurationMediator.getMailConfiguration()));
         return configuration;
     }
 
     @Override
     public void setSystemConfiguration(SystemConfiguration configuration) {
         LOG.info("Updating system properties.");
+        // mail configuration
+        boolean mailReconnect = false;
+        if (configuration.getMailConfiguration() == null) {
+            currentConfiguration.setMailConfigurationDocument(null);
+            mailService.disconnect();
+        } else {
+            currentConfiguration.setMailConfigurationDocument(MailConfigurationDocumentConverter.toMailConfigurationDocument(configuration.getMailConfiguration(),
+                    cryptoService, currentConfiguration.getConfigurationId(), currentConfiguration.getMailConfigurationDocument().getPassword()));
+            mailReconnect = true;
+        }
         // update system properties
         currentConfiguration.setRestoreVolumeIopsPerGb(configuration.getSystemProperties().getRestoreVolumeIopsPerGb());
         currentConfiguration.setRestoreVolumeType(configuration.getSystemProperties().getRestoreVolumeType());
@@ -275,6 +298,10 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
         currentConfiguration.setStoreSnapshot(configuration.getSystemProperties().isStoreSnapshots());
         currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
+        if (configuration.getDomain() == null) {
+            currentConfiguration.setDomain("");
+        }
+        currentConfiguration.setDomain(configuration.getDomain());
 
         // update sdfs setting
         currentConfiguration.setSdfsSize(configuration.getSdfs().getVolumeSize());
@@ -286,11 +313,14 @@ public class SystemServiceImpl implements SystemService {
         configurationRepository.save(currentConfiguration);
 
         configurationMediator.setCurrentConfiguration(currentConfiguration);
+        if (mailReconnect) {
+            mailService.reconnect();
+        }
     }
 
     @Override
     public void systemUninstall(boolean removeS3Bucket) {
-        LOG.info("Uninstaling system. S3 bucket will be removed: {}", removeS3Bucket);
+        LOG.info("Uninstalling system. S3 bucket will be removed: {}", removeS3Bucket);
         applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
         applicationContext.getAutowireCapableBeanFactory().destroyBean(WorkersDispatcher.class);
         new Thread() {

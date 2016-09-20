@@ -1,10 +1,11 @@
 package com.sungardas.enhancedsnapshots.rest;
 
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.dto.MailConfigurationTestDto;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
+import com.sungardas.enhancedsnapshots.service.MailService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 
 import javax.annotation.security.RolesAllowed;
 
@@ -27,6 +27,8 @@ public class SystemController {
     @Autowired
     private SystemService systemService;
 
+    @Autowired
+    private MailService mailService;
 
     @Autowired
     private ConfigurationMediator configurationMediator;
@@ -84,6 +86,13 @@ public class SystemController {
     @RequestMapping(value = "/backup", method = RequestMethod.GET)
     public ResponseEntity<SystemBackupDto> getConfiguration() {
         return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);
+    }
+
+    @RolesAllowed({"ROLE_ADMIN", "ROLE_USER"})
+    @RequestMapping(value = "/mail/configuration/test", method = RequestMethod.POST)
+    public ResponseEntity mailConfigurationTest(@RequestBody MailConfigurationTestDto dto) {
+        mailService.testConfiguration(dto.getMailConfiguration(), dto.getTestEmail(), dto.getDomain());
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     private static class SystemBackupDto {

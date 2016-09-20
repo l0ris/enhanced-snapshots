@@ -49,6 +49,21 @@ public class Configuration {
     private int logsBufferSize;
     private String logFile;
 
+    @DynamoDBAttribute
+    private String domain;
+
+    @DynamoDBAttribute
+    private MailConfigurationDocument mailConfigurationDocument;
+
+    public MailConfigurationDocument getMailConfigurationDocument() {
+        return mailConfigurationDocument;
+    }
+
+    public void setMailConfigurationDocument(MailConfigurationDocument mailConfigurationDocument) {
+        this.mailConfigurationDocument = mailConfigurationDocument;
+    }
+
+
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
     }
@@ -260,6 +275,7 @@ public class Configuration {
     public void setTaskHistoryTTS(int taskHistoryTTS) {
         this.taskHistoryTTS = taskHistoryTTS;
     }
+
     public int getLogsBufferSize() {
         return logsBufferSize;
     }
@@ -274,6 +290,14 @@ public class Configuration {
 
     public void setLogFile(String logFile) {
         this.logFile = logFile;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
 }
