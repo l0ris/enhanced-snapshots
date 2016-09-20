@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import static java.util.Collections.*;
 
 
 @Service
+@DependsOn("SystemService")
 public class LogsWatcherService implements TailerListener {
 
     private static final Logger LOG = LogManager.getLogger(LogsWatcherService.class);
