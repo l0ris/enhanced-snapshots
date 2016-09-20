@@ -156,7 +156,9 @@ angular.module('web')
                     settings.user = $scope.userToEdit;
 
                     delete settings.user.isNew;
-                    settings.mailConfiguration = $scope.settings.mailConfiguration || null;
+
+                    if (!!settings.mailConfiguration.fromMailAddress) $scope.settings.mailConfiguration = null;
+
                     settings.domain = $scope.settings.domain;
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {

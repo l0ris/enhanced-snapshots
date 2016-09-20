@@ -5,6 +5,7 @@ angular.module('web')
         $scope.state = 'ask';
 
         var newSettings = angular.copy($scope.settings);
+        if (!!newSettings.mailConfiguration.fromMailAddress) newSettings.mailConfiguration = null;
         //deletion of Arrays from model per request of backend
         delete newSettings.systemProperties.volumeTypeOptions;
 
