@@ -14,7 +14,6 @@ angular.module('web')
             "deleted": "error",
             "error": "error",
             "removed": "danger"
-
         };
 
         $scope.textClass = {
