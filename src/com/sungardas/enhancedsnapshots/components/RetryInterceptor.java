@@ -39,7 +39,7 @@ public class RetryInterceptor implements MethodInterceptor {
                     methodInvocation.proceed();
                 } finally {
                     // setting back correct region
-                    amazonS3.setRegion(Region.getRegion(Regions.fromName(configurationMediator.getRegion())));
+                    amazonS3.setRegion(Regions.getCurrentRegion());
                 }
             } catch (AmazonServiceException e) {
                 if (e.getErrorType() == AmazonServiceException.ErrorType.Client) {
