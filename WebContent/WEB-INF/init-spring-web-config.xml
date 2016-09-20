@@ -20,6 +20,7 @@
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
     <bean class="com.sungardas.init.ContextManager"/>
+    <bean class="com.sungardas.enhancedsnapshots.service.impl.MailServiceImpl"/>
     <bean id="multipartResolver"
           class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <!-- max upload size in bytes -->

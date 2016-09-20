@@ -5,6 +5,8 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+import com.sungardas.enhancedsnapshots.service.MailService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +36,8 @@ public class DeleteFakeTaskExecutor implements TaskExecutor {
     @Autowired
     private TaskService taskService;
 
+    @Autowired
+    private MailService mailService;
 
     @Override
     public void execute(TaskEntry taskEntry) {
@@ -52,6 +56,7 @@ public class DeleteFakeTaskExecutor implements TaskExecutor {
             taskService.complete(taskEntry);
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Delete complete", 100);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
+            mailService.notifyAboutError(taskEntry, new EnhancedSnapshotsException("Test message"));
         } catch (DataAccessException e){
             LOG.error(e);
             taskEntry.setStatus(ERROR.getStatus());

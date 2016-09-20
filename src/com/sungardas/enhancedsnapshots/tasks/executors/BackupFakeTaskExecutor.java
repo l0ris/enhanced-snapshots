@@ -8,6 +8,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
+import com.sungardas.enhancedsnapshots.service.MailService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
@@ -40,6 +41,9 @@ public class BackupFakeTaskExecutor implements TaskExecutor {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private MailService mailService;
 
     @Override
     public void execute(TaskEntry taskEntry) {
@@ -75,6 +79,7 @@ public class BackupFakeTaskExecutor implements TaskExecutor {
             LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
             taskService.complete(taskEntry);
             LOG.info("Task completed.");
+            mailService.notifyAboutSuccess(taskEntry);
             retentionService.apply();
         } catch (Exception e) {
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Delete temp resources", 40, CANCELED);

@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.components.impl;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.MailConfigurationDocument;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,6 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
         currentConfiguration = new Configuration();
         currentConfiguration.setAmazonRetryCount(30);
         currentConfiguration.setAmazonRetrySleep(15);
-
     }
 
     @Override
@@ -173,5 +173,14 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     @Override
     public String getLogFileName() {
         return currentConfiguration.getLogFile();
+    }
+
+    public String getDomain() {
+        return currentConfiguration.getDomain();
+    }
+
+    @Override
+    public MailConfigurationDocument getMailConfiguration() {
+        return currentConfiguration.getMailConfigurationDocument();
     }
 }
