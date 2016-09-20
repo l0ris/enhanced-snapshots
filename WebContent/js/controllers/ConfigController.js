@@ -133,20 +133,20 @@ angular.module('web')
         $scope.sendSettings = function () {
             var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
 
-            var settings = {
-                bucketName: $scope.selectedBucket.bucketName,
-                volumeSize: volumeSize,
-                ssoMode: $scope.isSSO,
-                spEntityId: $scope.entityId,
-                mailConfiguration: getMailConfig()
-            };
-
             var getMailConfig = function () {
                 if (!$scope.mailConfiguration.fromMailAddress) {
                     return null;
                 } else {
                     return $scope.mailConfiguration
                 }
+            };
+
+            var settings = {
+                bucketName: $scope.selectedBucket.bucketName,
+                volumeSize: volumeSize,
+                ssoMode: $scope.isSSO,
+                spEntityId: $scope.entityId,
+                mailConfiguration: getMailConfig()
             };
 
             if (!$scope.settings.db.hasAdmin && !$scope.isSSO) {
