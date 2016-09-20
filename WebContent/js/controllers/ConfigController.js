@@ -137,7 +137,16 @@ angular.module('web')
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
                 ssoMode: $scope.isSSO,
-                spEntityId: $scope.entityId
+                spEntityId: $scope.entityId,
+                mailConfiguration: getMailConfig()
+            };
+
+            var getMailConfig = function () {
+                if (!$scope.mailConfiguration.fromMailAddress) {
+                    return null;
+                } else {
+                    return $scope.mailConfiguration
+                }
             };
 
             if (!$scope.settings.db.hasAdmin && !$scope.isSSO) {
@@ -157,8 +166,6 @@ angular.module('web')
 
                     delete settings.user.isNew;
 
-                    if (!!settings.mailConfiguration.fromMailAddress) $scope.settings.mailConfiguration = null;
-
                     settings.domain = $scope.settings.domain;
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {
@@ -175,18 +182,18 @@ angular.module('web')
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
-                settings.mailConfiguration = $scope.settings.mailConfiguration || null;
+
                 settings.domain = $scope.settings.domain;
                 $scope.progressState = 'running';
 
-                    Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
-                        $scope.progressState = 'success';
-                    	Storage.save("ssoMode", {ssoMode: $scope.isSSO});
-                    }, function (data, status) {
-                        $scope.progressState = 'failed';
-                    });
+                Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
+                    $scope.progressState = 'success';
+                    Storage.save("ssoMode", {ssoMode: $scope.isSSO});
+                }, function (data, status) {
+                    $scope.progressState = 'failed';
+                });
 
-                    wizardCreationProgress();
+                wizardCreationProgress();
             }
         };
 
