@@ -42,10 +42,15 @@ In templates are defined few variables to do it more interactive.
 #### Variables for successful template:
 
 ${domain} - domain value from settings
+
 ${task.id} - task id
+
 ${task.worker} - worker id (usually identify node that run task)
+
 ${task.status} - task status (waiting, running, queued, complete, canceled, error)
+
 ${task.type} - task type (backup, restore, delete, system_backup, unknown)
+
 ${task.volume} - source volume id
 
 #### Variables for error template:
