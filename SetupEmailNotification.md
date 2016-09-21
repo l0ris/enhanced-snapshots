@@ -79,7 +79,9 @@ ${message} - information message
 
 
 2) Put custom templates into ESS tool file system
+
 3) Add properties to EnhancedSnapshots.properties file (for AMI users: /opt/tomcat-latest/conf/EnhancedSnapshots.properties)
+
 There are applicable next options for email notification:
 
 enhancedsnapshots.mail.success.template.path=/templates/success.ftl      **(path to success template)**
@@ -92,4 +94,5 @@ enhancedsnapshots.mail.test.message.subject=Test subject                 **(test
 enhancedsnapshots.mail.test.message=Test message                         **(test message body)**
 
 4) Restart tomcat at ESS tool instance (for AMI users: **sudo service tomcat8 restart**)
+
 5) Enjoy
