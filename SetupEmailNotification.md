@@ -13,15 +13,16 @@ Settings are the same on both pages.
 ![Enhanced Snapshots settings page](https://cloud.githubusercontent.com/assets/3055547/18710297/295064f2-800d-11e6-8025-334eff8cbb99.png)
 
 There are:
-Domain - using for callback links
-Sender email address - not reply address for notification
-User name - SMTP server account user name
-Password - SMTP server account password
-Email SMTP host - SMTP server host name
-Email SMTP port - SMTP server port
-Connection type - connection type to SMTP server. TLS or SSL
-Type(s) of event - types, about which system will inform users 
-Recipients - list of recipients
+
+**Domain** - using for callback links
+**Sender email address** - not reply address for notification
+**User name** - SMTP server account user name
+**Password** - SMTP server account password
+**Email SMTP host** - SMTP server host name
+**Email SMTP port** - SMTP server port
+**Connection type** - connection type to SMTP server. TLS or SSL
+**Type(s) of event** - types, about which system will inform users 
+**Recipients** - list of recipients
 
 Check connection is an option to check settings. The system will try to send the test message to the email address that entered in this field. 
 If the message received successfully, then settings are correct.
