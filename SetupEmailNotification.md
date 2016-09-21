@@ -34,7 +34,7 @@ ESS tool using [Apache FreeMarker](http://freemarker.org/) template engine. So, 
 
 It can be done in few steps:
 
-1) Create template like the default one ([Default success template](https://github.com/SungardAS/enhanced-snapshots/blob/develop/resources/WEB-INF/classes/success.ftl))
+###1) Create template like the default one ([Default success template](https://github.com/SungardAS/enhanced-snapshots/blob/develop/resources/WEB-INF/classes/success.ftl))
 
 Template can contain HTML tags, styles and link to images.
 In templates are defined few variables to do it more interactive.
@@ -78,9 +78,9 @@ ${domain} - domain value from settings
 ${message} - information message
 
 
-2) Put custom templates into ESS tool file system
+###2) Put custom templates into ESS tool file system
 
-3) Add properties to EnhancedSnapshots.properties file (for AMI users: /opt/tomcat-latest/conf/EnhancedSnapshots.properties)
+###3) Add properties to EnhancedSnapshots.properties file (for AMI users: /opt/tomcat-latest/conf/EnhancedSnapshots.properties)
 
 There are applicable next options for email notification:
 
@@ -93,6 +93,6 @@ enhancedsnapshots.mail.info.subject=Information letter                   **(info
 enhancedsnapshots.mail.test.message.subject=Test subject                 **(test message subject)**
 enhancedsnapshots.mail.test.message=Test message                         **(test message body)**
 
-4) Restart tomcat at ESS tool instance (for AMI users: **sudo service tomcat8 restart**)
+###4) Restart tomcat at ESS tool instance (for AMI users: **sudo service tomcat8 restart**)
 
-5) Enjoy
+###5) Enjoy
