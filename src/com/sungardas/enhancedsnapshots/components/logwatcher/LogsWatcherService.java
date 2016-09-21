@@ -9,8 +9,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -24,7 +27,8 @@ import static java.util.Collections.*;
 
 
 @Service
-public class LogsWatcherService implements TailerListener {
+@DependsOn("SystemService")
+public class LogsWatcherService implements TailerListener, ApplicationListener<SessionUnsubscribeEvent> {
 
     private static final Logger LOG = LogManager.getLogger(LogsWatcherService.class);
     private static final String LOGS_DESTINATION = "/logs";
@@ -41,13 +45,14 @@ public class LogsWatcherService implements TailerListener {
 
     @PreDestroy
     public void destroy() {
-        tailer.stop();
-        LOG.info("Logs watcher stoped");
+        stop();
     }
 
-    public void stop(){
-        tailer.stop();
-        LOG.info("Logs watcher stoped.");
+    public void stop() {
+        if (tailer != null) {
+            tailer.stop();
+            LOG.info("Logs watcher stopped.");
+        }
     }
 
     @PostConstruct
@@ -101,5 +106,12 @@ public class LogsWatcherService implements TailerListener {
             reverse(list);
             return list;
         }
+    }
+
+
+
+    @Override
+    public void onApplicationEvent(SessionUnsubscribeEvent event) {
+        stop();
     }
 }

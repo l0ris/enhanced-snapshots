@@ -4,6 +4,7 @@ package com.sungardas.enhancedsnapshots.rest;
 import com.sungardas.enhancedsnapshots.components.logwatcher.LogsWatcherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
 import java.util.Collection;
@@ -27,6 +28,12 @@ public class LogsController {
             logsWatcherService.stop();
         }
         return null;
+    }
+
+    @SubscribeMapping("/logs")
+    public Collection<String> subscriptionHandler() {
+        logsWatcherService.start();
+        return logsWatcherService.getLatestLogs();
     }
 
 
