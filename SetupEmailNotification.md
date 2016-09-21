@@ -53,20 +53,30 @@ ${task.type} - task type (backup, restore, delete, system_backup, unknown)
 
 ${task.volume} - source volume id
 
+
 #### Variables for error template:
 
 ${domain} - domain value from settings
+
 ${task.id} - task id
+
 ${task.worker} - worker id (usually identify node that run task)
+
 ${task.status} - task status (waiting, running, queued, complete, canceled, error)
+
 ${task.type} - task type (backup, restore, delete, system_backup, unknown)
+
 ${task.volume} - source volume id
+
 ${errorMessage} - error message
+
 
 #### Variables for info template:
 
 ${domain} - domain value from settings
+
 ${message} - information message
+
 
 2) Put custom templates into ESS tool file system
 3) Add properties to EnhancedSnapshots.properties file (for AMI users: /opt/tomcat-latest/conf/EnhancedSnapshots.properties)
