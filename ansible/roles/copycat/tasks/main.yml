@@ -1,0 +1,42 @@
+---
+- debug: msg="install CopyCat"
+  tags:
+    - copycat
+
+- name: add group "copycat"
+  group: name=copycat
+  tags:
+    - copycat
+
+- name: add user "copycat"
+  user: name=copycat group=copycat home=/home/copycat createhome=no shell=/sbin/nologin
+  tags:
+    - copycat
+
+- name: installing init script
+  copy: src=copycat dest=/etc/init.d/copycat owner=root group=root mode=0700
+  tags:
+    - copycat
+
+- name: installing required packages
+  yum: name="{{item}}" state=installed
+  with_items:
+    - unzip
+  tags:
+    - copycat
+
+- name: unarchive CopyCat
+  unarchive: src="http://www.opendedup.org/downloads/copycat.zip" dest=/opt copy=no owner=root group=root mode=0755
+  tags:
+    - copycat
+
+- name: creating folder for logs
+  file: path=/var/log/copycat state=directory mode=0755 owner=copycat group=copycat
+  tags:
+    - copycat
+
+- name: ensure CopyCat is running
+  service: name=copycat state=running enabled=yes
+  tags:
+    - copycat
+
