@@ -13,28 +13,19 @@ import java.util.Collection;
 public class LogsController {
 
     private final static String SUBSCRIBTIONS_MSG = "subscribed";
-    private final static String UNSUBSCRIBTIONS_MSG = "unsubscribed";
 
     @Autowired
     private LogsWatcherService logsWatcherService;
 
-    @MessageMapping({"/logs"})
-    public Collection<String> msgHandler(String msg) {
-        if (msg.equals(SUBSCRIBTIONS_MSG)) {
-            logsWatcherService.start();
-            return logsWatcherService.getLatestLogs();
-        }
-        if (msg.equals(UNSUBSCRIBTIONS_MSG)) {
-            logsWatcherService.stop();
-        }
-        return null;
-    }
+//    @MessageMapping({"/logs"})
+//    public Collection<String> msgHandler(String msg) {
+//        logsWatcherService.start();
+//        return logsWatcherService.getLatestLogs();
+//    }
 
     @SubscribeMapping("/logs")
     public Collection<String> subscriptionHandler() {
         logsWatcherService.start();
         return logsWatcherService.getLatestLogs();
     }
-
-
 }

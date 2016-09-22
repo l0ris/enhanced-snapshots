@@ -18,7 +18,7 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker(ERROR_DESTINATION, TASK_PROGRESS_DESTINATION, LOGS_DESTINATION);
-        config.setApplicationDestinationPrefixes(DESTINATION_PREFIX);
+//        config.setApplicationDestinationPrefixes(DESTINATION_PREFIX);
     }
 
     @Override
