@@ -298,6 +298,7 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
         currentConfiguration.setStoreSnapshot(configuration.getSystemProperties().isStoreSnapshots());
         currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
+        currentConfiguration.setLogsBufferSize(configuration.getSystemProperties().getLogsBuffer());
         if (configuration.getDomain() == null) {
             currentConfiguration.setDomain("");
         }

@@ -19,7 +19,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,7 +92,7 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
         LOG.warn("Failed to read log file {}", configurationMediator.getLogFileName(), ex);
     }
 
-    public synchronized List<String> getLatestLogs() {
+    public synchronized void sendLatestLogs() {
         List<String> list = new ArrayList<>();
         try {
             ReversedLinesFileReader reader = new ReversedLinesFileReader(getLogsFile());
@@ -101,11 +100,11 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
                 list.add(reader.readLine());
             }
             reverse(list);
-            return list;
+            template.convertAndSend(LOGS_DESTINATION, list);
         } catch (IOException e) {
             LOG.warn("Failed to read logs {}", e);
             reverse(list);
-            return list;
+            template.convertAndSend(LOGS_DESTINATION, list);
         }
     }
 

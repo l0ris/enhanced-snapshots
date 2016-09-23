@@ -17,15 +17,9 @@ public class LogsController {
     @Autowired
     private LogsWatcherService logsWatcherService;
 
-//    @MessageMapping({"/logs"})
-//    public Collection<String> msgHandler(String msg) {
-//        logsWatcherService.start();
-//        return logsWatcherService.getLatestLogs();
-//    }
-
     @SubscribeMapping("/logs")
-    public Collection<String> subscriptionHandler() {
+    public void subscriptionHandler() {
         logsWatcherService.start();
-        return logsWatcherService.getLatestLogs();
+        logsWatcherService.sendLatestLogs();
     }
 }
