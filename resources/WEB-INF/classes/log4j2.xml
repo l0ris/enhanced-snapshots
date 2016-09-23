@@ -19,7 +19,7 @@
       <AppenderRef ref="console"/>
       <AppenderRef ref="RollingFile"/>
     </logger>
-    <Root additivity="false" level="info">
+    <Root additivity="false" level="debug">
       <AppenderRef ref="console"/>
       <AppenderRef ref="RollingFile"/>
     </Root>

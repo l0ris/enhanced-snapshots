@@ -19,8 +19,10 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Collections.*;
@@ -54,7 +56,6 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
             LOG.info("Logs watcher stopped.");
         }
     }
-
     @PostConstruct
     public void start() {
         if (tailer != null) {
@@ -84,7 +85,7 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
 
     @Override
     public synchronized void handle(String line) {
-        template.convertAndSend(LOGS_DESTINATION, line);
+        template.convertAndSend(LOGS_DESTINATION, Arrays.asList(line));
     }
 
     @Override
@@ -107,8 +108,6 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
             return list;
         }
     }
-
-
 
     @Override
     public void onApplicationEvent(SessionUnsubscribeEvent event) {
