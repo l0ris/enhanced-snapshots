@@ -268,6 +268,7 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setMaxQueueSize(configurationMediator.getMaxQueueSize());
         systemProperties.setStoreSnapshots(configurationMediator.isStoreSnapshot());
         systemProperties.setTaskHistoryTTS(configurationMediator.getTaskHistoryTTS());
+        systemProperties.setLogsBuffer(configurationMediator.getLogsBufferSize());
         configuration.setSystemProperties(systemProperties);
         configuration.setSsoMode(configurationMediator.isSsoLoginMode());
         configuration.setDomain(configurationMediator.getDomain());
