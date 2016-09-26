@@ -122,12 +122,18 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
     $httpProvider.interceptors.push('Interceptor');
 })
-    .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users) {
-        if (Storage.get("currentUser")) {
-            Users.refreshCurrent().then(function (user) {
-                $rootScope.isLoading = false;
-            });
-        }
+    .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users, System, $q) {
+        $rootScope.isLoading = true;
+        var promises = [System.get(), Users.refreshCurrent()];
+        $q.all(promises).then(function (results) {
+            Storage.save("ssoMode", {"ssoMode": results[0].ssoMode});
+            if (results[1].email) {
+                $state.go('app.volume.list');
+            }
+            $rootScope.isLoading = false;
+        }, function (error) {
+            $rootScope.isLoading = false;
+        });
 
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
@@ -160,7 +166,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
-            $state.go('login');
+            if (Storage.get("ssoMode")) {
+                $rootScope.isLoading = true;
+            } else {
+                $state.go('login');
+            }
         });
 
         $rootScope.errorListener = {};
