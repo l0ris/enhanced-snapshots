@@ -1228,5 +1228,28 @@ div.tr.state-removed {
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 }
 
+.logs .grid {
+    max-height: 700px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.logs .grid .auto-scroll-button {
+    position: absolute;
+    margin: 5px;
+    right: 20px;
+}
+
+.logs .grid .even {
+    background: #eeeeee;
+}
+
+.logs .grid .even span {
+    word-break: break-all
+}
+
+.logs .grid .even .text-warning {
+    color: orangered !important;
+}
 /* end of view-specific styling*/
 /* end of Color scheme */

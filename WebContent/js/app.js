@@ -100,6 +100,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 ssoMode: ssoMode
             }
         })
+        .state('app.logs', {
+            url: "/logs",
+            templateUrl: "partials/logs.html",
+            controller: "LogsController"
+        })
         .state('config', {
             url: "/config",
             templateUrl: "partials/config.html",
@@ -154,9 +159,6 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                     $rootScope.errorListener = $stomp.subscribe('/error', function (err) {
                         toastr.error(err.message, err.title);
                     });
-                    $rootScope.errorListener = $stomp.subscribe('/logs', function (err) {
-                        toastr.error(err.message, err.title);
-                    });
                     $rootScope.taskListener = $stomp.subscribe('/task', function (msg) {
                         Storage.save('lastTaskStatus_' + msg.taskId, msg);
                         $rootScope.$broadcast("task-status-changed", msg);
@@ -164,7 +166,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 }, function (e) {
                     console.log(e);
                 });
-        };
+            };
 
 
         $rootScope.$on('$stateChangeError', function (e) {

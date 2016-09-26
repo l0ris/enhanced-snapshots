@@ -1,0 +1,41 @@
+<div class="header-page">
+    <div class="container">
+        <div class="sub-nav pull-right">
+            <div class="user">
+                <a ui-sref="login" title="logout">{{getUserName()}}&nbsp;<span
+                        class="glyphicon glyphicon-off text-danger"></span></a>
+            </div>
+            <div class="page-btns">
+
+            </div>
+        </div>
+        <div class="page-name">
+            <div class="go-back">&nbsp;</div>
+            <div class="current">System Logs</div>
+        </div>
+    </div>
+</div>
+<div class="table-header-placeholder"></div>
+
+<div class="container app">
+
+    <div class="card logs" ng-hide="isLoading || !logs.length">
+        <div class="grid" auto-scroll="logs" enable-scroll="{{followLogs}}">
+            <button ng-show="logs.length > 5" type="button" ng-click="followLogs = !followLogs" class="auto-scroll-button btn btn-success">
+                <span class="glyphicon glyphicon-{{followLogs ? 'check': 'unchecked'}}"></span> &nbsp;Follow logs
+            </button>
+
+
+            <div ng-repeat="log in logs track by $index" id="{{$index}}" ng-class="{'even': $index%2 === 0}">
+                <span class="text-{{log.type}}">
+                     {{log.message}}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center noitems-container" ng-hide="isLoading || logs.length">
+        <h2>Waiting for logs...</h2>
+    </div>
+
+</div>
