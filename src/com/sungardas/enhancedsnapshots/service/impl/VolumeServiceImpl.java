@@ -1,10 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -21,6 +18,8 @@ import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.VolumeService;
 
+import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.collections.comparators.ReverseComparator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,25 +122,28 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     private Set<VolumeDto> convert(Iterable<BackupEntry> entries) {
-        Set<VolumeDto> dtos = new HashSet<>();
+        List<BackupEntry> backupList = IteratorUtils.toList(entries.iterator());
+        Comparator<BackupEntry> cmp = Comparator.comparingLong(backup-> Long.parseLong(backup.getTimeCreated()));
+        Collections.sort(backupList, cmp.reversed());
+        Map<String, VolumeDto> dtos = new HashMap<>();
 
-        for (BackupEntry entry : entries) {
+        for (BackupEntry entry : backupList) {
             VolumeDto dto = new VolumeDto();
 
             dto.setVolumeId(entry.getVolumeId());
             dto.setSize(0);
 
             dto.setInstanceID(EMPTY);
-            dto.setVolumeName(EMPTY);
+            dto.setVolumeName(entry.getVolumeName());
             dto.setTags(Collections.EMPTY_LIST);
             dto.setAvailabilityZone(EMPTY);
             dto.setSnapshotId(EMPTY);
             dto.setState(REMOVED_VOLUME_STATE);
-
-            dtos.add(dto);
+            if(!dtos.containsKey(dto.getVolumeId())) {
+                dtos.put(dto.getVolumeId(), dto);
+            }
         }
-
-        return dtos;
+        return new HashSet<>(dtos.values());
     }
 
     private static final class VolumeDtoComparator implements Comparator<VolumeDto> {
@@ -150,6 +152,4 @@ public class VolumeServiceImpl implements VolumeService {
             return o1.getVolumeId().compareTo(o2.getVolumeId());
         }
     }
-
-
 }
