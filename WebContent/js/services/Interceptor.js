@@ -3,7 +3,7 @@
  */
 
 angular.module('web')
-    .factory('Interceptor', function ($q, Exception) {
+    .factory('Interceptor', ['$q', 'Exception', function ($q, Exception) {
 
         return {
             responseError: function (rejection) {
@@ -21,4 +21,4 @@ angular.module('web')
                 return $q.reject(rejection);
             }
         }
-    });
+    }]);

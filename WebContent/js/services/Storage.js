@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Storage', function () {
+    .service('Storage', [function () {
 
         return {
 
@@ -21,4 +21,4 @@ angular.module('web')
                 sessionStorage.clear();
             }
         };
-    });
+    }]);

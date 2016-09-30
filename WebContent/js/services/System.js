@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('System', function ($q, $http, BASE_URL) {
+    .service('System', ['$q', '$http', 'BASE_URL', function ($q, $http, BASE_URL) {
         var url = BASE_URL + 'rest/system';
 
         var _get = function () {
@@ -49,4 +49,4 @@ angular.module('web')
                 return _delete(deletionData);
             }
         }
-    });
+    }]);

@@ -1,7 +1,6 @@
 'use strict';
-
 angular.module('web')
-    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
+    .controller('ConfigController', ['$scope', 'Volumes', 'Configuration', '$modal', '$state', 'Storage', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
         var DELAYTIME = 600*1000;
         $scope.STRINGS = {
             s3: {
@@ -133,11 +132,19 @@ angular.module('web')
         $scope.sendSettings = function () {
             var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
 
+            var getMailConfig = function () {
+                if (!$scope.settings.mailConfiguration.fromMailAddress) {
+                    return null;
+                } else {
+                    return $scope.settings.mailConfiguration
+                }
+            };
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
                 ssoMode: $scope.isSSO,
-                spEntityId: $scope.entityId
+                spEntityId: $scope.entityId || null,
+                mailConfiguration: getMailConfig()
             };
 
             if (!$scope.settings.db.hasAdmin && !$scope.isSSO) {
@@ -156,7 +163,7 @@ angular.module('web')
                     settings.user = $scope.userToEdit;
 
                     delete settings.user.isNew;
-                    settings.mailConfiguration = $scope.settings.mailConfiguration || null;
+
                     settings.domain = $scope.settings.domain;
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {
@@ -173,18 +180,18 @@ angular.module('web')
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
-                settings.mailConfiguration = $scope.settings.mailConfiguration || null;
+
                 settings.domain = $scope.settings.domain;
                 $scope.progressState = 'running';
 
-                    Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
-                        $scope.progressState = 'success';
-                    	Storage.save("ssoMode", {ssoMode: $scope.isSSO});
-                    }, function (data, status) {
-                        $scope.progressState = 'failed';
-                    });
+                Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
+                    $scope.progressState = 'success';
+                    Storage.save("ssoMode", {ssoMode: $scope.isSSO});
+                }, function (data, status) {
+                    $scope.progressState = 'failed';
+                });
 
-                    wizardCreationProgress();
+                wizardCreationProgress();
             }
         };
 
@@ -195,4 +202,4 @@ angular.module('web')
             }, function (data, status) {
             });
         };
-    });
+    }]);

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Backups', function ($q, $http, BASE_URL) {
+    .service('Backups', ['$q', '$http', 'BASE_URL', function ($q, $http, BASE_URL) {
         var url = BASE_URL + 'rest/backup';
 
         var _getForVolume = function (volume) {
@@ -33,4 +33,4 @@ angular.module('web')
                 return _delete(fileName);
             }
         }
-    });
+    }]);

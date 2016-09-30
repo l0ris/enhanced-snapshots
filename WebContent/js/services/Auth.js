@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Auth', function (Storage, $q, $http, BASE_URL) {
+    .service('Auth', ['Storage', '$q', '$http', 'BASE_URL', function (Storage, $q, $http, BASE_URL) {
         var sessionUrl = BASE_URL + "login";
         var statuses = {
             404: "Service is unavailable",
@@ -47,4 +47,4 @@ angular.module('web')
                 return _logout();
             }
         };
-    });
+    }]);

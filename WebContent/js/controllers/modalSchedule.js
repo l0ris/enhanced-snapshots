@@ -4,7 +4,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalScheduleCtrl', function ($scope, $modalInstance, $filter, schedule, Schedules) {
+    .controller('modalScheduleCtrl', ['$scope', '$modalInstance', '$filter', 'schedule', 'Schedules', function ($scope, $modalInstance, $filter, schedule, Schedules) {
 
         $scope.Schedules = Schedules;
         $scope.schedule = schedule;
@@ -112,4 +112,4 @@ angular.module('web')
             $modalInstance.dismiss();
         };
 
-    });
+    }]);

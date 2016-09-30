@@ -1,7 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $rootScope, $state, $q, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks, Zones) {
+    .controller('VolumesController', ['$scope', '$rootScope', '$state', '$q', 'Retention', '$filter', 'Storage', 'Regions', 'ITEMS_BY_PAGE', 'DISPLAY_PAGES', '$modal', 'Volumes', 'Tasks', 'Zones',
+        function ($scope, $rootScope, $state, $q, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks, Zones) {
         $scope.maxVolumeDisplay = 5;
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
@@ -52,7 +53,7 @@ angular.module('web')
                 description: 'add schedule',
                 buttonText: 'Add schedule'
             }
-        }
+        };
 
         $scope.isAllSelected = false;
         $scope.selectedAmount = 0;
@@ -298,4 +299,4 @@ angular.module('web')
             });
 
         }
-    });
+    }]);
