@@ -9,6 +9,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.dto.TaskProgressDto;
+import com.sungardas.enhancedsnapshots.dto.converter.VolumeDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
@@ -117,7 +118,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             if (volumeType.equals("standard")) volumeType = "gp2";
             backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
 
-            BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS, snapshotId, volumeType, iops, sizeGib);
+            BackupEntry backup = new BackupEntry(volumeId, VolumeDtoConverter.convert(volumeToBackup).getVolumeName(), backupFileName, backupDate, "", BackupState.INPROGRESS, snapshotId, volumeType, iops, sizeGib);
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Copying...", 15);
             String source = attachedDeviceName;

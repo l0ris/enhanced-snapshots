@@ -18,12 +18,12 @@ final public class BackupEntry {
     private String iops;
     private String sizeGiB;
     private String volumeId;
-
+    private String volumeName;
 
 
 	public BackupEntry() {}
 
-	public BackupEntry(String volumeId, String fileName, String timeCreated, String backupSize, BackupState state,
+	public BackupEntry(String volumeId, String volumeName, String fileName, String timeCreated, String backupSize, BackupState state,
                        String snapshotId, String volumeType, String iops, String sizeGiB) {
         setVolumeId(volumeId);
 		setFileName(fileName);
@@ -34,6 +34,7 @@ final public class BackupEntry {
 		setVolumeType(volumeType);
 		setIops(iops);
 		setSizeGiB(sizeGiB);
+        setVolumeName(volumeName);
 	}
 
     @DynamoDBHashKey()
@@ -109,6 +110,15 @@ final public class BackupEntry {
     public void setSizeGiB(final String sizeGiB) {
         this.sizeGiB = sizeGiB;
     }
+
+    public String getVolumeName() {
+        return volumeName;
+    }
+
+    public void setVolumeName(String volumeName) {
+        this.volumeName = volumeName;
+    }
+
 
     @Override
     public boolean equals(Object o) {

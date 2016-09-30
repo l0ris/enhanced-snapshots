@@ -163,7 +163,7 @@ angular.module('web')
                     settings.user = $scope.userToEdit;
 
                     delete settings.user.isNew;
-
+                    settings.mailConfiguration = $scope.settings.mailConfiguration || null;
                     settings.domain = $scope.settings.domain;
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {
@@ -180,7 +180,7 @@ angular.module('web')
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
-
+                settings.mailConfiguration = $scope.settings.mailConfiguration || null;
                 settings.domain = $scope.settings.domain;
                 $scope.progressState = 'running';
 
