@@ -9,12 +9,7 @@
     - copycat
 
 - name: add user "copycat"
-  user: name=copycat group=copycat home=/home/copycat createhome=yes shell=/sbin/nologin
-  tags:
-    - copycat
-
-- name: installing init script
-  copy: src=copycat dest=/etc/init.d/copycat owner=root group=root mode=0700
+  user: name=copycat group=copycat home=/home/copycat createhome=no shell=/sbin/nologin
   tags:
     - copycat
 
@@ -39,9 +34,3 @@
   file: path=/var/log/copycat state=directory mode=0755 owner=copycat group=copycat
   tags:
     - copycat
-
-- name: ensure CopyCat is running
-  service: name=copycat state=running enabled=yes
-  tags:
-    - copycat
-

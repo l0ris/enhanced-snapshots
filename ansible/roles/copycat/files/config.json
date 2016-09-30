@@ -1,6 +1,6 @@
 {
-"persist-path" : "c:\\tmp\\",
-"debug" : false,
+"persist-path" : "/tmp",
+"debug" : true,
 "servers" : [ {
 	"port" : 6442,
 	"host": "13.91.96.131",
