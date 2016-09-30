@@ -1244,12 +1244,5 @@ div.tr.state-removed {
     background: #eeeeee;
 }
 
-.logs .grid .even span {
-    word-break: break-all
-}
-
-.logs .grid .even .text-warning {
-    color: orangered !important;
-}
 /* end of view-specific styling*/
 /* end of Color scheme */
