@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('LogsController', function ($stomp, $scope, $rootScope, $state, $timeout, $q, System) {
+    .controller('LogsController', function ($location, $anchorScroll, $stomp, $scope, $rootScope, $state, $timeout, $q, System) {
         $scope.followLogs = false;
         $scope.logs = [];
 
@@ -27,6 +27,11 @@ angular.module('web')
                     $rootScope.isLoading = false;
                     $scope.logsListener = $stomp.subscribe('/logs', function (payload, headers, res) {
                         updateLogs(res);
+                        if ($scope.followLogs) {
+                            var lastLogId = 'log-' + ($scope.logs.length ? $scope.logs.length - 1 : 0);
+                            $location.hash(lastLogId);
+                            $anchorScroll();
+                        }
                     });
 
                 }, function (e) {

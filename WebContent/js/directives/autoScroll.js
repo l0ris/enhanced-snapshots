@@ -8,7 +8,7 @@ app.directive('autoScroll', function () {
             scope.$watchCollection('autoScroll', function (newValue) {
                 if (newValue && JSON.parse(attr.enableScroll))
                 {
-                    $(element).scrollTop($(element)[0].scrollHeight);
+                    $(element).scrollTop($(element)[0].scrollHeight + $(element)[0].clientHeight);
                 }
             });
         }

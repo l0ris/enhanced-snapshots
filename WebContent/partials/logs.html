@@ -20,13 +20,13 @@
 <div class="container app">
 
     <div class="card logs" ng-hide="isLoading || !logs.length">
-        <div class="grid" auto-scroll="logs" enable-scroll="{{followLogs}}">
+        <div class="grid">
             <button ng-show="logs.length > 5" type="button" ng-click="followLogs = !followLogs" class="auto-scroll-button btn btn-success">
                 <span class="glyphicon glyphicon-{{followLogs ? 'check': 'unchecked'}}"></span> &nbsp;Follow logs
             </button>
 
 
-            <div ng-repeat="log in logs track by $index" id="{{$index}}" ng-class="{'even': $index%2 === 0}">
+            <div ng-repeat="log in logs track by $index" id="log-{{$index}}" ng-class="{'even': $index%2 === 0}">
                 <span class="text-{{log.type}}">
                      {{log.message}}
                 </span>
