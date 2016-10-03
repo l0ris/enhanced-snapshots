@@ -60,8 +60,11 @@ public interface ConfigurationMediator {
 
     boolean isStoreSnapshot();
 
+    int getLogsBufferSize();
+
+    String getLogFileName();
+
     String getDomain();
 
     MailConfigurationDocument getMailConfiguration();
-
 }

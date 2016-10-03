@@ -140,12 +140,11 @@ angular.module('web')
                     return $scope.settings.mailConfiguration
                 }
             };
-
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
                 ssoMode: $scope.isSSO,
-                spEntityId: $scope.entityId,
+                spEntityId: $scope.entityId || null,
                 mailConfiguration: getMailConfig()
             };
 

@@ -199,7 +199,6 @@ public class SystemConfiguration {
     }
 
     public static class SystemProperties {
-
         private String tempVolumeType;
         private int tempVolumeIopsPerGb;
         private String restoreVolumeType;
@@ -210,6 +209,7 @@ public class SystemConfiguration {
         private int maxQueueSize;
         private int taskHistoryTTS;
         private boolean storeSnapshots;
+        private int logsBuffer;
 
         public int getAmazonRetryCount() {
             return amazonRetryCount;
@@ -289,6 +289,14 @@ public class SystemConfiguration {
 
         public void setStoreSnapshots(boolean storeSnapshots) {
             this.storeSnapshots = storeSnapshots;
+        }
+
+        public int getLogsBuffer() {
+            return logsBuffer;
+        }
+
+        public void setLogsBuffer(int logsBuffer) {
+            this.logsBuffer = logsBuffer;
         }
     }
 }
