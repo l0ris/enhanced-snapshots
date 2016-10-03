@@ -45,6 +45,10 @@ public class Configuration {
     // saml settings
     private String entityId;
 
+    // logs watcher settings
+    private int logsBufferSize;
+    private String logFile;
+
     @DynamoDBAttribute
     private String domain;
 
@@ -58,6 +62,7 @@ public class Configuration {
     public void setMailConfigurationDocument(MailConfigurationDocument mailConfigurationDocument) {
         this.mailConfigurationDocument = mailConfigurationDocument;
     }
+
 
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
@@ -271,6 +276,22 @@ public class Configuration {
         this.taskHistoryTTS = taskHistoryTTS;
     }
 
+    public int getLogsBufferSize() {
+        return logsBufferSize;
+    }
+
+    public void setLogsBufferSize(int logsBufferSize) {
+        this.logsBufferSize = logsBufferSize;
+    }
+
+    public String getLogFile() {
+        return logFile;
+    }
+
+    public void setLogFile(String logFile) {
+        this.logFile = logFile;
+    }
+
     public String getDomain() {
         return domain;
     }
@@ -278,4 +299,5 @@ public class Configuration {
     public void setDomain(String domain) {
         this.domain = domain;
     }
+
 }

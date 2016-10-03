@@ -63,6 +63,11 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @Value("${enhancedsnapshots.default.max.wait.time.to.detach.volume}")
     private int defaultMaxWaitTimeToDetachVolume;
 
+    @Value("${enhancedsnapshots.logs.buffer.size}")
+    private int bufferSize;
+    @Value("${enhancedsnapshots.logs.file}")
+    private String logFile;
+
     @Value("${enhancedsnapshots.dev.isSystemConfigured:false}")
     private boolean isSystemConfigured;
 
@@ -196,7 +201,8 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         configuration.setSdfsVolumeName("awspool");
         configuration.setSdfsMountPoint("/mnt/awspool");
         configuration.setSsoLoginMode(true);
-
+        configuration.setLogFile(logFile);
+        configuration.setLogsBufferSize(bufferSize);
         return configuration;
     }
 

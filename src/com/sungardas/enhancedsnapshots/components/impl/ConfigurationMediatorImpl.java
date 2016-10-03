@@ -25,7 +25,6 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
         currentConfiguration = new Configuration();
         currentConfiguration.setAmazonRetryCount(30);
         currentConfiguration.setAmazonRetrySleep(15);
-
     }
 
     @Override
@@ -167,6 +166,15 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     }
 
     @Override
+    public int getLogsBufferSize() {
+        return currentConfiguration.getLogsBufferSize();
+    }
+
+    @Override
+    public String getLogFileName() {
+        return currentConfiguration.getLogFile();
+    }
+
     public String getDomain() {
         return currentConfiguration.getDomain();
     }
