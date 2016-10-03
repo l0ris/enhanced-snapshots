@@ -65,9 +65,6 @@ angular.module('web')
                     // yes, it's a magic number :) Logs are guaranteed to be displayed smoothly at
                     // this speed of 15 logs/half-sec
                     if (logsAdded < 15) {
-                        console.log("logCollection: ", logsCollection.length);
-                        console.log("logsAdded: ", logsAdded);
-
                         sendToView(logsCollection);
                     } else {
                         // if speed of logs is more than 30 log/sec (15 logs/half-sec) => update view
