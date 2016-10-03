@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
+import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -55,14 +56,13 @@ public class BackupFakeTaskExecutor implements TaskExecutor {
             taskRepository.save(taskEntry);
 
             checkThreadInterruption(taskEntry);
-
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Finding source file", 30);
             LOG.info(taskEntry.toString());
             String timestamp = Long.toString(System.currentTimeMillis());
             String volumeId = taskEntry.getVolume();
             String filename = volumeId + "." + timestamp + ".backup";
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Checking volume", 60);
-            BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED,
+            BackupEntry backup = new BackupEntry(taskEntry.getVolume(), "Fake", filename, timestamp, "123456789", BackupState.COMPLETED,
                     "snap-00100110", "gp2", "3000", "10");
             LOG.info("Task " + taskEntry.getId() + ":put backup info'");
             backupRepository.save(backup);

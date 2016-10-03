@@ -290,6 +290,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         LOG.info("System is successfully configured");
     }
 
+
     @Override
     public void checkMailConfiguration(MailConfigurationDto configuration) {
         try {
