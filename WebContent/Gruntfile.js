@@ -40,6 +40,9 @@ module.exports = function(grunt) {
                     js: 'lib/vendor.min.js',
                     css: 'lib/vendor.css'
                 },
+                bowerOptions: {
+                    relative: false
+                },
                 mainFiles: {
                     'jquery': 'dist/jquery.min.js',
                     'angular': 'angular.min.js',
