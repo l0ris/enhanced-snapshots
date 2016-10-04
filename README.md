@@ -65,7 +65,7 @@ But for the single AMI option from the marketplace Create a es-admin role using 
 * A [VPC id](https://console.aws.amazon.com/vpc/home?#vpcs:) (Not needed if you are using the Simple Stack option below.)
 * An IP prefix from which inbound http/https connections will be allowed. If you're not sure, use your current [public IP address](http://www.myipaddress.com/show-my-ip-address/) with "/32" tacked on the end (like "1.2.3.4/32").
 * An IP prefix from which inbound ssh connections will be allowed. If you're not sure, use your current [public IP address](http://www.myipaddress.com/show-my-ip-address/) with "/32" tacked on the end (like "1.2.3.4/32").
-* Size of Instance EBS volume (in GB). Size can be as small as 8 or higher for large amount of data keys storage. By default, 48GB will be used.
+* Size of Instance EBS volume (in GB). Volume size should be calculated on the basis of 4% of expected backup data size, e.g. for storing 10TB of data it will be required to create instance EBS volume near 400GB.
 
 **Note** When creating the CloudFormation stack, on the Review page, make sure to check the box at the bottom of the page in the Capabilities section.
 
