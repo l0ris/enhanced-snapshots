@@ -65,6 +65,15 @@ public class TaskEntry {
     @DynamoDBAttribute
     private int restoreVolumeIopsPerGb;
 
+    @DynamoDBAttribute
+    private String progress;
+
+    @DynamoDBAttribute
+    private String tempVolumeId;
+
+    @DynamoDBAttribute
+    private String tempSnapshotId;
+
     public String getId() {
         return id;
     }
@@ -239,6 +248,30 @@ public class TaskEntry {
         this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
+    public String getProgress() {
+        return progress;
+    }
+
+    public void setProgress(final String progress) {
+        this.progress = progress;
+    }
+
+    public String getTempVolumeId() {
+        return tempVolumeId;
+    }
+
+    public void setTempVolumeId(final String tempVolumeId) {
+        this.tempVolumeId = tempVolumeId;
+    }
+
+    public String getTempSnapshotId() {
+        return tempSnapshotId;
+    }
+
+    public void setTempSnapshotId(final String tempSnapshotId) {
+        this.tempSnapshotId = tempSnapshotId;
+    }
+
     public enum TaskEntryType {
         BACKUP("backup"),
         RESTORE("restore"),
@@ -272,6 +305,7 @@ public class TaskEntry {
         QUEUED("queued"),
         COMPLETE("complete"),
         CANCELED("canceled"),
+        PARTIALLY_FINISHED("partially_finished"),
         ERROR("error");
 
         private String status;

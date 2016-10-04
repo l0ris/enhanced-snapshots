@@ -2,12 +2,14 @@ package com.sungardas.enhancedsnapshots.tasks.executors;
 
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.TaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,9 @@ public abstract class AbstractAWSVolumeTaskExecutor implements TaskExecutor {
 
     @Autowired
     private AWSCommunicationService awsCommunication;
+
+    @Autowired
+    private TaskRepository taskRepository;
 
     @Autowired
     private TaskService taskService;
@@ -67,5 +72,16 @@ public abstract class AbstractAWSVolumeTaskExecutor implements TaskExecutor {
             LOG.info("Task {} was canceled.", taskEntry.getId());
             throw new EnhancedSnapshotsTaskInterruptedException("Task canceled");
         }
+    }
+
+    protected void setProgress(TaskEntry taskEntry, Object progress) {
+        setProgress(taskEntry, progress, null, null);
+    }
+
+    protected void setProgress(TaskEntry taskEntry, Object progress, String tempVolumeId, String tempSnapshotId) {
+        taskEntry.setProgress(progress.toString());
+        taskEntry.setTempSnapshotId(tempSnapshotId);
+        taskEntry.setTempVolumeId(tempVolumeId);
+        taskRepository.save(taskEntry);
     }
 }

@@ -1,6 +1,16 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import com.amazonaws.services.ec2.model.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.MessageFormat;
+import java.util.concurrent.TimeUnit;
+
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Snapshot;
+import com.amazonaws.services.ec2.model.Volume;
+import com.amazonaws.services.ec2.model.VolumeState;
+import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -10,22 +20,27 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.dto.TaskProgressDto;
 import com.sungardas.enhancedsnapshots.dto.converter.VolumeDtoConverter;
+import com.sungardas.enhancedsnapshots.enumeration.BackupProgress;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
-import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
+import com.sungardas.enhancedsnapshots.service.MailService;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.RetentionService;
+import com.sungardas.enhancedsnapshots.service.SnapshotService;
+import com.sungardas.enhancedsnapshots.service.StorageService;
+import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.service.VolumeService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.text.MessageFormat;
-import java.util.concurrent.TimeUnit;
-
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
 
 @Service("awsBackupVolumeTaskExecutor")
@@ -79,6 +94,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             }
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting backup task", 0);
+            setProgress(taskEntry, BackupProgress.STARTED);
 
             LOG.info("Starting backup process for volume {}", volumeId);
             LOG.info("{} task state was changed to 'in progress'", taskEntry.getId());
@@ -123,6 +139,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Copying...", 15);
             String source = attachedDeviceName;
             LOG.info("Starting copying: " + source + " to:" + backupFileName);
+            setProgress(taskEntry, BackupProgress.COPYING, tempVolume.getVolumeId(), snapshotId);
             CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
             storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto, taskEntry.getId());
 
@@ -131,10 +148,12 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             // kill initialization Process if it's alive, should be killed before volume detaching
             killInitializationVolumeProcessIfAlive(tempVolume);
             LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
+            setProgress(taskEntry, BackupProgress.DETACHING_TEMP_VOLUME, tempVolume.getVolumeId(), snapshotId);
             awsCommunication.detachVolume(tempVolume);
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting temp volume", 85);
             LOG.info("Deleting temporary volume: {}", tempVolume.getVolumeId());
+            setProgress(taskEntry, BackupProgress.DELETING_TEMP_VOLUME, tempVolume.getVolumeId(), snapshotId);
             awsCommunication.deleteVolume(tempVolume);
             checkThreadInterruption(taskEntry);
             long backupSize = storageService.getSize(configurationMediator.getSdfsMountPoint() + backupFileName);
@@ -153,6 +172,8 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
             LOG.info("Cleaning up previously created snapshots");
             LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationMediator.getConfigurationId());
+
+            setProgress(taskEntry, BackupProgress.CLEANING_TEMP_RESOURCES, tempVolume.getVolumeId(), snapshotId);
 
             String previousSnapshot = snapshotService.getSnapshotIdByVolumeId(volumeId);
             if (previousSnapshot != null) {
@@ -174,6 +195,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             mailService.notifyAboutSuccess(taskEntry);
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
             LOG.info("Backup process for volume {} canceled ", volumeId);
+            setProgress(taskEntry, BackupProgress.FAIL_CLEANING, tempVolume.getVolumeId(), taskEntry.getTempSnapshotId());
             TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Kill initialization process", 20, CANCELED);
             notificationService.notifyAboutTaskProgress(dto);
             // kill initialization Process if it's alive, should be killed before volume detaching
@@ -187,6 +209,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             mailService.notifyAboutSystemStatus("Backup task for volume with id: " + taskEntry.getVolume() + " was canceled");
         } catch (Exception e) {
             LOG.error("Backup process for volume {} failed ", volumeId, e);
+            setProgress(taskEntry, BackupProgress.FAIL_CLEANING, tempVolume.getVolumeId(), taskEntry.getTempSnapshotId());
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
 
@@ -292,10 +315,12 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             throw new AWSBackupVolumeException(MessageFormat.format("Can't get access to {} volume", volumeId));
         }
 
+        setProgress(taskEntry, BackupProgress.CREATING_SNAPSHOT);
         Snapshot snapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(volumeSrc));
         LOG.info("SnapshotEntry created: {}", snapshot.toString());
 
         // create volume
+        setProgress(taskEntry, BackupProgress.CREATING_TEMP_VOLUME, null, snapshot.getSnapshotId());
         String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
         Volume volumeDest = awsCommunication.waitForVolumeState(awsCommunication.createVolumeFromSnapshot(snapshot.getSnapshotId(),
                 instanceAvailabilityZone, VolumeType.fromValue(taskEntry.getTempVolumeType()), taskEntry.getTempVolumeIopsPerGb()),
@@ -305,6 +330,7 @@ public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
         // create temporary tag
         awsCommunication.createTemporaryTag(volumeDest.getVolumeId(),volumeSrc.getVolumeId());
 
+        setProgress(taskEntry, BackupProgress.ATTACHING_VOLUME, volumeDest.getVolumeId(), snapshot.getSnapshotId());
         // mount AMI volume
         awsCommunication.attachVolume(instance, volumeDest);
 
