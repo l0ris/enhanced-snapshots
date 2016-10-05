@@ -224,6 +224,20 @@
                         </div>
 
                         <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">Logs Limit:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       min="0"
+                                       max="1000"
+                                       ng-model="settings.systemProperties.logsBuffer"
+                                       name="logsBuffer"
+                                       required>
+                            </div>
+                            <div class="settings field-label col-sm-5 text-left">logs</div>
+                        </div>
+
+                        <div class="col-sm-12 form-group">
                             <div class="settings field-label col-sm-5 text-right">Email notifications:</div>
                             <div class="col-sm-2 text-left">
                                 <button type="button" class="btn btn-success" ng-click="emailNotifications()">

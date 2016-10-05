@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.service;
 
 import com.amazonaws.regions.Region;
+import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.enhancedsnapshots.dto.VolumeDto;
 
 import java.util.Set;

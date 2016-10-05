@@ -265,6 +265,7 @@ public class SystemServiceImpl implements SystemService {
         systemProperties.setMaxQueueSize(configurationMediator.getMaxQueueSize());
         systemProperties.setStoreSnapshots(configurationMediator.isStoreSnapshot());
         systemProperties.setTaskHistoryTTS(configurationMediator.getTaskHistoryTTS());
+        systemProperties.setLogsBuffer(configurationMediator.getLogsBufferSize());
         configuration.setSystemProperties(systemProperties);
         configuration.setSsoMode(configurationMediator.isSsoLoginMode());
         configuration.setDomain(configurationMediator.getDomain());
@@ -295,6 +296,7 @@ public class SystemServiceImpl implements SystemService {
         currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
         currentConfiguration.setStoreSnapshot(configuration.getSystemProperties().isStoreSnapshots());
         currentConfiguration.setTaskHistoryTTS(configuration.getSystemProperties().getTaskHistoryTTS());
+        currentConfiguration.setLogsBufferSize(configuration.getSystemProperties().getLogsBuffer());
         if (configuration.getDomain() == null) {
             currentConfiguration.setDomain("");
         }

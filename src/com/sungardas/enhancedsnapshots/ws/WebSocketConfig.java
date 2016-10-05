@@ -10,10 +10,13 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
 
+    public static final String TASK_PROGRESS_DESTINATION = "/task";
+    public static final String ERROR_DESTINATION = "/error";
+    public static final String LOGS_DESTINATION = "/logs";
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/error", "/task");
-        config.setApplicationDestinationPrefixes("/app");
+        config.enableSimpleBroker(ERROR_DESTINATION, TASK_PROGRESS_DESTINATION, LOGS_DESTINATION);
     }
 
     @Override

@@ -180,6 +180,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${CUSTOM_BUCKET_NAME:}")
     private String customBucketName;
 
+    @Value("${enhancedsnapshots.logs.buffer.size}")
+    private int bufferSize;
+    @Value("${enhancedsnapshots.logs.file}")
+    private String logFile;
+
     private static final String CUSTOM_BUCKET_NAME_DEFAULT_VALUE = "enhancedsnapshots";
 
     @Autowired
@@ -283,6 +288,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         refreshContext(config.isSsoMode(), config.getSpEntityId());
         LOG.info("System is successfully configured");
     }
+
 
     @Override
     public void checkMailConfiguration(MailConfigurationDto configuration) {
@@ -487,6 +493,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setNginxKeyPath(nginxKeyPath);
         configuration.setTaskHistoryTTS(taskHistoryTTS);
         configuration.setStoreSnapshot(storeSnapshot);
+        configuration.setLogFile(logFile);
+        configuration.setLogsBufferSize(bufferSize);
         // saving configuration to DB
         mapper.save(configuration);
     }

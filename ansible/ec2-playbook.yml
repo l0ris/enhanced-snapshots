@@ -8,6 +8,7 @@
     - openjdk
     - tomcat8
     - opendedup
+    - copycat
     - maven
     - nodejs
     - nginx

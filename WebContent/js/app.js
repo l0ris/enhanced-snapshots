@@ -100,6 +100,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 ssoMode: ssoMode
             }
         })
+        .state('app.logs', {
+            url: "/logs",
+            templateUrl: "partials/logs.html",
+            controller: "LogsController"
+        })
         .state('config', {
             url: "/config",
             templateUrl: "partials/config.html",
@@ -161,7 +166,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 }, function (e) {
                     console.log(e);
                 });
-        };
+            };
 
 
         $rootScope.$on('$stateChangeError', function (e) {
