@@ -133,7 +133,7 @@ public class AmazonConfigProviderDEV {
     }
 
 
-    public static String getDynamoDbPrefix(String instanceId) {
-        return "ENHANCEDSNAPSHOTS_" + instanceId + "_";
+    public static String getDynamoDbPrefix(String systemId) {
+        return "ENHANCEDSNAPSHOTS_" + systemId + "_";
     }
 }

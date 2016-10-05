@@ -36,7 +36,7 @@ public class SystemController {
     @RolesAllowed("ROLE_ADMIN")
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody RemoveAppDTO removeAppDTO) {
-        if (!configurationMediator.getConfigurationId().equals(removeAppDTO.getInstanceId())) {
+        if (!configurationMediator.getConfigurationId().equals(removeAppDTO.getSystemId())) {
             return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
         systemService.systemUninstall(removeAppDTO.removeS3Bucket);
@@ -113,7 +113,7 @@ public class SystemController {
 
     private static class RemoveAppDTO {
 
-        private String instanceId;
+        private String systemId;
         private boolean removeS3Bucket;
 
         public boolean isRemoveS3Bucket() {
@@ -124,12 +124,12 @@ public class SystemController {
             this.removeS3Bucket = removeS3Bucket;
         }
 
-        public String getInstanceId() {
-            return instanceId;
+        public String getSystemId() {
+            return systemId;
         }
 
-        public void setInstanceId(String instanceId) {
-            this.instanceId = instanceId;
+        public void setSystemId(String instanceId) {
+            this.systemId = instanceId;
         }
     }
 

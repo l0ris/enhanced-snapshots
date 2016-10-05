@@ -11,9 +11,10 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.util.EC2MetadataUtils;
+
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
 
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.context.annotation.Bean;
@@ -113,10 +114,10 @@ public class AmazonConfigProvider {
     }
 
     public static String getDynamoDbPrefix() {
-        return getDynamoDbPrefix(EC2MetadataUtils.getInstanceId());
+        return getDynamoDbPrefix(SystemUtils.getSystemId());
     }
 
-    public static String getDynamoDbPrefix(String instanceId) {
-        return "ENHANCEDSNAPSHOTS_" + instanceId + "_";
+    public static String getDynamoDbPrefix(String systemId) {
+        return "ENHANCEDSNAPSHOTS_" + systemId + "_";
     }
 }

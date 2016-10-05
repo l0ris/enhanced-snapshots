@@ -59,11 +59,8 @@ public class RetentionServiceImpl implements RetentionService {
     @Autowired
     private ConfigurationMediator configurationMediator;
 
-    private String instanceId;
-
     @PostConstruct
     private void init() {
-        instanceId = configurationMediator.getConfigurationId();
         schedulerService.addTask(getJob(this), configurationMediator.getRetentionCronExpression());
         try {
             apply();
