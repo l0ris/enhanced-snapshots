@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('LogsController', ['$stomp', '$scope', '$rootScope', '$state', '$timeout', '$q', 'System', function ($stomp, $scope, $rootScope, $state, $timeout, $q, System) {
+    .controller('LogsController', ['$location', '$anchorScroll','$stomp', '$scope', '$rootScope', '$state', '$timeout', '$q', 'System', function ($location, $anchorScroll, $stomp, $scope, $rootScope, $state, $timeout, $q, System) {
         $scope.followLogs = false;
         $scope.logs = [];
 
@@ -27,6 +27,11 @@ angular.module('web')
                     $rootScope.isLoading = false;
                     $scope.logsListener = $stomp.subscribe('/logs', function (payload, headers, res) {
                         updateLogs(res);
+                        if ($scope.followLogs) {
+                            var lastLogId = 'log-' + ($scope.logs.length ? $scope.logs.length - 1 : 0);
+                            $location.hash(lastLogId);
+                            $anchorScroll();
+                        }
                     });
 
                 }, function (e) {
@@ -60,9 +65,6 @@ angular.module('web')
                     // yes, it's a magic number :) Logs are guaranteed to be displayed smoothly at
                     // this speed of 15 logs/half-sec
                     if (logsAdded < 15) {
-                        console.log("logCollection: ", logsCollection.length);
-                        console.log("logsAdded: ", logsAdded);
-
                         sendToView(logsCollection);
                     } else {
                         // if speed of logs is more than 30 log/sec (15 logs/half-sec) => update view
