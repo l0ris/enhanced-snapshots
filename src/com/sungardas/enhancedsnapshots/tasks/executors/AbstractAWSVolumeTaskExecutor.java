@@ -4,6 +4,7 @@ import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.TaskProgressDto;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
@@ -74,14 +75,8 @@ public abstract class AbstractAWSVolumeTaskExecutor implements TaskExecutor {
         }
     }
 
-    protected void setProgress(TaskEntry taskEntry, Object progress) {
-        setProgress(taskEntry, progress, null, null);
-    }
-
-    protected void setProgress(TaskEntry taskEntry, Object progress, String tempVolumeId, String tempSnapshotId) {
-        taskEntry.setProgress(progress.toString());
-        taskEntry.setTempSnapshotId(tempSnapshotId);
-        taskEntry.setTempVolumeId(tempVolumeId);
+    protected void setProgress(TaskEntry taskEntry, TaskProgress progress) {
+        taskEntry.setProgress(progress);
         taskRepository.save(taskEntry);
     }
 }

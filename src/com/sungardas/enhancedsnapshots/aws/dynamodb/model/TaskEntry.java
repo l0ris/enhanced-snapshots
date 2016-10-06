@@ -3,8 +3,11 @@ package com.sungardas.enhancedsnapshots.aws.dynamodb.model;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.util.json.Jackson;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.TaskProgressMarshaller;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 
 
 @DynamoDBTable(tableName = "Tasks")
@@ -54,6 +57,9 @@ public class TaskEntry {
     private long completeTime;
 
     @DynamoDBAttribute
+    private long startTime;
+
+    @DynamoDBAttribute
     private String tempVolumeType;
 
     @DynamoDBAttribute
@@ -66,7 +72,8 @@ public class TaskEntry {
     private int restoreVolumeIopsPerGb;
 
     @DynamoDBAttribute
-    private String progress;
+    @DynamoDBMarshalling(marshallerClass = TaskProgressMarshaller.class)
+    private TaskProgress progress;
 
     @DynamoDBAttribute
     private String tempVolumeId;
@@ -248,16 +255,25 @@ public class TaskEntry {
         this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
-    public String getProgress() {
+    public TaskProgress getProgress() {
         return progress;
     }
 
-    public void setProgress(final String progress) {
+    public void setProgress(final TaskProgress progress) {
         this.progress = progress;
     }
 
     public String getTempVolumeId() {
         return tempVolumeId;
+    }
+
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(final long startTime) {
+        this.startTime = startTime;
     }
 
     public void setTempVolumeId(final String tempVolumeId) {
