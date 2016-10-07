@@ -183,4 +183,19 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public MailConfigurationDocument getMailConfiguration() {
         return currentConfiguration.getMailConfigurationDocument();
     }
+
+    @Override
+    public int getMinNodeNumberInCluster() {
+        return currentConfiguration.getMinNodeNumber();
+    }
+
+    @Override
+    public int getMaxNodeNumberInCluster() {
+        return currentConfiguration.getMaxNodeNumber();
+    }
+
+    @Override
+    public boolean isClusterMode() {
+        return currentConfiguration.isClusterMode();
+    }
 }

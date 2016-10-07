@@ -4,20 +4,26 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.autoscaling.AmazonAutoScaling;
+import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
 
+import com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.aop.framework.ProxyFactoryBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,8 +47,11 @@ public class AmazonConfigProviderDEV {
     @Value("${amazon.aws.region}")
     private String region;
 
-    @Autowired
-    private CryptoService cryptoService;
+    private CryptoService cryptoService = new CryptoServiceImpl();
+
+    private DynamoDBMapper dynamoDBMapper() {
+        return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
+    }
 
 
     @Bean(name = "retryInterceptor")
@@ -105,11 +114,6 @@ public class AmazonConfigProviderDEV {
         return proxyFactoryBean;
     }
 
-    private DynamoDBMapper dynamoDBMapper() {
-        return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
-    }
-
-
     @Bean(name = "dynamoDB")
     public AmazonDynamoDB amazonDynamoDB() {
         AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
@@ -132,6 +136,47 @@ public class AmazonConfigProviderDEV {
         return amazonS3;
     }
 
+    @Bean
+    public ProxyFactoryBean amazonAutoScalingProxy() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+        proxyFactoryBean.setTarget(autoScalingClient());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+        return proxyFactoryBean;
+    }
+
+    @Bean
+    public ProxyFactoryBean amazonELBProxy() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+        proxyFactoryBean.setTarget(elasticLoadBalancingClient());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+        return proxyFactoryBean;
+    }
+
+    @Bean
+    public ProxyFactoryBean amazonCloudWatch() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+        proxyFactoryBean.setTarget(cloudWatchClient());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+        return proxyFactoryBean;
+    }
+
+    private AmazonAutoScaling autoScalingClient() {
+        AmazonAutoScalingClient autoScalingClient = new AmazonAutoScalingClient(amazonAWSCredentials());
+        autoScalingClient.setRegion(Region.getRegion(Regions.fromName(region)));
+        return autoScalingClient;
+    }
+
+    private AmazonElasticLoadBalancing elasticLoadBalancingClient() {
+        AmazonElasticLoadBalancingClient elasticLoadBalancingClient = new AmazonElasticLoadBalancingClient(amazonAWSCredentials());
+        elasticLoadBalancingClient.setRegion(Region.getRegion(Regions.fromName(region)));
+        return elasticLoadBalancingClient;
+    }
+
+    private AmazonCloudWatch cloudWatchClient() {
+        AmazonCloudWatchClient cloudWatchClient = new AmazonCloudWatchClient(amazonAWSCredentials());
+        cloudWatchClient.setRegion(Region.getRegion(Regions.fromName(region)));
+        return cloudWatchClient;
+    }
 
     public static String getDynamoDbPrefix(String systemId) {
         return "ENHANCEDSNAPSHOTS_" + systemId + "_";

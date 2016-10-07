@@ -11,6 +11,7 @@ import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -117,6 +118,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         config.setDb(db);
         config.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
 
+        config.setClusterMode(SystemUtils.clusterMode());
         return config;
     }
 

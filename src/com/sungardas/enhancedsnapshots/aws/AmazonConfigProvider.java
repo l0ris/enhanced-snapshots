@@ -3,12 +3,18 @@ package com.sungardas.enhancedsnapshots.aws;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.autoscaling.AmazonAutoScaling;
+import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 
@@ -25,7 +31,7 @@ import org.springframework.context.annotation.Profile;
 @Profile("prod")
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository", dynamoDBMapperConfigRef = "dynamoDBMapperConfig")
 public class AmazonConfigProvider {
-    private InstanceProfileCredentialsProvider  credentialsProvider;
+    private InstanceProfileCredentialsProvider credentialsProvider;
 
     @Bean(name = "retryInterceptor")
     public RetryInterceptor retryInterceptor() {
@@ -34,7 +40,7 @@ public class AmazonConfigProvider {
 
     @Bean
     public InstanceProfileCredentialsProvider amazonCredentialsProvider() {
-        if(credentialsProvider==null) {
+        if (credentialsProvider == null) {
             credentialsProvider = new InstanceProfileCredentialsProvider();
         }
         return credentialsProvider;
@@ -111,6 +117,48 @@ public class AmazonConfigProvider {
             amazonS3.setRegion(current);
         }
         return amazonS3;
+    }
+
+    @Bean
+    public ProxyFactoryBean amazonAutoScalingProxy() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+        proxyFactoryBean.setTarget(autoScalingClient());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+        return proxyFactoryBean;
+    }
+
+    @Bean
+    public ProxyFactoryBean amazonELBProxy() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+        proxyFactoryBean.setTarget(elasticLoadBalancingClient());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+        return proxyFactoryBean;
+    }
+
+    @Bean
+    public ProxyFactoryBean amazonCloudWatch() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+        proxyFactoryBean.setTarget(cloudWatchClient());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+        return proxyFactoryBean;
+    }
+
+    private AmazonAutoScaling autoScalingClient() {
+        AmazonAutoScalingClient autoScalingClient = new AmazonAutoScalingClient(credentialsProvider);
+        autoScalingClient.setRegion(Regions.getCurrentRegion());
+        return autoScalingClient;
+    }
+
+    private AmazonElasticLoadBalancing elasticLoadBalancingClient() {
+        AmazonElasticLoadBalancingClient elasticLoadBalancingClient = new AmazonElasticLoadBalancingClient(credentialsProvider);
+        elasticLoadBalancingClient.setRegion(Regions.getCurrentRegion());
+        return elasticLoadBalancingClient;
+    }
+
+    private AmazonCloudWatch cloudWatchClient() {
+        AmazonCloudWatchClient cloudWatchClient = new AmazonCloudWatchClient(credentialsProvider);
+        cloudWatchClient.setRegion(Regions.getCurrentRegion());
+        return cloudWatchClient;
     }
 
     public static String getDynamoDbPrefix() {
