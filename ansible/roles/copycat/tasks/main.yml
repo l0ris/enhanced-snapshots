@@ -9,7 +9,7 @@
     - copycat
 
 - name: add user "copycat"
-  user: name=copycat group=copycat home=/home/copycat createhome=no shell=/sbin/nologin
+  user: name=copycat group=copycat home=/home/copycat createhome=yes shell=/sbin/nologin
   tags:
     - copycat
 
