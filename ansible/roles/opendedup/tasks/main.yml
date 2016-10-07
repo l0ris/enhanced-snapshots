@@ -8,7 +8,7 @@
     - libxml2
 
 - name: install sdfs
-  shell: rpm -ivh --force http://www.opendedup.org/downloads/sdfs-3.2.4-1.x86_64.rpm
+  shell: rpm -ivh --force http://www.opendedup.org/downloads/sdfs-3.2.6-1.x86_64.rpm
 
 - lineinfile: dest=/etc/security/limits.conf state=present
             line='* hardnofile 65535'
