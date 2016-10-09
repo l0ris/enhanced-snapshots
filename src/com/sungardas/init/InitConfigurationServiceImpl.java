@@ -18,7 +18,6 @@ import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
@@ -426,6 +425,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         createTable(TaskEntry.class);
         createTable(SnapshotEntry.class);
         createTable(User.class);
+        createTable(NodeEntry.class);
     }
 
     private void createTable(Class tableClass) {
@@ -495,6 +495,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setStoreSnapshot(storeSnapshot);
         configuration.setLogFile(logFile);
         configuration.setLogsBufferSize(bufferSize);
+        configuration.setClusterMode(SystemUtils.clusterMode());
+        configuration.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
+        configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
         // saving configuration to DB
         mapper.save(configuration);
     }
@@ -631,6 +634,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
         initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix002);
+        initConfigurationDto.setClusterMode(SystemUtils.clusterMode());
         return initConfigurationDto;
     }
 

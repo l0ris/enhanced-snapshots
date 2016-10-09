@@ -49,6 +49,11 @@ public class Configuration {
     private int logsBufferSize;
     private String logFile;
 
+    // cluster info
+    private boolean clusterMode;
+    private int minNodeNumber;
+    private int maxNodeNumber;
+
     @DynamoDBAttribute
     private String domain;
 
@@ -62,7 +67,13 @@ public class Configuration {
     public void setMailConfigurationDocument(MailConfigurationDocument mailConfigurationDocument) {
         this.mailConfigurationDocument = mailConfigurationDocument;
     }
+    public boolean isClusterMode() {
+        return clusterMode;
+    }
 
+    public void setClusterMode(boolean clusterMode) {
+        this.clusterMode = clusterMode;
+    }
 
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
@@ -299,5 +310,22 @@ public class Configuration {
     public void setDomain(String domain) {
         this.domain = domain;
     }
+
+    public int getMinNodeNumber() {
+        return minNodeNumber;
+    }
+
+    public void setMinNodeNumber(int minNodeNumber) {
+        this.minNodeNumber = minNodeNumber;
+    }
+
+    public int getMaxNodeNumber() {
+        return maxNodeNumber;
+    }
+
+    public void setMaxNodeNumber(int maxNodeNumber) {
+        this.maxNodeNumber = maxNodeNumber;
+    }
+
 
 }
