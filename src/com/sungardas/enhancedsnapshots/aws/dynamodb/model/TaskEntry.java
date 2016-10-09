@@ -73,7 +73,7 @@ public class TaskEntry {
 
     @DynamoDBAttribute
     @DynamoDBMarshalling(marshallerClass = TaskProgressMarshaller.class)
-    private TaskProgress progress;
+    private TaskProgress progress = TaskProgress.NONE;
 
     @DynamoDBAttribute
     private String tempVolumeId;

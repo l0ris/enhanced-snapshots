@@ -35,7 +35,6 @@ import com.sungardas.enhancedsnapshots.service.VolumeService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
@@ -43,8 +42,7 @@ import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskE
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
 
-@Service("awsBackupVolumeStrategyTaskExecutor")
-@Profile("prod")
+@Service("awsBackupVolumeTaskExecutor")
 public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskExecutor {
 
     private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeStrategyTaskExecutor.class);
@@ -87,6 +85,49 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
     public void execute(final TaskEntry taskEntry) {
         Volume tempVolume = taskEntry.getTempVolumeId() != null ? awsCommunication.getVolume(taskEntry.getTempVolumeId()) : null;
         try {
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting backup task", 0);
+
+            LOG.info("Starting backup process for volume {}", taskEntry.getVolume());
+            LOG.info("{} task state was changed to 'in progress'", taskEntry.getId());
+            // change task status
+            taskEntry.setStatus(RUNNING.getStatus());
+            taskRepository.save(taskEntry);
+
+            if (taskEntry.getProgress() != TaskProgress.NONE) {
+                switch (taskEntry.getProgress()) {
+                    case ATTACHING_VOLUME:
+                    case CREATING_TEMP_VOLUME:
+                    case WAITING_TEMP_VOLUME:
+                    case COPYING: {
+                        try {
+                            detachingTempVolumeStep(taskEntry, tempVolume);
+                        } catch (Exception e) {
+                            //skip
+                        }
+                        try {
+                            deletingTempVolumeStep(taskEntry, tempVolume);
+                        } catch (Exception e) {
+                            //skip
+                        }
+                        try {
+                            storageService.deleteFile(getBackupName(taskEntry));
+                        } catch (Exception e) {
+                            //skip
+                        }
+                        setProgress(taskEntry, TaskProgress.CREATING_TEMP_VOLUME);
+                        break;
+                    }
+                    case CREATING_SNAPSHOT: {
+                        if (taskEntry.getTempSnapshotId() != null) {
+                            setProgress(taskEntry, TaskProgress.WAITING_SNAPSHOT);
+                        }
+                        break;
+                    }
+                    case DETACHING_TEMP_VOLUME: {
+                        setProgress(taskEntry, TaskProgress.DELETING_TEMP_VOLUME);
+                    }
+                }
+            }
             switch (taskEntry.getProgress()) {
                 case NONE: {
                     // check volume exists
@@ -97,159 +138,34 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
                     }
                 }
                 case STARTED: {
-                    setProgress(taskEntry, TaskProgress.STARTED);
-                    checkThreadInterruption(taskEntry);
-                    taskEntry.setStartTime(System.currentTimeMillis());
-                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting backup task", 0);
-
-                    LOG.info("Starting backup process for volume {}", taskEntry.getVolume());
-                    LOG.info("{} task state was changed to 'in progress'", taskEntry.getId());
-
-                    // change task status
-                    taskEntry.setStatus(RUNNING.getStatus());
-                    taskRepository.save(taskEntry);
+                    startedStep(taskEntry);
                 }
                 case CREATING_SNAPSHOT: {
-                    // create snapshot
-                    setProgress(taskEntry, TaskProgress.CREATING_SNAPSHOT);
-                    Volume volumeSrc = awsCommunication.getVolume(taskEntry.getVolume());
-                    if (volumeSrc == null) {
-                        LOG.error("Can't get access to {} volume", taskEntry.getVolume());
-                        throw new AWSBackupVolumeException(MessageFormat.format("Can't get access to {} volume", taskEntry.getVolume()));
-                    }
-
-                    taskEntry.setTempSnapshotId(awsCommunication.createSnapshot(volumeSrc).getSnapshotId());
-                    taskRepository.save(taskEntry);
-
+                    creatingSnapshotStep(taskEntry);
                 }
                 case WAITING_SNAPSHOT: {
-                    setProgress(taskEntry, TaskProgress.WAITING_SNAPSHOT);
-                    Snapshot snapshot = awsCommunication.waitForCompleteState(awsCommunication.getSnapshot(taskEntry.getTempSnapshotId()));
-                    LOG.info("SnapshotEntry created: {}", snapshot.toString());
+                    waitingSnapshotStep(taskEntry);
                 }
                 case CREATING_TEMP_VOLUME: {
-                    // create volume
-                    checkThreadInterruption(taskEntry);
-                    setProgress(taskEntry, TaskProgress.CREATING_TEMP_VOLUME);
-                    Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
-                    if (instance == null) {
-                        LOG.error("Can't get access to {} instance" + configurationMediator.getConfigurationId());
-                        throw new AWSBackupVolumeException(MessageFormat.format("Can't get access to {} instance", configurationMediator.getConfigurationId()));
-                    }
-                    String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
-                    tempVolume = awsCommunication.createVolumeFromSnapshot(taskEntry.getTempSnapshotId(), instanceAvailabilityZone,
-                            VolumeType.fromValue(taskEntry.getTempVolumeType()), taskEntry.getTempVolumeIopsPerGb());
-                    taskEntry.setTempVolumeId(tempVolume.getVolumeId());
-                    taskRepository.save(taskEntry);
-
-                    // create temporary tag
-                    awsCommunication.createTemporaryTag(taskEntry.getTempVolumeId(), taskEntry.getVolume());
+                    tempVolume = creatingTempVolumeStep(taskEntry);
                 }
                 case WAITING_TEMP_VOLUME: {
-                    checkThreadInterruption(taskEntry);
-                    setProgress(taskEntry, TaskProgress.WAITING_TEMP_VOLUME);
-                    Volume volumeDest = awsCommunication.waitForVolumeState(tempVolume, VolumeState.Available);
-                    LOG.info("Volume created: {}", volumeDest.toString());
+                    waitingTempVolumeStep(taskEntry, tempVolume);
                 }
-
                 case ATTACHING_VOLUME: {
-                    setProgress(taskEntry, TaskProgress.ATTACHING_VOLUME);
-                    // mount volume
-                    awsCommunication.attachVolume(awsCommunication.getInstance(configurationMediator.getConfigurationId()), tempVolume);
-
-                    tempVolume = awsCommunication.syncVolume(tempVolume);
-
-                    try {
-                        TimeUnit.MINUTES.sleep(1);
-                    } catch (InterruptedException e1) {
-                        e1.printStackTrace();
-                    }
-                    // storage blocks on volumes that were restored from snapshots must be initialized (pulled down from Amazon S3 and written to the volume) before they can be accesed.
-                    // This preliminary action takes time and can cause a significant increase in the latency of an I/O operation the first time each block is accessed.
-                    // To avoid this performance hit in a production environment all blocks on volumes can be read before volume usage; this process is called initialization (formerly known as pre-warming).
-                    initializeVolume(tempVolume);
-                    checkThreadInterruption(taskEntry);
-                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Checking volume", 10);
+                    tempVolume = attachingVolumeStep(taskEntry, tempVolume);
                 }
                 case COPYING: {
-                    setProgress(taskEntry, TaskProgress.COPYING);
-                    checkThreadInterruption(taskEntry);
-
-                    Volume volumeToBackup = awsCommunication.getVolume(taskEntry.getVolume());
-                    String volumeType = volumeToBackup.getVolumeType();
-                    String iops = (volumeToBackup.getIops() != null) ? volumeToBackup
-                            .getIops().toString() : "";
-                    String sizeGib = tempVolume.getSize().toString();
-                    if (volumeType.equals("")) {
-                        volumeType = "gp2";
-                    }
-                    if (volumeType.equals("standard")) {
-                        volumeType = "gp2";
-                    }
-                    String backupFileName = getBackupName(taskEntry);
-                    BackupEntry backup = new BackupEntry(taskEntry.getVolume(),
-                            VolumeDtoConverter.convert(awsCommunication.getVolume(taskEntry.getVolume())).getVolumeName(),
-                            backupFileName, taskEntry.getStartTime() + "", "", BackupState.INPROGRESS, taskEntry.getTempSnapshotId(), volumeType, iops, sizeGib);
-                    checkThreadInterruption(taskEntry);
-                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Copying...", 15);
-                    String source = storageService.detectFsDevName(tempVolume);
-                    LOG.info("Starting copying: " + source + " to:" + backupFileName);
-                    CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
-                    storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto, taskEntry.getId());
-
-                    checkThreadInterruption(taskEntry);
-                    long backupSize = storageService.getSize(configurationMediator.getSdfsMountPoint() + backupFileName);
-                    long backupCreationtime = storageService.getBackupCreationTime(configurationMediator.getSdfsMountPoint() + backupFileName);
-                    LOG.info("Backup creation time: {}", backupCreationtime);
-                    LOG.info("Backup size: {}", backupSize);
-
-                    checkThreadInterruption(taskEntry);
-                    LOG.info("Put backup entry to the Backup List: {}", backup.getFileName());
-                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Backup complete", 90);
-                    backup.setState(BackupState.COMPLETED.getState());
-                    backup.setSize(String.valueOf(backupSize));
-                    backupRepository.save(backup);
-
-                    LOG.info(format("Backup process for volume %s finished successfully ", taskEntry.getVolume()));
-                    LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
-                    LOG.info("Cleaning up previously created snapshots");
-                    LOG.info("Storing snapshot data: [{},{},{}]", taskEntry.getVolume(), taskEntry.getTempSnapshotId(), configurationMediator.getConfigurationId());
+                    copyingStep(taskEntry, tempVolume);
                 }
                 case DETACHING_TEMP_VOLUME: {
-                    setProgress(taskEntry, TaskProgress.DETACHING_TEMP_VOLUME);
-                    checkThreadInterruption(taskEntry);
-                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Detaching temp volume", 80);
-                    // kill initialization Process if it's alive, should be killed before volume detaching
-                    killInitializationVolumeProcessIfAlive(tempVolume);
-                    LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
-                    awsCommunication.detachVolume(tempVolume);
+                    detachingTempVolumeStep(taskEntry, tempVolume);
                 }
                 case DELETING_TEMP_VOLUME: {
-                    setProgress(taskEntry, TaskProgress.DELETING_TEMP_VOLUME);
-                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting temp volume", 85);
-                    LOG.info("Deleting temporary volume: {}", tempVolume.getVolumeId());
-                    awsCommunication.deleteVolume(tempVolume);
+                    deletingTempVolumeStep(taskEntry, tempVolume);
                 }
                 case CLEANING_TEMP_RESOURCES: {
-                    setProgress(taskEntry, TaskProgress.CLEANING_TEMP_RESOURCES);
-                    String previousSnapshot = snapshotService.getSnapshotIdByVolumeId(taskEntry.getVolume());
-                    if (previousSnapshot != null) {
-                        checkThreadInterruption(taskEntry);
-                        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
-                        LOG.info("Deleting previous snapshot {}", previousSnapshot);
-                        snapshotService.deleteSnapshot(previousSnapshot);
-                    }
-                    if (configurationMediator.isStoreSnapshot()) {
-                        snapshotService.saveSnapshot(taskEntry.getVolume(), taskEntry.getTempSnapshotId());
-                    } else {
-                        awsCommunication.deleteSnapshot(taskEntry.getTempSnapshotId());
-                    }
-                    taskService.complete(taskEntry);
-                    LOG.info("Task completed.");
-                    checkThreadInterruption(taskEntry);
-                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
-                    retentionService.apply();
-                    mailService.notifyAboutSuccess(taskEntry);
+                    cleaningTempResourcesStep(taskEntry);
                 }
             }
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
@@ -285,6 +201,163 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
             mailService.notifyAboutError(taskEntry, e);
         }
     }
+
+    private void startedStep(TaskEntry taskEntry) {
+        setProgress(taskEntry, TaskProgress.STARTED);
+        checkThreadInterruption(taskEntry);
+        taskEntry.setStartTime(System.currentTimeMillis());
+    }
+
+    private void creatingSnapshotStep(TaskEntry taskEntry) {
+        setProgress(taskEntry, TaskProgress.CREATING_SNAPSHOT);
+        Volume volumeSrc = awsCommunication.getVolume(taskEntry.getVolume());
+        if (volumeSrc == null) {
+            LOG.error("Can't get access to {} volume", taskEntry.getVolume());
+            throw new AWSBackupVolumeException(MessageFormat.format("Can't get access to {} volume", taskEntry.getVolume()));
+        }
+
+        taskEntry.setTempSnapshotId(awsCommunication.createSnapshot(volumeSrc).getSnapshotId());
+        taskRepository.save(taskEntry);
+    }
+
+    private void waitingSnapshotStep(TaskEntry taskEntry) {
+        setProgress(taskEntry, TaskProgress.WAITING_SNAPSHOT);
+        Snapshot snapshot = awsCommunication.waitForCompleteState(awsCommunication.getSnapshot(taskEntry.getTempSnapshotId()));
+        LOG.info("SnapshotEntry created: {}", snapshot.toString());
+    }
+
+    private Volume creatingTempVolumeStep(TaskEntry taskEntry) {
+        // create volume
+        checkThreadInterruption(taskEntry);
+        setProgress(taskEntry, TaskProgress.CREATING_TEMP_VOLUME);
+        Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
+        if (instance == null) {
+            LOG.error("Can't get access to {} instance" + configurationMediator.getConfigurationId());
+            throw new AWSBackupVolumeException(MessageFormat.format("Can't get access to {} instance", configurationMediator.getConfigurationId()));
+        }
+        String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
+        Volume tempVolume = awsCommunication.createVolumeFromSnapshot(taskEntry.getTempSnapshotId(), instanceAvailabilityZone,
+                VolumeType.fromValue(taskEntry.getTempVolumeType()), taskEntry.getTempVolumeIopsPerGb());
+        taskEntry.setTempVolumeId(tempVolume.getVolumeId());
+        taskRepository.save(taskEntry);
+
+        // create temporary tag
+        awsCommunication.createTemporaryTag(taskEntry.getTempVolumeId(), taskEntry.getVolume());
+        return tempVolume;
+    }
+
+    private void waitingTempVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
+        checkThreadInterruption(taskEntry);
+        setProgress(taskEntry, TaskProgress.WAITING_TEMP_VOLUME);
+        Volume volumeDest = awsCommunication.waitForVolumeState(tempVolume, VolumeState.Available);
+        LOG.info("Volume created: {}", volumeDest.toString());
+    }
+
+    private Volume attachingVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
+        setProgress(taskEntry, TaskProgress.ATTACHING_VOLUME);
+        // mount volume
+        awsCommunication.attachVolume(awsCommunication.getInstance(configurationMediator.getConfigurationId()), tempVolume);
+
+        tempVolume = awsCommunication.syncVolume(tempVolume);
+
+        try {
+            TimeUnit.MINUTES.sleep(1);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
+        // storage blocks on volumes that were restored from snapshots must be initialized (pulled down from Amazon S3 and written to the volume) before they can be accesed.
+        // This preliminary action takes time and can cause a significant increase in the latency of an I/O operation the first time each block is accessed.
+        // To avoid this performance hit in a production environment all blocks on volumes can be read before volume usage; this process is called initialization (formerly known as pre-warming).
+        initializeVolume(tempVolume);
+        checkThreadInterruption(taskEntry);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Checking volume", 10);
+        return tempVolume;
+    }
+
+    private void copyingStep(TaskEntry taskEntry, Volume tempVolume) throws IOException, InterruptedException {
+        setProgress(taskEntry, TaskProgress.COPYING);
+        checkThreadInterruption(taskEntry);
+
+        Volume volumeToBackup = awsCommunication.getVolume(taskEntry.getVolume());
+        String volumeType = volumeToBackup.getVolumeType();
+        String iops = (volumeToBackup.getIops() != null) ? volumeToBackup
+                .getIops().toString() : "";
+        String sizeGib = tempVolume.getSize().toString();
+        if (volumeType.equals("")) {
+            volumeType = "gp2";
+        }
+        if (volumeType.equals("standard")) {
+            volumeType = "gp2";
+        }
+        String backupFileName = getBackupName(taskEntry);
+        BackupEntry backup = new BackupEntry(taskEntry.getVolume(),
+                VolumeDtoConverter.convert(awsCommunication.getVolume(taskEntry.getVolume())).getVolumeName(),
+                backupFileName, taskEntry.getStartTime() + "", "", BackupState.INPROGRESS, taskEntry.getTempSnapshotId(), volumeType, iops, sizeGib);
+        checkThreadInterruption(taskEntry);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Copying...", 15);
+        String source = storageService.detectFsDevName(tempVolume);
+        LOG.info("Starting copying: " + source + " to:" + backupFileName);
+        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
+        storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto, taskEntry.getId());
+
+        checkThreadInterruption(taskEntry);
+        long backupSize = storageService.getSize(configurationMediator.getSdfsMountPoint() + backupFileName);
+        long backupCreationtime = storageService.getBackupCreationTime(configurationMediator.getSdfsMountPoint() + backupFileName);
+        LOG.info("Backup creation time: {}", backupCreationtime);
+        LOG.info("Backup size: {}", backupSize);
+
+        checkThreadInterruption(taskEntry);
+        LOG.info("Put backup entry to the Backup List: {}", backup.getFileName());
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Backup complete", 90);
+        backup.setState(BackupState.COMPLETED.getState());
+        backup.setSize(String.valueOf(backupSize));
+        backupRepository.save(backup);
+
+        LOG.info(format("Backup process for volume %s finished successfully ", taskEntry.getVolume()));
+        LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+        LOG.info("Cleaning up previously created snapshots");
+        LOG.info("Storing snapshot data: [{},{},{}]", taskEntry.getVolume(), taskEntry.getTempSnapshotId(), configurationMediator.getConfigurationId());
+    }
+
+    private void detachingTempVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
+        setProgress(taskEntry, TaskProgress.DETACHING_TEMP_VOLUME);
+        checkThreadInterruption(taskEntry);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Detaching temp volume", 80);
+        // kill initialization Process if it's alive, should be killed before volume detaching
+        killInitializationVolumeProcessIfAlive(tempVolume);
+        LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
+        awsCommunication.detachVolume(tempVolume);
+    }
+
+    private void deletingTempVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
+        setProgress(taskEntry, TaskProgress.DELETING_TEMP_VOLUME);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting temp volume", 85);
+        LOG.info("Deleting temporary volume: {}", tempVolume.getVolumeId());
+        awsCommunication.deleteVolume(tempVolume);
+    }
+
+    private void cleaningTempResourcesStep(TaskEntry taskEntry) {
+        setProgress(taskEntry, TaskProgress.CLEANING_TEMP_RESOURCES);
+        String previousSnapshot = snapshotService.getSnapshotIdByVolumeId(taskEntry.getVolume());
+        if (previousSnapshot != null) {
+            checkThreadInterruption(taskEntry);
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
+            LOG.info("Deleting previous snapshot {}", previousSnapshot);
+            snapshotService.deleteSnapshot(previousSnapshot);
+        }
+        if (configurationMediator.isStoreSnapshot()) {
+            snapshotService.saveSnapshot(taskEntry.getVolume(), taskEntry.getTempSnapshotId());
+        } else {
+            awsCommunication.deleteSnapshot(taskEntry.getTempSnapshotId());
+        }
+        taskService.complete(taskEntry);
+        LOG.info("Task completed.");
+        checkThreadInterruption(taskEntry);
+        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
+        retentionService.apply();
+        mailService.notifyAboutSuccess(taskEntry);
+    }
+
 
     public class AWSBackupVolumeException extends EnhancedSnapshotsException {
         public AWSBackupVolumeException(String message) {

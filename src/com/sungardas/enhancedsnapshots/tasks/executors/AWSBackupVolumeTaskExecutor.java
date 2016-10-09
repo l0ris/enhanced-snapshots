@@ -43,7 +43,7 @@ import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskE
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
 
-@Service("awsBackupVolumeTaskExecutor")
+@Service("awsBackupVolumeTaskExecutorOld")
 @Profile("prod")
 public class AWSBackupVolumeTaskExecutor extends AbstractAWSVolumeTaskExecutor {
     private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTaskExecutor.class);

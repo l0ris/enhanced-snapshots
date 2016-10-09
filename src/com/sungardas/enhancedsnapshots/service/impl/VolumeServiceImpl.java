@@ -1,7 +1,13 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 
@@ -19,7 +25,6 @@ import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.VolumeService;
 
 import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.collections.comparators.ReverseComparator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;

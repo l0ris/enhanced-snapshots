@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.components;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -116,7 +117,10 @@ public class WorkersDispatcher {
                 }
                 TaskEntry entry = null;
                 try {
-                    Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString()));
+                    List<TaskEntry> taskEntries = new ArrayList<>();
+                    taskEntries.addAll(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString()));
+                    taskEntries.addAll(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus(), Boolean.FALSE.toString()));
+                    Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskEntries);
                     while (!taskEntrySet.isEmpty()) {
                         entry = taskEntrySet.iterator().next();
 
