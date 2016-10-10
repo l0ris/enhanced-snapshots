@@ -41,7 +41,6 @@ public class TaskDtoConverterTest {
         taskDto.setSchedulerManual(schedulerManual);
         taskDto.setSchedulerTime(schedulerTime);
         taskDto.setSchedulerName(schedulerName);
-        taskDto.setInstanceId(instanceId);
         taskDto.setBackupFileName(backupFileName);
         taskDto.setCron(cron);
         taskDto.setZone(zone);

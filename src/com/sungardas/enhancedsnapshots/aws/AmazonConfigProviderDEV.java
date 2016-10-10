@@ -4,26 +4,11 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.autoscaling.AmazonAutoScaling;
 import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
 
 import com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
-import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +17,7 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @Profile("dev")
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository", dynamoDBMapperConfigRef = "dynamoDBMapperConfig")
-public class AmazonConfigProviderDEV {
+public class AmazonConfigProviderDEV extends AmazonConfigProvider {
 
 
     @Value("${amazon.aws.accesskey}")
@@ -42,143 +27,31 @@ public class AmazonConfigProviderDEV {
     private String amazonAWSSecretKey;
 
     @Value("${sungardas.worker.configuration}")
-    private String instanceId;
+    private String configurationId;
 
     @Value("${amazon.aws.region}")
     private String region;
 
     private CryptoService cryptoService = new CryptoServiceImpl();
+    private AWSCredentials awsCredentials;
 
-    private DynamoDBMapper dynamoDBMapper() {
-        return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
-    }
-
-
-    @Bean(name = "retryInterceptor")
-    public RetryInterceptor retryInterceptor() {
-        return new RetryInterceptor();
-    }
 
     @Bean
-    public AWSCredentials amazonAWSCredentials() {
-        String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
-        String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
-        return new BasicAWSCredentials(accessKey, secretKey);
-    }
-
-    @Bean(name = "amazonDynamoDB")
-    public ProxyFactoryBean amazonDynamoDbProxy() {
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-
-        proxyFactoryBean.setTarget(amazonDynamoDB());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-
-        return proxyFactoryBean;
-    }
-
-    @Bean
-    public ProxyFactoryBean amazonEC2Proxy() {
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-
-        proxyFactoryBean.setTarget(amazonEC2());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-
-        return proxyFactoryBean;
-    }
-
-    @Bean
-    public ProxyFactoryBean amazonS3Proxy() {
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-
-        proxyFactoryBean.setTarget(amazonS3());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-
-        return proxyFactoryBean;
-    }
-
-    @Bean
-    public DynamoDBMapperConfig dynamoDBMapperConfig() {
-        DynamoDBMapperConfig.Builder builder = new DynamoDBMapperConfig.Builder();
-        builder.withTableNameOverride(DynamoDBMapperConfig.TableNameOverride
-                .withTableNamePrefix(AmazonConfigProvider.getDynamoDbPrefix("DEV")));
-        return builder.build();
-    }
-
-    @Bean
-    public ProxyFactoryBean amazonDynamoDbMapperProxy() {
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-
-        proxyFactoryBean.setTarget(dynamoDBMapper());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-
-        return proxyFactoryBean;
-    }
-
-    @Bean(name = "dynamoDB")
-    public AmazonDynamoDB amazonDynamoDB() {
-        AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
-        amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
-        return amazonDynamoDB;
-    }
-
-    private AmazonEC2 amazonEC2() {
-        AmazonEC2 amazonEC2 = new AmazonEC2Client(amazonAWSCredentials());
-        amazonEC2.setRegion(Region.getRegion(Regions.fromName(region)));
-        return amazonEC2;
-    }
-
-    private AmazonS3 amazonS3() {
-        AmazonS3 amazonS3 = new AmazonS3Client(amazonAWSCredentials());
-        Region current = Region.getRegion(Regions.fromName(region));
-        if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
-            amazonS3.setRegion(current);
+    public AWSCredentials awsCredentials() {
+        if(awsCredentials == null) {
+            String accessKey = cryptoService.decrypt(configurationId, amazonAWSAccessKey);
+            String secretKey = cryptoService.decrypt(configurationId, amazonAWSSecretKey);
+            awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
         }
-        return amazonS3;
+        return awsCredentials;
     }
 
-    @Bean
-    public ProxyFactoryBean amazonAutoScalingProxy() {
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-        proxyFactoryBean.setTarget(autoScalingClient());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-        return proxyFactoryBean;
-    }
-
-    @Bean
-    public ProxyFactoryBean amazonELBProxy() {
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-        proxyFactoryBean.setTarget(elasticLoadBalancingClient());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-        return proxyFactoryBean;
-    }
-
-    @Bean
-    public ProxyFactoryBean amazonCloudWatch() {
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-        proxyFactoryBean.setTarget(cloudWatchClient());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-        return proxyFactoryBean;
-    }
-
-    private AmazonAutoScaling autoScalingClient() {
-        AmazonAutoScalingClient autoScalingClient = new AmazonAutoScalingClient(amazonAWSCredentials());
-        autoScalingClient.setRegion(Region.getRegion(Regions.fromName(region)));
-        return autoScalingClient;
-    }
-
-    private AmazonElasticLoadBalancing elasticLoadBalancingClient() {
-        AmazonElasticLoadBalancingClient elasticLoadBalancingClient = new AmazonElasticLoadBalancingClient(amazonAWSCredentials());
-        elasticLoadBalancingClient.setRegion(Region.getRegion(Regions.fromName(region)));
-        return elasticLoadBalancingClient;
-    }
-
-    private AmazonCloudWatch cloudWatchClient() {
-        AmazonCloudWatchClient cloudWatchClient = new AmazonCloudWatchClient(amazonAWSCredentials());
-        cloudWatchClient.setRegion(Region.getRegion(Regions.fromName(region)));
-        return cloudWatchClient;
+    protected Region getRegion (){
+        return Region.getRegion(Regions.fromName(region));
     }
 
     public static String getDynamoDbPrefix(String systemId) {
         return "ENHANCEDSNAPSHOTS_" + systemId + "_";
     }
+
 }

@@ -55,7 +55,7 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
             LOG.info("Logs watcher stopped.");
         }
     }
-    @PostConstruct
+
     public void start() {
         if (tailer != null) {
             tailer.stop();

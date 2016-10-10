@@ -57,9 +57,9 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applyTest() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "first", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "second", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "third", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
         when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 1, 1);
@@ -86,9 +86,9 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applyCountRetentionPolicyTest() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "first", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "second","fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "third","fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
         when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 1, 0);
@@ -113,9 +113,9 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applySizeRetentionPolicyTest1() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "first", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "second", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "third", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
         when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 1, 0, 0);
@@ -140,9 +140,9 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applySizeRetentionPolicyTest2() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "first", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "second", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "third", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1073741824", COMPLETED, "", "", "", "");
         when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 0, 0);
@@ -166,9 +166,9 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applyDayRetentionPolicyTest1() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusHours(23).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "first", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "second", "fileName2", new DateTime().plusHours(23).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "third", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
         when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 0, 1);
@@ -192,9 +192,9 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applyDayRetentionPolicyTest2() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().minusDays(23).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "first", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "second", "fileName2", new DateTime().minusDays(23).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "third", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
         when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 0, 1);
@@ -219,9 +219,9 @@ public class RetentionServiceImplTest {
 
     @Test
     public void removeEmptyRetentionsTest() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 2", "fileName2", new DateTime().minusDays(23).getMillis() + "", "1", COMPLETED, "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 3", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "first", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 2", "second", "fileName2", new DateTime().minusDays(23).getMillis() + "", "1", COMPLETED, "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 3", "third", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "");
         when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 0, 0);
