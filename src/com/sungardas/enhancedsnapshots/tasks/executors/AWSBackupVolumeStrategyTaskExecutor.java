@@ -1,16 +1,6 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.text.MessageFormat;
-import java.util.concurrent.TimeUnit;
-
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeState;
-import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.ec2.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -23,23 +13,19 @@ import com.sungardas.enhancedsnapshots.dto.converter.VolumeDtoConverter;
 import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.MailService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.RetentionService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
-import com.sungardas.enhancedsnapshots.service.VolumeService;
-
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.MessageFormat;
+import java.util.concurrent.TimeUnit;
+
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
 import static java.lang.String.format;
 
 @Service("awsBackupVolumeTaskExecutor")
@@ -85,8 +71,6 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
     public void execute(final TaskEntry taskEntry) {
         Volume tempVolume = taskEntry.getTempVolumeId() != null ? awsCommunication.getVolume(taskEntry.getTempVolumeId()) : null;
         try {
-            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting backup task", 0);
-
             LOG.info("Starting backup process for volume {}", taskEntry.getVolume());
             LOG.info("{} task state was changed to 'in progress'", taskEntry.getId());
             // change task status
@@ -95,21 +79,24 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
 
             if (taskEntry.getProgress() != TaskProgress.NONE) {
                 switch (taskEntry.getProgress()) {
-                    case ATTACHING_VOLUME:
                     case CREATING_TEMP_VOLUME:
                     case WAITING_TEMP_VOLUME:
+                    case ATTACHING_VOLUME:
                     case COPYING: {
                         try {
+                            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Detaching temp volume", 85);
                             detachingTempVolumeStep(taskEntry, tempVolume);
                         } catch (Exception e) {
                             //skip
                         }
                         try {
+                            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting temp volume", 50);
                             deletingTempVolumeStep(taskEntry, tempVolume);
                         } catch (Exception e) {
                             //skip
                         }
                         try {
+                            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting temp file", 10);
                             storageService.deleteFile(getBackupName(taskEntry));
                         } catch (Exception e) {
                             //skip
@@ -129,6 +116,16 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
                 }
             }
             switch (taskEntry.getProgress()) {
+                case INTERRUPTED_CLEANING: {
+                    interruptedCleaningStep(taskEntry, tempVolume);
+                    break;
+                }
+                case FAIL_CLEANING: {
+                    failCleaningStep(taskEntry, tempVolume, null);
+                    break;
+                }
+
+
                 case NONE: {
                     // check volume exists
                     if (!volumeService.volumeExists(taskEntry.getVolume())) {
@@ -138,68 +135,88 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
                     }
                 }
                 case STARTED: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Starting backup task", 0);
                     startedStep(taskEntry);
                 }
                 case CREATING_SNAPSHOT: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Creating snapshot", 5);
                     creatingSnapshotStep(taskEntry);
                 }
                 case WAITING_SNAPSHOT: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Waiting snapshot", 10);
                     waitingSnapshotStep(taskEntry);
                 }
                 case CREATING_TEMP_VOLUME: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Creating temp volume", 15);
                     tempVolume = creatingTempVolumeStep(taskEntry);
                 }
                 case WAITING_TEMP_VOLUME: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Waiting temp volume", 20);
                     waitingTempVolumeStep(taskEntry, tempVolume);
                 }
                 case ATTACHING_VOLUME: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Attaching volume", 25);
                     tempVolume = attachingVolumeStep(taskEntry, tempVolume);
                 }
                 case COPYING: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Coping ...", 30);
                     copyingStep(taskEntry, tempVolume);
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Backup complete", 80);
                 }
                 case DETACHING_TEMP_VOLUME: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Detaching temp volume", 85);
                     detachingTempVolumeStep(taskEntry, tempVolume);
                 }
                 case DELETING_TEMP_VOLUME: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting temp volume", 90);
                     deletingTempVolumeStep(taskEntry, tempVolume);
                 }
                 case CLEANING_TEMP_RESOURCES: {
+                    notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Cleaning temp resources", 95);
                     cleaningTempResourcesStep(taskEntry);
                 }
             }
+            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Done", 100);
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
-            LOG.info("Backup process for volume {} canceled ", taskEntry.getVolume());
-            setProgress(taskEntry, TaskProgress.FAIL_CLEANING);
-            TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Kill initialization process", 20, CANCELED);
-            notificationService.notifyAboutTaskProgress(dto);
-            // kill initialization Process if it's alive, should be killed before volume detaching
-            killInitializationVolumeProcessIfAlive(tempVolume);
-            deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
-
-            taskRepository.delete(taskEntry);
-            dto.setMessage("Done");
-            dto.setProgress(100);
-            notificationService.notifyAboutTaskProgress(dto);
-            mailService.notifyAboutSystemStatus("Backup task for volume with id: " + taskEntry.getVolume() + " was canceled");
+            interruptedCleaningStep(taskEntry, tempVolume);
         } catch (Exception e) {
-            LOG.error("Backup process for volume {} failed ", taskEntry.getVolume(), e);
-            setProgress(taskEntry, TaskProgress.FAIL_CLEANING);
-            taskEntry.setStatus(ERROR.toString());
-            taskRepository.save(taskEntry);
-
-            TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Killing initialization process", 20, ERROR);
-            notificationService.notifyAboutTaskProgress(dto);
-
-            // kill initialization Process if it's alive, should be killed before volume detaching
-            killInitializationVolumeProcessIfAlive(tempVolume);
-            deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
-
-            dto.setMessage("Done");
-            dto.setProgress(100);
-            notificationService.notifyAboutTaskProgress(dto);
-            mailService.notifyAboutError(taskEntry, e);
+            failCleaningStep(taskEntry, tempVolume, e);
         }
+    }
+
+    private void interruptedCleaningStep(TaskEntry taskEntry, Volume tempVolume) {
+        LOG.info("Backup process for volume {} canceled ", taskEntry.getVolume());
+        setProgress(taskEntry, TaskProgress.INTERRUPTED_CLEANING);
+        TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Kill initialization process", 20, CANCELED);
+        notificationService.notifyAboutTaskProgress(dto);
+        // kill initialization Process if it's alive, should be killed before volume detaching
+        killInitializationVolumeProcessIfAlive(tempVolume);
+        deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
+
+        taskRepository.delete(taskEntry);
+        dto.setMessage("Done");
+        dto.setProgress(100);
+        notificationService.notifyAboutTaskProgress(dto);
+        mailService.notifyAboutSystemStatus("Backup task for volume with id: " + taskEntry.getVolume() + " was canceled");
+    }
+
+    private void failCleaningStep(TaskEntry taskEntry, Volume tempVolume, Exception e) {
+        LOG.error("Backup process for volume {} failed ", taskEntry.getVolume(), e);
+        setProgress(taskEntry, TaskProgress.FAIL_CLEANING);
+        taskEntry.setStatus(ERROR.toString());
+        taskRepository.save(taskEntry);
+
+        TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Killing initialization process", 20, ERROR);
+        notificationService.notifyAboutTaskProgress(dto);
+
+        // kill initialization Process if it's alive, should be killed before volume detaching
+        killInitializationVolumeProcessIfAlive(tempVolume);
+        deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
+
+        dto.setMessage("Done");
+        dto.setProgress(100);
+        notificationService.notifyAboutTaskProgress(dto);
+        mailService.notifyAboutError(taskEntry, e);
     }
 
     private void startedStep(TaskEntry taskEntry) {
@@ -270,7 +287,6 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         // To avoid this performance hit in a production environment all blocks on volumes can be read before volume usage; this process is called initialization (formerly known as pre-warming).
         initializeVolume(tempVolume);
         checkThreadInterruption(taskEntry);
-        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Checking volume", 10);
         return tempVolume;
     }
 
@@ -294,10 +310,9 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
                 VolumeDtoConverter.convert(awsCommunication.getVolume(taskEntry.getVolume())).getVolumeName(),
                 backupFileName, taskEntry.getStartTime() + "", "", BackupState.INPROGRESS, taskEntry.getTempSnapshotId(), volumeType, iops, sizeGib);
         checkThreadInterruption(taskEntry);
-        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Copying...", 15);
         String source = storageService.detectFsDevName(tempVolume);
         LOG.info("Starting copying: " + source + " to:" + backupFileName);
-        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80, Long.parseLong(backup.getSizeGiB()));
+        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 30, 80, Long.parseLong(backup.getSizeGiB()));
         storageService.copyData(source, configurationMediator.getSdfsMountPoint() + backupFileName, dto, taskEntry.getId());
 
         checkThreadInterruption(taskEntry);
@@ -308,7 +323,6 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
 
         checkThreadInterruption(taskEntry);
         LOG.info("Put backup entry to the Backup List: {}", backup.getFileName());
-        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Backup complete", 90);
         backup.setState(BackupState.COMPLETED.getState());
         backup.setSize(String.valueOf(backupSize));
         backupRepository.save(backup);
@@ -322,7 +336,6 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
     private void detachingTempVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
         setProgress(taskEntry, TaskProgress.DETACHING_TEMP_VOLUME);
         checkThreadInterruption(taskEntry);
-        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Detaching temp volume", 80);
         // kill initialization Process if it's alive, should be killed before volume detaching
         killInitializationVolumeProcessIfAlive(tempVolume);
         LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
@@ -331,7 +344,6 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
 
     private void deletingTempVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
         setProgress(taskEntry, TaskProgress.DELETING_TEMP_VOLUME);
-        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting temp volume", 85);
         LOG.info("Deleting temporary volume: {}", tempVolume.getVolumeId());
         awsCommunication.deleteVolume(tempVolume);
     }
@@ -341,7 +353,6 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         String previousSnapshot = snapshotService.getSnapshotIdByVolumeId(taskEntry.getVolume());
         if (previousSnapshot != null) {
             checkThreadInterruption(taskEntry);
-            notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
             LOG.info("Deleting previous snapshot {}", previousSnapshot);
             snapshotService.deleteSnapshot(previousSnapshot);
         }
@@ -353,7 +364,6 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         taskService.complete(taskEntry);
         LOG.info("Task completed.");
         checkThreadInterruption(taskEntry);
-        notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
         retentionService.apply();
         mailService.notifyAboutSuccess(taskEntry);
     }

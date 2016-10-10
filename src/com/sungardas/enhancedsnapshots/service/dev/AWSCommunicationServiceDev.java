@@ -1,12 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.dev;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeState;
-import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.ec2.model.*;
 import com.sungardas.enhancedsnapshots.service.impl.AWSCommunicationServiceImpl;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,17 +23,17 @@ public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
 
     @Override
     public Volume createVolume(final int size, final VolumeType type) {
-        return new Volume();
+        return getVolume();
     }
 
     @Override
     public Volume createIO1Volume(final int size, final int iopsPerGb) {
-        return new Volume();
+        return getVolume();
     }
 
     @Override
     public Snapshot createSnapshot(final Volume volume) {
-        return new Snapshot();
+        return getSnapshot();
     }
 
     @Override
@@ -75,12 +70,19 @@ public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
     }
 
     @Override
+    public Instance getInstance(String instanceId) {
+        Instance instance = new Instance();
+        instance.setPlacement(new Placement());
+        return instance;
+    }
+
+    @Override
     public void detachVolume(final Volume volume) {
     }
 
     @Override
     public Volume createVolumeFromSnapshot(final String snapshotId, final String availabilityZoneName, final VolumeType type, final int iopsPerGb) {
-        return new Volume();
+        return getVolume();
     }
 
     @Override
@@ -115,7 +117,7 @@ public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
 
     @Override
     public Snapshot getSnapshot(final String snapshotId) {
-        return new Snapshot();
+        return getSnapshot();
     }
 
     @Override
@@ -131,6 +133,19 @@ public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
     @Override
     public void dropS3Bucket(String bucketName) {
         return;
+    }
+
+    @Override
+    public Volume getVolume(String volumeId) {
+        return getVolume();
+    }
+
+    private Snapshot getSnapshot() {
+        return new Snapshot().withSnapshotId("DEV_SNAPSHOT_ID");
+    }
+
+    private Volume getVolume() {
+        return new Volume().withSize(100).withVolumeType("gp2").withVolumeId("DEV_VOLUME_ID");
     }
 
 }
