@@ -1,9 +1,16 @@
-package com.sungardas.enhancedsnapshots.service.impl;
+package com.sungardas.enhancedsnapshots.cluster;
 
 import com.amazonaws.services.autoscaling.AmazonAutoScaling;
 import com.amazonaws.services.autoscaling.model.*;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.model.*;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.model.SubscribeRequest;
+import com.amazonaws.services.sns.model.Topic;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
@@ -22,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class ClusterServiceImpl {
+public class ClusterServiceImpl implements ClusterService {
 
     private static final Logger LOG = LogManager.getLogger(ClusterServiceImpl.class);
     private static final String SCALE_UP_POLICY = "ESS-ScaleUpPolicy-" + SystemUtils.getInstanceId();
@@ -30,7 +37,13 @@ public class ClusterServiceImpl {
     private static final String METRIC_DATA_NAME = "ESS-Load-Metric-" + SystemUtils.getInstanceId();
     private static final String ESS_OVERLOAD_ALARM = "ESS-Overload-Alarm-" + SystemUtils.getInstanceId();
     private static final String ESS_IDLE_ALARM = "ESS-Idle-Alarm-" + SystemUtils.getInstanceId();
+    private static final String ESS_TOPIC_NAME = "ESS-" + SystemUtils.getInstanceId() + "-topic";
+    private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getInstanceId() + "-queue";
 
+    @Autowired
+    private AmazonSNS amazonSNS;
+    @Autowired
+    private AmazonSQS amazonSQS;
     @Autowired
     private AmazonCloudWatch cloudWatch;
     @Autowired
@@ -39,11 +52,12 @@ public class ClusterServiceImpl {
     private NodeRepository nodeRepository;
     @Autowired
     private ConfigurationMediator configurationMediator;
+    @Autowired
+    private ClusterEventListener listener;
     @Value("${enhancedsnapshots.default.backup.threadPool.size}")
     private int backupThreadPoolSize;
     @Value("${enhancedsnapshots.default.restore.threadPool.size}")
     private int restoreThreadPoolSize;
-
     private AutoScalingGroup autoScalingGroup;
 
 
@@ -62,6 +76,7 @@ public class ClusterServiceImpl {
 
     private void configureClusterInfrastructure() {
         LOG.info("Configuration of cluster infrastructure started");
+
         // update AutoScalingGroup with min and max node number
         autoScaling.updateAutoScalingGroup(new UpdateAutoScalingGroupRequest()
                 .withAutoScalingGroupName(getAutoScalingGroup().getAutoScalingGroupName())
@@ -70,6 +85,7 @@ public class ClusterServiceImpl {
                 .withDesiredCapacity(configurationMediator.getMaxNodeNumberInCluster()));
         LOG.info("AutoScalingGroup {} updated: {}", autoScalingGroup.getAutoScalingGroupName(), autoScalingGroup.toString());
 
+        // we create this infrustructure from JAVA since currently we can not get arn when we create policy from CFT
         //create AutoScaling Policies
         String scaleUpPolicyARN = autoScaling.putScalingPolicy(new PutScalingPolicyRequest().withAutoScalingGroupName(getAutoScalingGroup().getAutoScalingGroupName())
                 .withPolicyName(SCALE_UP_POLICY)
@@ -132,6 +148,17 @@ public class ClusterServiceImpl {
                         .withValue(getAutoScalingGroup()
                                 .getAutoScalingGroupName()))
                 .withAlarmActions(scaleDownPolicyARN));
+
+        // subscribe to topic
+        CreateQueueRequest request = new CreateQueueRequest()
+                .withQueueName(ESS_QUEUE_NAME);
+        amazonSQS.createQueue(request);
+        Topic ess_topic = amazonSNS.listTopics().getTopics()
+                .stream().filter(topic -> topic.getTopicArn().endsWith(ESS_TOPIC_NAME)).findFirst()
+                .orElseThrow(() -> new ConfigurationException("Topic " + ESS_TOPIC_NAME + " does not exist."));
+        amazonSNS.subscribe(new SubscribeRequest(ess_topic.getTopicArn(), "sqs", ESS_QUEUE_NAME));
+
+
         LOG.info("Alarm for idle resources added: ", cloudWatch.describeAlarms().getMetricAlarms()
                 .stream().filter(alarm->alarm.getAlarmName().equals(ESS_IDLE_ALARM)).findFirst().get().toString());
         LOG.info("Cluster infrastructure successfully configured.");
@@ -171,5 +198,13 @@ public class ClusterServiceImpl {
     // we assume that system is configured if configuration exists
     private boolean clusterIsConfigured() {
         return (nodeRepository.count() != 0) ? true : false;
+    }
+
+    @Override
+    public void removeClusterInfrastructure() {
+        autoScaling.deletePolicy(new DeletePolicyRequest().withPolicyName(SCALE_UP_POLICY));
+        autoScaling.deletePolicy(new DeletePolicyRequest().withPolicyName(SCALE_DOWN_POLICY));
+        cloudWatch.deleteAlarms(new DeleteAlarmsRequest().withAlarmNames(ESS_OVERLOAD_ALARM, ESS_IDLE_ALARM));
+        // CloudWatch metrics are stored for two weeks. Old data will be removed automatically.
     }
 }
