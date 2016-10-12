@@ -15,13 +15,15 @@ public class NodeEntry {
     private int freeRestoreWorkers;
     @DynamoDBAttribute
     private int freeBackupWorkers;
+    @DynamoDBAttribute
+    private String sdfsVolumeId;
 
-
-    public NodeEntry(String nodeId, boolean isMaster, int freeRestoreWorkers, int freeBackupWorkers) {
+    public NodeEntry(String nodeId, boolean isMaster, int freeRestoreWorkers, int freeBackupWorkers, String sdfsVolumeId) {
         this.nodeId = nodeId;
         this.isMaster = isMaster;
         this.freeRestoreWorkers = freeRestoreWorkers;
         this.freeBackupWorkers = freeBackupWorkers;
+        this.sdfsVolumeId = sdfsVolumeId;
     }
 
     public boolean isMaster() {
@@ -54,6 +56,14 @@ public class NodeEntry {
 
     public void setFreeBackupWorkers(int freeBackupWorkers) {
         this.freeBackupWorkers = freeBackupWorkers;
+    }
+
+    public String getSdfsVolumeId() {
+        return sdfsVolumeId;
+    }
+
+    public void setSdfsVolumeId(String sdfsVolumeId) {
+        this.sdfsVolumeId = sdfsVolumeId;
     }
 
 }
