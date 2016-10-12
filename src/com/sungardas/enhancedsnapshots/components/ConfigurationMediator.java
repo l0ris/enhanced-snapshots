@@ -67,4 +67,6 @@ public interface ConfigurationMediator {
     String getDomain();
 
     MailConfigurationDocument getMailConfiguration();
+
+    String getUUID();
 }

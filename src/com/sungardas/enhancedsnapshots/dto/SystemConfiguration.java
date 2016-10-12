@@ -12,6 +12,7 @@ public class SystemConfiguration {
     private boolean ssoMode;
     private String domain;
     private MailConfigurationDto mailConfiguration;
+    private String UUID;
 
 
     public String getCurrentVersion() {
@@ -89,6 +90,14 @@ public class SystemConfiguration {
 
     public MailConfigurationDto getMailConfiguration() {
         return mailConfiguration;
+    }
+
+    public String getUUID() {
+        return UUID;
+    }
+
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
     }
 
     public void setMailConfiguration(MailConfigurationDto mailConfiguration) {

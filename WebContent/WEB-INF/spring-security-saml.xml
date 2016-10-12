@@ -54,7 +54,7 @@
     <bean id="failureRedirectHandler"
           class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
         <property name="useForward" value="true"/>
-        <property name="defaultFailureUrl" value="/error.jsp"/>
+        <property name="defaultFailureUrl" value="/SSO_Error.html"/>
     </bean>
 
     <!-- Handler for successful logout -->
@@ -165,7 +165,7 @@
     </bean>
 
     <!-- SAML Authentication Provider responsible for validating of received SAML messages -->
-    <bean id="authProvider" class="org.springframework.security.saml.SAMLAuthenticationProvider">
+    <bean id="authProvider" class="com.sungardas.enhancedsnapshots.security.SAMLAuthenticationProviderImpl">
         <!-- OPTIONAL property: can be used to store/load user data after login -->
         <property name="userDetails" ref="userDetails"/>
     </bean>

@@ -183,4 +183,9 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public MailConfigurationDocument getMailConfiguration() {
         return currentConfiguration.getMailConfigurationDocument();
     }
+
+    @Override
+    public String getUUID() {
+        return currentConfiguration.getUUID();
+    }
 }

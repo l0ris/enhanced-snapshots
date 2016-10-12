@@ -55,6 +55,8 @@ public class Configuration {
     @DynamoDBAttribute
     private MailConfigurationDocument mailConfigurationDocument;
 
+    private String UUID;
+
     public MailConfigurationDocument getMailConfigurationDocument() {
         return mailConfigurationDocument;
     }
@@ -300,4 +302,11 @@ public class Configuration {
         this.domain = domain;
     }
 
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
+    }
+
+    public String getUUID() {
+        return UUID;
+    }
 }

@@ -117,6 +117,8 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         config.setDb(db);
         config.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
 
+        config.setUUID(UUID);
+
         return config;
     }
 

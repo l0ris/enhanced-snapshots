@@ -211,6 +211,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private List<String> tablesWithPrefix;
     private String dbPrefix;
 
+    protected static final String UUID = java.util.UUID.randomUUID().toString();
+
     @PostConstruct
     protected void init() {
         configureAWSLogAgent();
@@ -496,6 +498,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setStoreSnapshot(storeSnapshot);
         configuration.setLogFile(logFile);
         configuration.setLogsBufferSize(bufferSize);
+        configuration.setUUID(UUID);
         // saving configuration to DB
         mapper.save(configuration);
     }
@@ -632,6 +635,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
         initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix002);
+
+        initConfigurationDto.setUUID(UUID);
         return initConfigurationDto;
     }
 

@@ -1,5 +1,7 @@
 package com.sungardas.init;
 
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.security.SAMLAuthenticationProviderImpl;
 import com.sungardas.enhancedsnapshots.security.SamlUserDetails;
 import com.sungardas.enhancedsnapshots.service.UserService;
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +56,7 @@ public class ContextManager {
 
             // set userService property to userDetails bean, so we could manage users roles within ssoLogin mode
             applicationContext.getBean(SamlUserDetails.class).setUserService(applicationContext.getBean(UserService.class));
+            applicationContext.getBean(SAMLAuthenticationProviderImpl.class).setConfigurationMediator(applicationContext.getBean(ConfigurationMediator.class));
         }
         // for local authentication
         else {
