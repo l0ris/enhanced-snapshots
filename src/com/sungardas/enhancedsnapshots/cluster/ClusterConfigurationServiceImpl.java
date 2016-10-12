@@ -72,7 +72,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
                 restoreThreadPoolSize, backupThreadPoolSize, sdfsStateService.getSDFSVolumeId());
     }
 
-    private void configureClusterInfrastructure() {
+    public void configureClusterInfrastructure() {
         LOG.info("Configuration of cluster infrastructure started");
 
         // update AutoScalingGroup with min and max node number

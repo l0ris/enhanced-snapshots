@@ -145,7 +145,7 @@ public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
     }
 
     private Volume getVolume() {
-        return new Volume().withSize(100).withVolumeType("gp2").withVolumeId("DEV_VOLUME_ID");
+        return new Volume().withSize(100).withVolumeType("gp2").withVolumeId("DEV_VOLUME_ID").withAvailabilityZone("");
     }
 
 }

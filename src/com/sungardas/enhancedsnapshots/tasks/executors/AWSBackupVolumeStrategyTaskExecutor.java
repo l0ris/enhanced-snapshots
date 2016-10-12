@@ -271,6 +271,7 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
     }
 
     private Volume attachingVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
+        checkThreadInterruption(taskEntry);
         setProgress(taskEntry, TaskProgress.ATTACHING_VOLUME);
         // mount volume
         awsCommunication.attachVolume(awsCommunication.getInstance(configurationMediator.getConfigurationId()), tempVolume);
