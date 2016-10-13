@@ -30,8 +30,4 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
        return Integer.parseInt(version.replace(".", ""));
     }
 
-    protected String getInstanceId() {
-        return EC2MetadataUtils.getInstanceId();
-    }
-
 }

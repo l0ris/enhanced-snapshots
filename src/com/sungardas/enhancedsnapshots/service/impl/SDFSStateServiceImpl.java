@@ -308,6 +308,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         return backupEntryList;
     }
 
+    @Override
+    public String getSDFSVolumeId() {
+        //TODO: implement
+        return "001";
+    }
+
     private BackupEntry getBackupFromFile(File file) {
         String fileName = file.getName();
         String[] props = fileName.split("\\.");

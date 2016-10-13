@@ -18,7 +18,6 @@ import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
@@ -32,6 +31,7 @@ import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
@@ -202,7 +202,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Autowired
     protected AmazonDynamoDB amazonDynamoDB;
     protected DynamoDBMapper mapper;
-    private String instanceId;
     private Region region;
 
     private UserDto userDto;
@@ -215,7 +214,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     protected void init() {
         configureAWSLogAgent();
         credentialsProvider = new InstanceProfileCredentialsProvider();
-        instanceId = EC2MetadataUtils.getInstanceId();
         region = Regions.getCurrentRegion();
         amazonDynamoDB.setRegion(region);
         dbPrefix = AmazonConfigProvider.getDynamoDbPrefix();
@@ -237,7 +235,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     protected Configuration getConfiguration(){
-        return mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+        return mapper.load(Configuration.class, SystemUtils.getSystemId());
     }
 
     @Override
@@ -253,7 +251,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             LOG.info("Restoring system  from bucket {}", config.getBucketName());
             createDbStructure();
             systemRestoreService.restore(config.getBucketName());
-            Configuration conf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+            Configuration conf = mapper.load(Configuration.class, SystemUtils.getSystemId());
             storePropertiesEditableFromConfigFile();
             refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
             LOG.info("System is successfully restored.");
@@ -427,6 +425,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         createTable(TaskEntry.class);
         createTable(SnapshotEntry.class);
         createTable(User.class);
+        createTable(NodeEntry.class);
     }
 
     private void createTable(Class tableClass) {
@@ -465,7 +464,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private void storeConfiguration(final ConfigDto config) {
         Configuration configuration = new Configuration();
-        configuration.setConfigurationId(EC2MetadataUtils.getInstanceId());
+        configuration.setConfigurationId(SystemUtils.getSystemId());
         configuration.setEc2Region(Regions.getCurrentRegion().getName());
         configuration.setSdfsMountPoint(mountPoint);
         configuration.setSdfsVolumeName(volumeName);
@@ -496,6 +495,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setStoreSnapshot(storeSnapshot);
         configuration.setLogFile(logFile);
         configuration.setLogsBufferSize(bufferSize);
+        configuration.setClusterMode(SystemUtils.clusterMode());
+        configuration.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
+        configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
         // saving configuration to DB
         mapper.save(configuration);
     }
@@ -506,7 +508,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     public void syncSettingsInDbAndConfigFile() {
         // sync properties in DB with conf file
         boolean configurationChanged = false;
-        Configuration loadedConf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+        Configuration loadedConf = mapper.load(Configuration.class, SystemUtils.getSystemId());
 
         if (cronExpressionIsValid(retentionCronExpression) && !retentionCronExpression.equals(loadedConf.getRetentionCronExpression())) {
             LOG.debug("Applying new cron expression {} for Retention policy.", retentionCronExpression);
@@ -557,7 +559,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @Override
     public boolean checkDefaultUser(String login, String password) {
-        return DEFAULT_LOGIN.equals(login.toLowerCase()) && password.equals(instanceId);
+        return DEFAULT_LOGIN.equals(login.toLowerCase()) && password.equals(SystemUtils.getSystemId());
     }
 
     protected List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
@@ -568,7 +570,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             if (customBucketName != null) {
                 result.add(new InitConfigurationDto.S3(customBucketName, false));
             }
-            String bucketName = enhancedSnapshotBucketPrefix002 + instanceId;
+            String bucketName = enhancedSnapshotBucketPrefix002 + SystemUtils.getSystemId();
             result.add(new InitConfigurationDto.S3(bucketName, false));
 
             String currentLocation = region.toString();
@@ -632,6 +634,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
         initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix002);
+        initConfigurationDto.setClusterMode(SystemUtils.clusterMode());
         return initConfigurationDto;
     }
 
@@ -654,9 +657,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private boolean adminExist() {
         DynamoDBScanExpression expression = new DynamoDBScanExpression()
                 .withFilterConditionEntry("role",
-                        new Condition().withComparisonOperator(EQ.toString()).withAttributeValueList(new AttributeValue("admin")))
-                .withFilterConditionEntry("instanceId",
-                        new Condition().withComparisonOperator(EQ.toString()).withAttributeValueList(new AttributeValue(instanceId)));
+                        new Condition().withComparisonOperator(EQ.toString()).withAttributeValueList(new AttributeValue("admin")));
         List<User> users = mapper.scan(User.class, expression);
         return !users.isEmpty();
     }
@@ -677,7 +678,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private void configureAWSLogAgent() {
         try {
             replaceInFile(new File(awscliConfPath), "<region>", region.toString());
-            replaceInFile(new File(awslogsConfPath), "<instance-id>", instanceId);
+            replaceInFile(new File(awslogsConfPath), "<instance-id>", SystemUtils.getSystemId());
         } catch (Exception e) {
             LOG.warn("Cant initialize AWS Log agent");
         }

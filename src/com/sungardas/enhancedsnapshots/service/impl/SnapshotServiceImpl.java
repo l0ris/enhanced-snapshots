@@ -1,5 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.List;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
@@ -8,12 +10,12 @@ import com.sungardas.enhancedsnapshots.service.SnapshotService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 
 @Service
+@Profile("prod")
 public class SnapshotServiceImpl implements SnapshotService {
     private static final Logger LOG = LogManager.getLogger(SnapshotServiceImpl.class);
 

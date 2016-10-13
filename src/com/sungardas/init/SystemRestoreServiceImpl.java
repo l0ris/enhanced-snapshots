@@ -12,12 +12,12 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
 import com.sungardas.enhancedsnapshots.service.upgrade.UpgradeSystemTo002;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -140,7 +140,7 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
         restoreTable(RetentionEntry.class, tempDirectory);
         restoreTable(SnapshotEntry.class, tempDirectory);
         restoreTable(User.class, tempDirectory);
-        currentConfiguration = dynamoDBMapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+        currentConfiguration = dynamoDBMapper.load(Configuration.class, SystemUtils.getSystemId());
     }
 
     private void restoreSDFS(final Path tempDirectory) throws IOException {
@@ -224,7 +224,7 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
                     objectMapper.getTypeFactory().constructCollectionType(List.class, Configuration.class));
             if (!data.isEmpty()) {
                 Configuration configuration = data.get(0);
-                configuration.setConfigurationId(EC2MetadataUtils.getInstanceId());
+                configuration.setConfigurationId(SystemUtils.getSystemId());
             }
             dynamoDBMapper.batchSave(data);
         } catch (IOException e) {

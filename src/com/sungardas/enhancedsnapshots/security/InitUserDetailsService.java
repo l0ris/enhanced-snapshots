@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.security;
 
 import com.amazonaws.util.EC2MetadataUtils;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +24,6 @@ public class InitUserDetailsService implements UserDetailsService {
     }
 
     protected String getPsw(){
-        return EC2MetadataUtils.getInstanceId();
+        return SystemUtils.getSystemId();
     }
 }

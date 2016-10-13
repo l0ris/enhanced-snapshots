@@ -3,13 +3,11 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
-import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
@@ -18,6 +16,7 @@ import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -87,7 +86,6 @@ public class SystemServiceImpl implements SystemService {
     @Autowired
     private ConfigurationMediatorConfigurator configurationMediator;
 
-
     @Autowired
     private SDFSStateService sdfsStateService;
 
@@ -107,13 +105,10 @@ public class SystemServiceImpl implements SystemService {
     @Autowired
     private MailService mailService;
 
-    @Autowired
-    private AmazonEC2 ec2client;
-
 
     @PostConstruct
     private void init() {
-        currentConfiguration = dynamoDBMapper.load(Configuration.class, getInstanceId());
+        currentConfiguration = dynamoDBMapper.load(Configuration.class, getSystemId());
         configurationMediator.setCurrentConfiguration(currentConfiguration);
         mailService.reconnect();
     }
@@ -251,7 +246,7 @@ public class SystemServiceImpl implements SystemService {
         configuration.getSdfs().setMinSdfsLocalCacheSize(configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
 
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
-        configuration.getEc2Instance().setInstanceID(getInstanceId());
+        configuration.getEc2Instance().setInstanceID(getSystemId());
 
         configuration.setLastBackup(getBackupTime());
         configuration.setCurrentVersion(CURRENT_VERSION);
@@ -356,8 +351,8 @@ public class SystemServiceImpl implements SystemService {
     }
 
 
-    protected String getInstanceId() {
-        return EC2MetadataUtils.getInstanceId();
+    protected String getSystemId() {
+        return SystemUtils.getSystemId();
     }
 
     //TODO: this should be stored in DB

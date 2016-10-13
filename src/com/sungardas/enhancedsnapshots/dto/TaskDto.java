@@ -14,7 +14,6 @@ public class TaskDto {
     private String schedulerManual;
     private String schedulerName;
     private String schedulerTime;
-    private String instanceId;
     private String backupFileName;
     private String cron;
     private String zone;
@@ -86,14 +85,6 @@ public class TaskDto {
 
     public void setSchedulerTime(String schedulerTime) {
         this.schedulerTime = schedulerTime;
-    }
-
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
     }
 
     public String getId() {

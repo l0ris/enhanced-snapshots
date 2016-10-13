@@ -10,6 +10,7 @@ public class InitConfigurationDto {
     private SDFS sdfs;
     private DB db;
     private String immutableBucketNamePrefix;
+    private boolean clusterMode;
 
     public List<S3> getS3() {
         return s3;
@@ -33,6 +34,14 @@ public class InitConfigurationDto {
 
     public void setDb(DB db) {
         this.db = db;
+    }
+
+    public boolean isClusterMode() {
+        return clusterMode;
+    }
+
+    public void setClusterMode(boolean clusterMode) {
+        this.clusterMode = clusterMode;
     }
 
     public static class S3 {

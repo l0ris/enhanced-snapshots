@@ -3,8 +3,11 @@ package com.sungardas.enhancedsnapshots.aws.dynamodb.model;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.util.json.Jackson;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.TaskProgressMarshaller;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 
 
 @DynamoDBTable(tableName = "Tasks")
@@ -54,6 +57,9 @@ public class TaskEntry {
     private long completeTime;
 
     @DynamoDBAttribute
+    private long startTime;
+
+    @DynamoDBAttribute
     private String tempVolumeType;
 
     @DynamoDBAttribute
@@ -64,6 +70,16 @@ public class TaskEntry {
 
     @DynamoDBAttribute
     private int restoreVolumeIopsPerGb;
+
+    @DynamoDBAttribute
+    @DynamoDBMarshalling(marshallerClass = TaskProgressMarshaller.class)
+    private TaskProgress progress = TaskProgress.NONE;
+
+    @DynamoDBAttribute
+    private String tempVolumeId;
+
+    @DynamoDBAttribute
+    private String tempSnapshotId;
 
     public String getId() {
         return id;
@@ -239,6 +255,39 @@ public class TaskEntry {
         this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
+    public TaskProgress getProgress() {
+        return progress;
+    }
+
+    public void setProgress(final TaskProgress progress) {
+        this.progress = progress;
+    }
+
+    public String getTempVolumeId() {
+        return tempVolumeId;
+    }
+
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(final long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setTempVolumeId(final String tempVolumeId) {
+        this.tempVolumeId = tempVolumeId;
+    }
+
+    public String getTempSnapshotId() {
+        return tempSnapshotId;
+    }
+
+    public void setTempSnapshotId(final String tempSnapshotId) {
+        this.tempSnapshotId = tempSnapshotId;
+    }
+
     public enum TaskEntryType {
         BACKUP("backup"),
         RESTORE("restore"),
@@ -272,6 +321,7 @@ public class TaskEntry {
         QUEUED("queued"),
         COMPLETE("complete"),
         CANCELED("canceled"),
+        PARTIALLY_FINISHED("partially_finished"),
         ERROR("error");
 
         private String status;
