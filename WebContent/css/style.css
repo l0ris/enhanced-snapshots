@@ -1177,9 +1177,11 @@ div.tr.state-removed {
 /* end of forms*/
 
 /* page specific stylings*/
-.configuration .sdfsVolume .form-control {
+.configuration .sdfsVolume .form-control,
+.configuration .cluster .form-control {
     width: 35% !important;
     display: inline;
+    margin-top: 5px;
 }
 
 .configuration .bucket .btn-group,
