@@ -499,6 +499,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setLogFile(logFile);
         configuration.setLogsBufferSize(bufferSize);
         configuration.setUUID(UUID);
+        configuration.setSungardasSSO(config.isSungardasSSO());
         // saving configuration to DB
         mapper.save(configuration);
     }
