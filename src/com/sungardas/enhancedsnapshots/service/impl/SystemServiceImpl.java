@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.cluster.ClusterEventPublisher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
@@ -104,12 +105,13 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private MailService mailService;
+    @Autowired
+    private ClusterEventPublisher clusterEventPublisher;
 
 
     @PostConstruct
     private void init() {
-        currentConfiguration = dynamoDBMapper.load(Configuration.class, getSystemId());
-        configurationMediator.setCurrentConfiguration(currentConfiguration);
+        refreshSystemConfiguration();
         mailService.reconnect();
     }
 
@@ -310,6 +312,7 @@ public class SystemServiceImpl implements SystemService {
         configurationRepository.save(currentConfiguration);
 
         configurationMediator.setCurrentConfiguration(currentConfiguration);
+        clusterEventPublisher.settingsUpdated();
         if (mailReconnect) {
             mailService.reconnect();
         }
@@ -329,6 +332,12 @@ public class SystemServiceImpl implements SystemService {
                 applicationContext.refresh();
             }
         }.start();
+    }
+
+    @Override
+    public void refreshSystemConfiguration() {
+        currentConfiguration = dynamoDBMapper.load(Configuration.class, getSystemId());
+        configurationMediator.setCurrentConfiguration(currentConfiguration);
     }
 
     /**

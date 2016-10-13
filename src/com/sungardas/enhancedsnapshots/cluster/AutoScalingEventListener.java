@@ -17,6 +17,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,6 +33,8 @@ public class AutoScalingEventListener implements Runnable {
     private AmazonSQS amazonSQS;
     @Autowired
     private ClusterEventPublisher clusterEventPublisher;
+    @Autowired
+    private NodeRepository nodeRepository;
 
 
     private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getInstanceId() + "-queue";
@@ -51,10 +54,10 @@ public class AutoScalingEventListener implements Runnable {
                     String msg = obj.get("Message").toString();
                     AutoScalingEvents event = AutoScalingEvents.valueOf((String) new JSONObject(msg).get("Event"));
                     switch (event) {
-                        case EC2_INSTANCE_TERMINATE:{
+                        case EC2_INSTANCE_TERMINATE: {
                             clusterEventPublisher.nodeTerminated((String) new JSONObject(msg).get("EC2InstanceId"));
                         }
-                        default:{
+                        default: {
                             LOG.warn("New AutoScaling event: {}", message.toString());
                         }
                     }
@@ -71,16 +74,21 @@ public class AutoScalingEventListener implements Runnable {
 
     @PostConstruct
     public void startListener() {
-        executor = Executors.newSingleThreadExecutor();
-        receiveMessages = true;
-        executor.execute(this);
-        LOG.info("Listener for queue: {} started.", ESS_QUEUE_NAME);
+        if (SystemUtils.clusterMode() && isMasterNode()) {
+            executor = Executors.newSingleThreadExecutor();
+            receiveMessages = true;
+            executor.execute(this);
+            LOG.info("Listener for queue: {} started.", ESS_QUEUE_NAME);
+        }
     }
 
+    @PreDestroy
     public void stopListener() {
-        receiveMessages = false;
-        executor.shutdownNow();
-        LOG.info("Listener for queue: {} stoped.", ESS_QUEUE_NAME);
+        if (executor != null) {
+            receiveMessages = false;
+            executor.shutdownNow();
+            LOG.info("Listener for queue: {} stoped.", ESS_QUEUE_NAME);
+        }
     }
 
     private void sleep() {
@@ -110,6 +118,11 @@ public class AutoScalingEventListener implements Runnable {
         AutoScalingEvents(String event) {
             this.autoScalingEvent = event;
         }
+    }
+
+    private boolean isMasterNode() {
+        NodeEntry node = nodeRepository.findOne(SystemUtils.getInstanceId());
+        return node != null && node.isMaster();
     }
 
 }

@@ -21,36 +21,22 @@ public class ClusterEventPublisherImpl implements ClusterEventPublisher {
 
 
     public void settingsUpdated() {
-        EventEntry eventEntry = new EventEntry(String.valueOf(System.currentTimeMillis()), ClusterEvents.SETTINGS_UPDATED.event, null, null);
+        EventEntry eventEntry = new EventEntry(System.currentTimeMillis(), ClusterEvents.SETTINGS_UPDATED.getEvent(), null, null);
         eventsRepository.save(eventEntry);
         LOG.info("Settings update event was published");
     }
 
     public void nodeLaunched(String nodeId, String volumeId) {
-        EventEntry eventEntry = new EventEntry(String.valueOf(System.currentTimeMillis()), ClusterEvents.NODE_LAUNCHED.event, nodeId, volumeId);
+        EventEntry eventEntry = new EventEntry(System.currentTimeMillis(), ClusterEvents.NODE_LAUNCHED.getEvent(), nodeId, volumeId);
         eventsRepository.save(eventEntry);
         LOG.info("Node launched event published");
     }
 
     public void nodeTerminated(String nodeId) {
         NodeEntry terminatedNode = nodeRepository.findOne(nodeId);
-        EventEntry eventEntry = new EventEntry(String.valueOf(System.currentTimeMillis()), ClusterEvents.NODE_TERMINATED.event, nodeId, terminatedNode.getSdfsVolumeId());
+        EventEntry eventEntry = new EventEntry(System.currentTimeMillis(), ClusterEvents.NODE_TERMINATED.getEvent(), nodeId, terminatedNode.getSdfsVolumeId());
         eventsRepository.save(eventEntry);
+        nodeRepository.delete(terminatedNode);
         LOG.info("Node terminated event published");
-    }
-
-
-    public enum ClusterEvents {
-        NODE_LAUNCHED("nodeLaunched"), NODE_TERMINATED("nodeTerminated"), SETTINGS_UPDATED("settingsUpdated");
-
-        public String getEvent() {
-            return event;
-        }
-
-        private final String event;
-
-        ClusterEvents(String event) {
-            this.event = event;
-        }
     }
 }

@@ -18,6 +18,9 @@ public class NodeEntry {
     @DynamoDBAttribute
     private String sdfsVolumeId;
 
+    public NodeEntry() {
+    }
+
     public NodeEntry(String nodeId, boolean isMaster, int freeRestoreWorkers, int freeBackupWorkers, String sdfsVolumeId) {
         this.nodeId = nodeId;
         this.isMaster = isMaster;

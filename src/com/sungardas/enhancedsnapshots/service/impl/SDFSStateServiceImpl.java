@@ -311,7 +311,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public String getSDFSVolumeId() {
         //TODO: implement
-        return "001";
+        return String.valueOf(System.currentTimeMillis());
     }
 
     private BackupEntry getBackupFromFile(File file) {

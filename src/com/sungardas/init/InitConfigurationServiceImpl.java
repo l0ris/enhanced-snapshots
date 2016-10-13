@@ -426,6 +426,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         createTable(SnapshotEntry.class);
         createTable(User.class);
         createTable(NodeEntry.class);
+        createTable(EventEntry.class);
     }
 
     private void createTable(Class tableClass) {
@@ -554,7 +555,12 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @Override
     public boolean systemIsConfigured() {
-        return getPropertyFile().exists();
+        if (!SystemUtils.clusterMode()) {
+            return getPropertyFile().exists();
+        } else {
+            return tableExists(mapper.generateCreateTableRequest(NodeEntry.class).getTableName())
+                    && (mapper.load(NodeEntry.class, SystemUtils.getSystemId()) != null) ? true : false;
+        }
     }
 
     @Override

@@ -18,6 +18,7 @@ import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ import javax.annotation.PostConstruct;
 import java.util.*;
 
 @Service
+@Qualifier("clusterConfigurationServiceImpl")
 public class ClusterConfigurationServiceImpl implements ClusterConfigurationService {
 
     private static final Logger LOG = LogManager.getLogger(ClusterConfigurationServiceImpl.class);
@@ -49,7 +51,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     @Autowired
     private ConfigurationMediator configurationMediator;
     @Autowired
-    private AutoScalingEventListener listener;
+    private ClusterEventPublisher clusterEventPublisher;
     @Autowired
     private SDFSStateService sdfsStateService;
     @Value("${enhancedsnapshots.default.backup.threadPool.size}")
@@ -64,7 +66,17 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
         if (SystemUtils.clusterMode() && !clusterIsConfigured()) {
             configureClusterInfrastructure();
             nodeRepository.save(getMasterNodeInfo());
+        } else if (SystemUtils.clusterMode()) {
+            clusterEventPublisher.nodeLaunched(SystemUtils.getInstanceId(), sdfsStateService.getSDFSVolumeId());
         }
+    }
+
+    private void joinCluster() {
+        LOG.info("Joining cluster {}", SystemUtils.getSystemId());
+        NodeEntry newNode = new NodeEntry(SystemUtils.getInstanceId(), false,
+                restoreThreadPoolSize, backupThreadPoolSize, sdfsStateService.getSDFSVolumeId());
+        nodeRepository.save(newNode);
+        clusterEventPublisher.nodeLaunched(newNode.getNodeId(), sdfsStateService.getSDFSVolumeId());
     }
 
     protected NodeEntry getMasterNodeInfo() {
