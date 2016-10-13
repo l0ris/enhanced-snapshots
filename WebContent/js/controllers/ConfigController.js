@@ -1,7 +1,6 @@
 'use strict';
-
 angular.module('web')
-    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
+    .controller('ConfigController', ['$scope', 'Volumes', 'Configuration', '$modal', '$state', 'Storage', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
         var DELAYTIME = 600*1000;
         $scope.STRINGS = {
             s3: {
@@ -143,7 +142,12 @@ angular.module('web')
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
+                cluster: {
+                    minNodeNumber: $scope.settings.cluster.minNodeNumber,
+                    maxNodeNumber: $scope.settings.cluster.maxNodeNumber
+                },
                 ssoMode: $scope.isSSO,
+                domain: $scope.settings.domain,
                 spEntityId: $scope.entityId || null,
                 mailConfiguration: getMailConfig()
             };
@@ -162,10 +166,8 @@ angular.module('web')
 
                 userModalInstance.result.then(function () {
                     settings.user = $scope.userToEdit;
-
                     delete settings.user.isNew;
 
-                    settings.domain = $scope.settings.domain;
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
@@ -177,13 +179,11 @@ angular.module('web')
 
                 });
             } else {
+                $scope.progressState = 'running';
 
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
-
-                settings.domain = $scope.settings.domain;
-                $scope.progressState = 'running';
 
                 Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
                     $scope.progressState = 'success';
@@ -203,4 +203,4 @@ angular.module('web')
             }, function (data, status) {
             });
         };
-    });
+    }]);

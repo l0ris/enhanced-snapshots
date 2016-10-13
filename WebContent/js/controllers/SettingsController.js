@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('SettingsController', function ($scope, System, Users, $modal, Configuration) {
+    .controller('SettingsController', ['$scope', 'System', 'Users', '$modal', 'Configuration', function ($scope, System, Users, $modal, Configuration) {
         var currentUser = Users.getCurrent();
         $scope.isAdmin = currentUser.role === "admin";
 
@@ -126,4 +126,4 @@ angular.module('web')
            return JSON.stringify($scope.settings) !== JSON.stringify($scope.initialSettings);
         };
 
-    });
+    }]);

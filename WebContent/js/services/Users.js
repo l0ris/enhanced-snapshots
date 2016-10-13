@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Users', function ($q, $http, Storage, BASE_URL) {
+    .service('Users', ['$q', '$http', 'Storage', 'BASE_URL', function ($q, $http, Storage, BASE_URL) {
         var url = BASE_URL + "rest/user";
         var storageKey = '_users';
 
@@ -92,4 +92,4 @@ angular.module('web')
                 })
             }
         }
-    });
+    }]);

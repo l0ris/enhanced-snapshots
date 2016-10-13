@@ -237,6 +237,31 @@
                             <div class="settings field-label col-sm-5 text-left">logs</div>
                         </div>
 
+                        <div class="col-sm-12 form-group" ng-show="settings.clusterMode">
+                            <div class="settings field-label col-sm-5 text-right">Minimum node number:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       min="1"
+                                       max="{{settings.systemProperties.cluster.maxNodeNumber}}"
+                                       ng-model="settings.systemProperties.cluster.minNodeNumber"
+                                       name="minNodeNumber"
+                                       ng-required="settings.clusterMode">
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12 form-group" ng-show="settings.clusterMode">
+                            <div class="settings field-label col-sm-5 text-right">Maximum node number:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       min="{{settings.systemProperties.cluster.minNodeNumber}}"
+                                       ng-model="settings.systemProperties.cluster.maxNodeNumber"
+                                       name="maxNodeNumber"
+                                       ng-required="settings.clusterMode">
+                            </div>
+                        </div>
+
                         <div class="col-sm-12 form-group">
                             <div class="settings field-label col-sm-5 text-right">Email notifications:</div>
                             <div class="col-sm-2 text-left">
@@ -247,9 +272,9 @@
                         </div>
 
                         <div class="col-sm-12 text-danger small"
-                             ng-show="otherSettings.maxQueueSize.$error.required ||
-                             otherSettings.amazonRetryCount.$error.required ||
-                             otherSettings.amazonRetrySleep.$error.required">
+                             ng-show="otherSettings.$error.required ||
+                             sdfs.$error.required ||
+                             volumeTypes.$error.required">
                             {{STRINGS.otherSettings.empty}}
                         </div>
                     </form>
@@ -260,10 +285,8 @@
                         <button ng-show="isNewValues()"
                                 class="settings btn btn-info" title="Update Settings"
                                 ng-click="updateSettings()"
-                                ng-disabled="sdfs.volumeSize.$invalid ||
-                                sdfs.sdfsLocalCacheSize.$invalid || volumeTypes.tVolumeSize.$invalid ||
-                                volumeTypes.rVolumeSize.$invalid || otherSettings.maxQueueSize.$invalid ||
-                                otherSettings.amazonRetryCount.$invalid || otherSettings.amazonRetrySleep.$invalid">
+                                ng-disabled="otherSettings.$invalid ||
+                                sdfs.$invalid || volumeTypes.$invalid">
                             Update Settings
                         </button>
                     </div>

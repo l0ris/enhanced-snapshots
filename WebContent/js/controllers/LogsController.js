@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('LogsController', function ($location, $anchorScroll, $stomp, $scope, $rootScope, $state, $timeout, $q, System) {
+    .controller('LogsController', ['$location', '$anchorScroll','$stomp', '$scope', '$rootScope', '$state', '$timeout', '$q', 'System', function ($location, $anchorScroll, $stomp, $scope, $rootScope, $state, $timeout, $q, System) {
         $scope.followLogs = false;
         $scope.logs = [];
 
@@ -113,4 +113,4 @@ angular.module('web')
                 $scope.logsListener.unsubscribe();
             }
         })
-    });
+    }]);

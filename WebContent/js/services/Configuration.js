@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Configuration', function ($q, $http, BASE_URL) {
+    .service('Configuration', ['$q', '$http', 'BASE_URL', function ($q, $http, BASE_URL) {
         var url = BASE_URL + 'rest/configuration';
 
         var _get = function (type) {
@@ -103,4 +103,4 @@ angular.module('web')
                 return _check(emailConfig)
             }
         }
-    });
+    }]);

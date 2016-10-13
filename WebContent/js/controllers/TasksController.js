@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('TasksController', function ($scope, $rootScope, $stateParams, $stomp, Tasks, Storage, $modal, $timeout) {
+    .controller('TasksController', ['$scope', '$rootScope', '$stateParams', '$stomp', 'Tasks', 'Storage', '$modal', '$timeout', function ($scope, $rootScope, $stateParams, $stomp, Tasks, Storage, $modal, $timeout) {
         $scope.typeColorClass = {
             backup: "primary",
             restore: "success",
@@ -101,4 +101,4 @@ angular.module('web')
                 });
             });
         };
-    });
+    }]);
