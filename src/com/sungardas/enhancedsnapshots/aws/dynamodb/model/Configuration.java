@@ -56,6 +56,7 @@ public class Configuration {
     private MailConfigurationDocument mailConfigurationDocument;
 
     private String UUID;
+    private boolean sungardasSSO;
 
     public MailConfigurationDocument getMailConfigurationDocument() {
         return mailConfigurationDocument;
@@ -308,5 +309,13 @@ public class Configuration {
 
     public String getUUID() {
         return UUID;
+    }
+
+    public boolean isSungardasSSO() {
+        return sungardasSSO;
+    }
+
+    public void setSungardasSSO(boolean sungardasSSO) {
+        this.sungardasSSO = sungardasSSO;
     }
 }

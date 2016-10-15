@@ -188,4 +188,9 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public String getUUID() {
         return currentConfiguration.getUUID();
     }
+
+    @Override
+    public boolean isSungardasSSO() {
+        return currentConfiguration.isSungardasSSO();
+    }
 }

@@ -69,4 +69,6 @@ public interface ConfigurationMediator {
     MailConfigurationDocument getMailConfiguration();
 
     String getUUID();
+
+    boolean isSungardasSSO();
 }

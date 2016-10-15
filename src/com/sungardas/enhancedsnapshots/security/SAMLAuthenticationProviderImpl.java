@@ -18,26 +18,36 @@ public class SAMLAuthenticationProviderImpl extends SAMLAuthenticationProvider {
 
     private static final String ALLOWED_LIST_ATTRIBUTE_NAME = "essaccesslist";
 
+    private static final String ADMIN_WILDCARD_EXP = "*";
+
     private ConfigurationMediator configurationMediator;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        if (configurationMediator.isSungardasSSO()) {
+            Authentication result = super.authenticate(authentication);
 
-        Authentication result = super.authenticate(authentication);
-
-        SAMLCredential credential = (SAMLCredential) result.getCredentials();
-        Attribute attribute = credential.getAttribute(ALLOWED_LIST_ATTRIBUTE_NAME);
-        if (attribute != null) {
-            for (XMLObject object : attribute.getAttributeValues()) {
-                if (configurationMediator.getUUID().equals(((XSStringImpl) object).getValue())) {
-                    return result;
+            SAMLCredential credential = (SAMLCredential) result.getCredentials();
+            Attribute attribute = credential.getAttribute(ALLOWED_LIST_ATTRIBUTE_NAME);
+            if (attribute != null) {
+                for (XMLObject object : attribute.getAttributeValues()) {
+                    String value = ((XSStringImpl) object).getValue();
+                    if (ADMIN_WILDCARD_EXP.equals(value)) {
+                        LOG.warn("User ({}) has admin access, instance UUID: {}", credential.getNameID().getValue(), configurationMediator.getUUID());
+                        return result;
+                    }
+                    if (configurationMediator.getUUID().equals(value)) {
+                        return result;
+                    }
                 }
             }
+
+            LOG.error("User ({}) has not allowed to use this instance with UUID: {}", credential.getNameID().getValue(), configurationMediator.getUUID());
+
+            throw new AuthenticationServiceException("Access denied");
+        } else {
+            return super.authenticate(authentication);
         }
-
-        LOG.error("User ({}) has not allowed to use this instance with UUID: {}", credential.getNameID().getValue(), configurationMediator.getUUID());
-
-        throw new AuthenticationServiceException("Access denied");
     }
 
     public void setConfigurationMediator(ConfigurationMediator configurationMediator) {
