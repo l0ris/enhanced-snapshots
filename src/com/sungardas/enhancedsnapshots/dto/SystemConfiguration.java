@@ -12,7 +12,16 @@ public class SystemConfiguration {
     private boolean ssoMode;
     private String domain;
     private MailConfigurationDto mailConfiguration;
+    private Cluster cluster;
 
+
+    public Cluster getCluster() {
+        return cluster;
+    }
+
+    public void setCluster(Cluster cluster) {
+        this.cluster = cluster;
+    }
 
     public String getCurrentVersion() {
         return currentVersion;

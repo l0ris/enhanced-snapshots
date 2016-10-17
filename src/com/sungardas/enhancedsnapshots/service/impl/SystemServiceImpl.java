@@ -13,6 +13,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepo
 import com.sungardas.enhancedsnapshots.cluster.ClusterEventPublisher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
+import com.sungardas.enhancedsnapshots.dto.Cluster;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
@@ -270,6 +271,10 @@ public class SystemServiceImpl implements SystemService {
         configuration.setSsoMode(configurationMediator.isSsoLoginMode());
         configuration.setDomain(configurationMediator.getDomain());
         configuration.setMailConfiguration(MailConfigurationDocumentConverter.toMailConfigurationDto(configurationMediator.getMailConfiguration()));
+        Cluster clusterDto = new Cluster();
+        clusterDto.setMaxNodeNumber(configurationMediator.getMaxNodeNumberInCluster());
+        clusterDto.setMinNodeNumber(configurationMediator.getMinNodeNumberInCluster());
+        configuration.setCluster(clusterDto);
         return configuration;
     }
 
@@ -308,6 +313,9 @@ public class SystemServiceImpl implements SystemService {
 
         // update bucket
         currentConfiguration.setS3Bucket(configuration.getS3().getBucketName());
+        
+        currentConfiguration.setMaxNodeNumber(configuration.getCluster().getMaxNodeNumber());
+        currentConfiguration.setMinNodeNumber(configuration.getCluster().getMinNodeNumber());
 
         configurationRepository.save(currentConfiguration);
 

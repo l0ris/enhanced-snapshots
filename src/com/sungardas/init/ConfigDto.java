@@ -1,6 +1,7 @@
 package com.sungardas.init;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.dto.Cluster;
 import com.sungardas.enhancedsnapshots.dto.MailConfigurationDto;
 
 class ConfigDto {
@@ -77,28 +78,5 @@ class ConfigDto {
     public void setCluster(Cluster cluster) {
         this.cluster = cluster;
     }
-
-
-    static class Cluster {
-        private int minNodeNumber;
-        private int maxNodeNumber;
-
-        public int getMinNodeNumber() {
-            return minNodeNumber;
-        }
-
-        public void setMinNodeNumber(int minNodeNumber) {
-            this.minNodeNumber = minNodeNumber;
-        }
-
-        public int getMaxNodeNumber() {
-            return maxNodeNumber;
-        }
-
-        public void setMaxNodeNumber(int maxNodeNumber) {
-            this.maxNodeNumber = maxNodeNumber;
-        }
-    }
-
 
 }
