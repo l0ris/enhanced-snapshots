@@ -6,6 +6,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.EventsRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.SystemService;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +15,12 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
 
 @Service
 public class ClusterEventListener implements Runnable {
@@ -52,9 +55,16 @@ public class ClusterEventListener implements Runnable {
                             //TODO: update copycat
                         }
                         case NODE_TERMINATED: {
-                            NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
+                            NodeEntry terminatedNode = nodeRepository.findOne(eventEntry.getInstanceId());
+                            // check whether terminated node was master one and current node should become a new master
+                            if (terminatedNode.isMaster() && StreamSupport.stream(nodeRepository.findAll().spliterator(), false)
+                                    .sorted(Comparator.comparing(node -> node.getNodeId()))
+                                    .findFirst().get().getNodeId().toLowerCase().equals(SystemUtils.getInstanceId().toLowerCase())) {
+                                NodeEntry currentNode = nodeRepository.findOne(SystemUtils.getInstanceId());
+                                currentNode.setMaster(true);
+                                nodeRepository.save(currentNode);
+                            }
                             //TODO: update copycat
-                            //TODO: checkMasterNodeIsAlive();
                             LOG.info("Node terminated event: {}", eventEntry.toString());
                         }
                         case SETTINGS_UPDATED: {
