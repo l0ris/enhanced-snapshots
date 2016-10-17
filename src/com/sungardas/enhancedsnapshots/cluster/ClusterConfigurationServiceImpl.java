@@ -63,11 +63,11 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
 
     @PostConstruct
     private void init() {
-        if (SystemUtils.clusterMode() && !clusterIsConfigured()) {
+        if (configurationMediator.isClusterMode() && !clusterIsConfigured()) {
             configureClusterInfrastructure();
             nodeRepository.save(getMasterNodeInfo());
-        } else if (SystemUtils.clusterMode()) {
-            clusterEventPublisher.nodeLaunched(SystemUtils.getInstanceId(), sdfsStateService.getSDFSVolumeId());
+        } else if (configurationMediator.isClusterMode()) {
+            clusterEventPublisher.nodeLaunched(SystemUtils.getInstanceId(), sdfsStateService.getSDFSVolumeId(), null);
         }
     }
 
@@ -76,7 +76,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
         NodeEntry newNode = new NodeEntry(SystemUtils.getInstanceId(), false,
                 restoreThreadPoolSize, backupThreadPoolSize, sdfsStateService.getSDFSVolumeId());
         nodeRepository.save(newNode);
-        clusterEventPublisher.nodeLaunched(newNode.getNodeId(), sdfsStateService.getSDFSVolumeId());
+        clusterEventPublisher.nodeLaunched(newNode.getNodeId(), sdfsStateService.getSDFSVolumeId(), null);
     }
 
     protected NodeEntry getMasterNodeInfo() {

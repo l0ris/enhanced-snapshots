@@ -8,25 +8,37 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 @DynamoDBTable(tableName = "Events")
 public class EventEntry {
 
-    @DynamoDBHashKey()
-    private long time;
+    @DynamoDBHashKey
+    private String Id;
+
     @DynamoDBAttribute
     private String event;
-
     // for node added/removed events
     @DynamoDBAttribute
     private String instanceId;
+
     @DynamoDBAttribute
     private String volumeId;
+
+    @DynamoDBAttribute
+    private long time;
 
     public EventEntry() {
     }
 
-    public EventEntry(long time, String event, String instanceId, String volumeId) {
+    public EventEntry(String sqsMessageId, long time, String event, String instanceId, String volumeId) {
+        this.Id = sqsMessageId;
         this.time = time;
         this.event = event;
         this.instanceId = instanceId;
         this.volumeId = volumeId;
+    }
+
+    public void setId(String id) {
+        this.Id = id;
+    }
+    public String getId() {
+        return Id;
     }
 
     public long getTime() {
@@ -59,5 +71,16 @@ public class EventEntry {
 
     public void setVolumeId(String volumeId) {
         this.volumeId = volumeId;
+    }
+
+    @Override
+    public String toString() {
+        return "EventEntry{" +
+                "Id='" + Id + '\'' +
+                ", event='" + event + '\'' +
+                ", instanceId='" + instanceId + '\'' +
+                ", volumeId='" + volumeId + '\'' +
+                ", time=" + time +
+                '}';
     }
 }

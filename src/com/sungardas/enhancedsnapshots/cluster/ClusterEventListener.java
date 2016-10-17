@@ -4,8 +4,8 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.EventEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.EventsRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.SystemService;
-import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +35,12 @@ public class ClusterEventListener implements Runnable {
     @Value("${enhancedsnapshots.default.polling.rate}")
     private int pollingRate;
     private long lastCheckTime;
+    @Autowired
+    private ConfigurationMediator configurationMediator;
 
 
     public void run() {
-        while (SystemUtils.clusterMode()) {
+        while (configurationMediator.isClusterMode()) {
             List<EventEntry> events = eventsRepository.findByTimeGreaterThan(lastCheckTime);
             try {
                 for (EventEntry eventEntry : events) {
@@ -46,10 +48,14 @@ public class ClusterEventListener implements Runnable {
                     switch (event) {
                         case NODE_LAUNCHED: {
                             NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
+                            LOG.info("node launched event: {}", eventEntry.toString());
                             //TODO: update copycat
                         }
                         case NODE_TERMINATED: {
+                            NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
                             //TODO: update copycat
+                            //TODO: checkMasterNodeIsAlive();
+                            LOG.info("Node terminated event: {}", eventEntry.toString());
                         }
                         case SETTINGS_UPDATED: {
                             systemService.refreshSystemConfiguration();
@@ -63,7 +69,6 @@ public class ClusterEventListener implements Runnable {
                         lastCheckTime = eventEntry.getTime();
                     }
                 }
-                //TODO: checkMasterNodeIsAlive();
             } catch (Exception e) {
                 LOG.error(e);
             }
@@ -74,7 +79,7 @@ public class ClusterEventListener implements Runnable {
 
     @PostConstruct
     public void startListener() {
-        if (SystemUtils.clusterMode()) {
+        if (configurationMediator.isClusterMode()) {
             lastCheckTime = System.currentTimeMillis();
             executor = Executors.newSingleThreadExecutor();
             executor.execute(this);

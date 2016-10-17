@@ -21,20 +21,23 @@ public class ClusterEventPublisherImpl implements ClusterEventPublisher {
 
 
     public void settingsUpdated() {
-        EventEntry eventEntry = new EventEntry(System.currentTimeMillis(), ClusterEvents.SETTINGS_UPDATED.getEvent(), null, null);
+        long time = System.currentTimeMillis();
+        EventEntry eventEntry = new EventEntry(String.valueOf(time), time, ClusterEvents.SETTINGS_UPDATED.getEvent(), null, null);
         eventsRepository.save(eventEntry);
         LOG.info("Settings update event was published");
     }
 
-    public void nodeLaunched(String nodeId, String volumeId) {
-        EventEntry eventEntry = new EventEntry(System.currentTimeMillis(), ClusterEvents.NODE_LAUNCHED.getEvent(), nodeId, volumeId);
+    public void nodeLaunched(String nodeId, String volumeId, String msgId) {
+        long time = System.currentTimeMillis();
+        EventEntry eventEntry = new EventEntry(msgId != null ? msgId : String.valueOf(time), time, ClusterEvents.NODE_LAUNCHED.getEvent(), nodeId, volumeId);
         eventsRepository.save(eventEntry);
         LOG.info("Node launched event published");
     }
 
-    public void nodeTerminated(String nodeId) {
+    public void nodeTerminated(String nodeId, String msgId) {
+        long time = System.currentTimeMillis();
         NodeEntry terminatedNode = nodeRepository.findOne(nodeId);
-        EventEntry eventEntry = new EventEntry(System.currentTimeMillis(), ClusterEvents.NODE_TERMINATED.getEvent(), nodeId, terminatedNode.getSdfsVolumeId());
+        EventEntry eventEntry = new EventEntry(msgId != null ? msgId : String.valueOf(time), time, ClusterEvents.NODE_TERMINATED.getEvent(), nodeId, terminatedNode.getSdfsVolumeId());
         eventsRepository.save(eventEntry);
         nodeRepository.delete(terminatedNode);
         LOG.info("Node terminated event published");

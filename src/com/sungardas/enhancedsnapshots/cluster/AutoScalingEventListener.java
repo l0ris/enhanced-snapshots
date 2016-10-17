@@ -6,7 +6,9 @@ import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.EventsRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,6 +37,10 @@ public class AutoScalingEventListener implements Runnable {
     private ClusterEventPublisher clusterEventPublisher;
     @Autowired
     private NodeRepository nodeRepository;
+    @Autowired
+    private ConfigurationMediator configurationMediator;
+    @Autowired
+    private EventsRepository eventsRepository;
 
 
     private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getInstanceId() + "-queue";
@@ -55,14 +61,18 @@ public class AutoScalingEventListener implements Runnable {
                     AutoScalingEvents event = AutoScalingEvents.valueOf((String) new JSONObject(msg).get("Event"));
                     switch (event) {
                         case EC2_INSTANCE_TERMINATE: {
-                            clusterEventPublisher.nodeTerminated((String) new JSONObject(msg).get("EC2InstanceId"));
+                            if (eventsRepository.findOne(message.getMessageId()) == null) {
+                                clusterEventPublisher.nodeTerminated((String) new JSONObject(msg).get("EC2InstanceId"), message.getMessageId());
+                                amazonSQS.deleteMessage(new DeleteMessageRequest()
+                                        .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
+                            }
                         }
                         default: {
                             LOG.warn("New AutoScaling event: {}", message.toString());
+                            amazonSQS.deleteMessage(new DeleteMessageRequest()
+                                    .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
                         }
                     }
-                    amazonSQS.deleteMessage(new DeleteMessageRequest()
-                            .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
                 }
             } catch (Exception e) {
                 LOG.error(e);
@@ -74,7 +84,7 @@ public class AutoScalingEventListener implements Runnable {
 
     @PostConstruct
     public void startListener() {
-        if (SystemUtils.clusterMode() && isMasterNode()) {
+        if (configurationMediator.isClusterMode()) {
             executor = Executors.newSingleThreadExecutor();
             receiveMessages = true;
             executor.execute(this);
@@ -120,8 +130,8 @@ public class AutoScalingEventListener implements Runnable {
         }
     }
 
-    private boolean isMasterNode() {
-        NodeEntry node = nodeRepository.findOne(SystemUtils.getInstanceId());
+    private boolean isMasterNode(String instanceId) {
+        NodeEntry node = nodeRepository.findOne(instanceId);
         return node != null && node.isMaster();
     }
 
