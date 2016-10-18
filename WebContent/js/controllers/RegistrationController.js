@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('RegistrationController', function ($scope, $state, Users, $modal) {
+    .controller('RegistrationController', ['$scope', '$state', 'Users', '$modal', function ($scope, $state, Users, $modal) {
         $scope.passwordError = "";
         $scope.userExists = "";
         var userData = {};
@@ -48,7 +48,7 @@ angular.module('web')
                 $scope.passwordError = "Password does not match"
             }
         };
-    });
+    }]);
 
 
 

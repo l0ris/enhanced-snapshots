@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalSystemBackupCtrl', function ($scope, $modalInstance, Tasks, Storage) {
+    .controller('modalSystemBackupCtrl', ['$scope', '$modalInstance', 'Tasks', 'Storage', function ($scope, $modalInstance, Tasks, Storage) {
         $scope.state = 'ask';
 
         $scope.sendTask = function () {
@@ -20,4 +20,4 @@ angular.module('web')
             });
 
         }
-    });
+    }]);

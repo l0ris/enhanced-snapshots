@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Tasks', function ($q, $http, Storage, BASE_URL) {
+    .service('Tasks', ['$q', '$http', 'Storage', 'BASE_URL', function ($q, $http, Storage, BASE_URL) {
         var url = BASE_URL + 'rest/task';
 
         var getAll = function (volumeId) {
@@ -64,4 +64,4 @@ angular.module('web')
                 return remove(id);
             }
         }
-    });
+    }]);

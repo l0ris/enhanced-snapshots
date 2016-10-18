@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('UserController', function ($scope, $rootScope, Users, ssoMode, Storage, toastr, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
+    .controller('UserController', ['$scope', '$rootScope', 'Users', 'ssoMode', 'Storage', 'toastr', '$modal', 'ITEMS_BY_PAGE', 'DISPLAY_PAGES', function ($scope, $rootScope, Users, ssoMode, Storage, toastr, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
         $scope.users = [];
@@ -117,4 +117,4 @@ angular.module('web')
                 });
             })
         };
-    });
+    }]);

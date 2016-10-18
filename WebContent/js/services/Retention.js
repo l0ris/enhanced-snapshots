@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Retention', function ($q, $http, BASE_URL) {
+    .service('Retention', ['$q', '$http', 'BASE_URL', function ($q, $http, BASE_URL) {
         var url = BASE_URL + 'rest/retention';
 
         var _get = function (id) {
@@ -33,4 +33,4 @@ angular.module('web')
             }
 
         }
-    });
+    }]);
