@@ -8,7 +8,19 @@ import java.util.Set;
 
 
 public interface VolumeService extends Cached {
+    /**
+     * Returns existing and historical volumes
+     *
+     * @return
+     */
     Set<VolumeDto> getVolumes();
+
+    /**
+     * Returns only existing volumes
+     *
+     * @return
+     */
+    Set<VolumeDto> getExistingVolumes();
 
     Set<VolumeDto> getVolumesByRegion(Region region);
 
