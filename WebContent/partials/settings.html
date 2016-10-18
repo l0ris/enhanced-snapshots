@@ -11,9 +11,7 @@
         </div>
         <div class="page-name">
             <div class="go-back">&nbsp;</div>
-            <div class="current">System&nbsp;Settings
-                <span class="pull-right">UUID: {{settings.uuid}}</span>
-            </div>
+            <div class="current">System&nbsp;Settings</div>
         </div>
     </div>
 </div>
@@ -217,6 +215,13 @@
                                        type="checkbox"
                                        ng-model="settings.sungardasSSO"
                                        name="sungardasSSO">
+                            </div>
+
+                        </div>
+
+                        <div ng-show="settings.sungardasSSO" class="col-sm-12 form-group">
+                            <div class="col-sm-offset-5 col-sm-7 text-left">
+                                <span class="label label-success">UUID: {{settings.uuid}}</span>
                             </div>
                         </div>
 
