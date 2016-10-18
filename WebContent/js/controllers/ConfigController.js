@@ -143,6 +143,7 @@ angular.module('web')
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
+                sangardasSSO: !!$scope.sangardasSSO,
                 ssoMode: $scope.isSSO,
                 spEntityId: $scope.entityId || null,
                 mailConfiguration: getMailConfig()

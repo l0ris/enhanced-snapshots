@@ -11,12 +11,13 @@
         </div>
         <div class="page-name">
             <div class="go-back">&nbsp;</div>
-            <div class="current">System&nbsp;Settings</div>
+            <div class="current">System&nbsp;Settings
+                <span class="pull-right">UUID: {{settings.uuid}}</span>
+            </div>
         </div>
     </div>
 </div>
 <div class="table-header-placeholder"></div>
-
 
 <div class="container app" ng-show="progressState !== 'loading'">
 
@@ -207,6 +208,15 @@
                                        type="checkbox"
                                        ng-model="settings.systemProperties.storeSnapshots"
                                        name="storeSnapshots">
+                            </div>
+                        </div>
+                        <div class="col-sm-12 form-group">
+                            <div class="settings field-label col-sm-5 text-right">SungardAS SSO:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="chb settings text-left"
+                                       type="checkbox"
+                                       ng-model="settings.sungardasSSO"
+                                       name="sungardasSSO">
                             </div>
                         </div>
 
