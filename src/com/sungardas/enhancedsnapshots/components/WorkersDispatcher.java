@@ -155,9 +155,10 @@ public class WorkersDispatcher {
                                         notificationService.notifyAboutRunningTaskProgress(entry.getId(), "System backup finished", 100);
                                         break;
                                     }
-                                    case UNKNOWN:
+                                    case UNKNOWN: {
                                         LOGtw.warn("Executor for type {} is not implemented. Task {} is going to be removed.", entry.getType(), entry.getId());
                                         taskService.removeTask(entry.getId());
+                                    }
                                 }
                             } else {
                                 LOGtw.debug("Task canceled: {}", entry);

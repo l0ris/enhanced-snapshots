@@ -120,7 +120,11 @@ public class TaskServiceImpl implements TaskService {
             }
 
         }
-        taskRepository.save(validTasks);
+        // method save(Iterable<S> var1) in spring-data-dynamodb 4.4.1 does not work correctly, that's why we have to save every taskEntry separately
+        // this should be changed once save(Iterable<S> var1) in spring-data-dynamodb is fixed
+        for(TaskEntry taskEntry: validTasks){
+            taskRepository.save(taskEntry);
+        }
         return messages;
     }
 
