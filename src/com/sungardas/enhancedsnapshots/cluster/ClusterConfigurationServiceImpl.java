@@ -67,7 +67,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
             configureClusterInfrastructure();
             nodeRepository.save(getMasterNodeInfo());
         } else if (configurationMediator.isClusterMode()) {
-            clusterEventPublisher.nodeLaunched(SystemUtils.getInstanceId(), sdfsStateService.getSDFSVolumeId(), null);
+            joinCluster();
         }
     }
 
