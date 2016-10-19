@@ -21,7 +21,7 @@ public class DynamoDbUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userService.getUser(username.toLowerCase());
-        if(user!=null){
+        if (user != null) {
             return new org.springframework.security.core.userdetails.User(username, user.getPassword(),
                     Arrays.asList(new SimpleGrantedAuthority(ROLE_PREFIX + user.getRole().toUpperCase())));
         }
