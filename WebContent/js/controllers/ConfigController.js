@@ -146,6 +146,7 @@ angular.module('web')
                     minNodeNumber: $scope.settings.cluster.minNodeNumber,
                     maxNodeNumber: $scope.settings.cluster.maxNodeNumber
                 },
+
                 ssoMode: $scope.isSSO,
                 domain: $scope.settings.domain,
                 spEntityId: $scope.entityId || null,
@@ -184,6 +185,9 @@ angular.module('web')
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
+
+                $scope.progressState = 'running';
+
 
                 Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
                     $scope.progressState = 'success';
