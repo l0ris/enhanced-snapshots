@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@DependsOn("clusterConfigurationServiceImpl")
+@DependsOn({"clusterConfigurationServiceImpl", "SystemService"})
 public class AutoScalingEventListener implements Runnable {
 
     private static final Logger LOG = LogManager.getLogger(AutoScalingEventListener.class);
@@ -58,7 +58,7 @@ public class AutoScalingEventListener implements Runnable {
                 for (Message message : messages) {
                     JSONObject obj = new JSONObject(message.getBody());
                     String msg = obj.get("Message").toString();
-                    AutoScalingEvents event = AutoScalingEvents.valueOf((String) new JSONObject(msg).get("Event"));
+                    AutoScalingEvents event = AutoScalingEvents.fromString((String) new JSONObject(msg).get("Event"));
                     switch (event) {
                         case EC2_INSTANCE_TERMINATE: {
                             if (eventsRepository.findOne(message.getMessageId()) == null) {
@@ -127,6 +127,17 @@ public class AutoScalingEventListener implements Runnable {
 
         AutoScalingEvents(String event) {
             this.autoScalingEvent = event;
+        }
+
+        public static AutoScalingEvents fromString(String text) {
+            if (text != null) {
+                for (AutoScalingEvents autoScalingEvents : AutoScalingEvents.values()) {
+                    if (text.equalsIgnoreCase(autoScalingEvents.autoScalingEvent)) {
+                        return autoScalingEvents;
+                    }
+                }
+            }
+            return null;
         }
     }
 

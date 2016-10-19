@@ -9,7 +9,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 public class EventEntry {
 
     @DynamoDBHashKey
-    private String Id;
+    private String id;
 
     @DynamoDBAttribute
     private String event;
@@ -26,8 +26,8 @@ public class EventEntry {
     public EventEntry() {
     }
 
-    public EventEntry(String sqsMessageId, long time, String event, String instanceId, String volumeId) {
-        this.Id = sqsMessageId;
+    public EventEntry(String id, long time, String event, String instanceId, String volumeId) {
+        this.id = id;
         this.time = time;
         this.event = event;
         this.instanceId = instanceId;
@@ -35,10 +35,10 @@ public class EventEntry {
     }
 
     public void setId(String id) {
-        this.Id = id;
+        this.id = id;
     }
     public String getId() {
-        return Id;
+        return id;
     }
 
     public long getTime() {
@@ -76,7 +76,7 @@ public class EventEntry {
     @Override
     public String toString() {
         return "EventEntry{" +
-                "Id='" + Id + '\'' +
+                "id='" + id + '\'' +
                 ", event='" + event + '\'' +
                 ", instanceId='" + instanceId + '\'' +
                 ", volumeId='" + volumeId + '\'' +

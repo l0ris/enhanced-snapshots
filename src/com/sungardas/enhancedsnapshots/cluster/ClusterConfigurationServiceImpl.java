@@ -20,13 +20,14 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
 
-@Service
-@Qualifier("clusterConfigurationServiceImpl")
+@Service("clusterConfigurationServiceImpl")
+@DependsOn("SystemService")
 public class ClusterConfigurationServiceImpl implements ClusterConfigurationService {
 
     private static final Logger LOG = LogManager.getLogger(ClusterConfigurationServiceImpl.class);

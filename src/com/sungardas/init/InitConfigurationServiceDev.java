@@ -167,6 +167,11 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         Configuration configuration = getDevConf();
         configuration.setMailConfigurationDocument(MailConfigurationDocumentConverter.toMailConfigurationDocument(config.getMailConfiguration(), cryptoService, "DEV", ""));
         configuration.setDomain(config.getDomain());
+        if (SystemUtils.clusterMode()) {
+            configuration.setClusterMode(true);
+            configuration.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
+            configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
+        }
         mapper.save(configuration);
 
         User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev");
