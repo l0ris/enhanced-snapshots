@@ -1,7 +1,6 @@
 'use strict';
-
 angular.module('web')
-    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
+    .controller('ConfigController', ['$scope', 'Volumes', 'Configuration', '$modal', '$state', 'Storage', function ($scope, Volumes, Configuration, $modal, $state, Storage) {
         var DELAYTIME = 600*1000;
         $scope.STRINGS = {
             s3: {
@@ -140,12 +139,12 @@ angular.module('web')
                     return $scope.settings.mailConfiguration
                 }
             };
-
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
+                domain: $scope.settings.domain,
                 ssoMode: $scope.isSSO,
-                spEntityId: $scope.entityId,
+                spEntityId: $scope.entityId || null,
                 mailConfiguration: getMailConfig()
             };
 
@@ -165,8 +164,6 @@ angular.module('web')
                     settings.user = $scope.userToEdit;
 
                     delete settings.user.isNew;
-
-                    settings.domain = $scope.settings.domain;
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
@@ -183,7 +180,6 @@ angular.module('web')
                     settings.user = {email: $scope.adminEmail}
                 }
 
-                settings.domain = $scope.settings.domain;
                 $scope.progressState = 'running';
 
                 Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
@@ -204,4 +200,4 @@ angular.module('web')
             }, function (data, status) {
             });
         };
-    });
+    }]);

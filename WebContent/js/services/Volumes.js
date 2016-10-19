@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Volumes', function ($q, $http, Storage, BASE_URL) {
+    .service('Volumes', ['$q', '$http', 'Storage', 'BASE_URL', function ($q, $http, Storage, BASE_URL) {
         var url = BASE_URL + 'rest/volume';
 
         return {
@@ -16,4 +16,4 @@ angular.module('web')
                 return deferred.promise;
             }
         }
-    });
+    }]);

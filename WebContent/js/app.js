@@ -6,7 +6,7 @@ app.constant('BASE_URL', './');
 app.constant('ITEMS_BY_PAGE', 25);
 app.constant('DISPLAY_PAGES', 7);
 
-app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
+app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $urlRouterProvider.otherwise("/app/volumes");
 
     var authenticated = ['$rootScope', function ($rootScope) {
@@ -44,7 +44,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             },
             controller: function ($scope, $rootScope, Storage, toastr) {
                 $rootScope.$on('$stateChangeSuccess',
-                    function(event, toState, toParams, fromState, fromParams){
+                    function(){
                         var notification = Storage.get("notification");
                         if (notification) {
                             toastr.info(notification, undefined, {
@@ -100,6 +100,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 ssoMode: ssoMode
             }
         })
+        .state('app.logs', {
+            url: "/logs",
+            templateUrl: "partials/logs.html",
+            controller: "LogsController"
+        })
         .state('config', {
             url: "/config",
             templateUrl: "partials/config.html",
@@ -121,8 +126,9 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
     $httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
     $httpProvider.interceptors.push('Interceptor');
-})
-    .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users, System, $q) {
+}])
+    .run(['$rootScope', '$state', '$modal', '$stomp', 'toastr', 'Storage', 'Users', 'System', '$q',
+        function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users, System, $q) {
         $rootScope.isLoading = true;
         var promises = [System.get(), Users.refreshCurrent()];
         $q.all(promises).then(function (results) {
@@ -131,7 +137,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 $state.go('app.volume.list');
             }
             $rootScope.isLoading = false;
-        }, function (error) {
+        }, function () {
             $rootScope.isLoading = false;
         });
 
@@ -161,7 +167,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                 }, function (e) {
                     console.log(e);
                 });
-        };
+            };
 
 
         $rootScope.$on('$stateChangeError', function (e) {
@@ -176,5 +182,4 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         $rootScope.errorListener = {};
         $rootScope.taskListener = {};
         if (angular.isDefined($rootScope.getUserName())) { $rootScope.subscribeWS(); }
-    });
-
+    }]);

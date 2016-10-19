@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Zones', function ($q, $http, BASE_URL) {
+    .service('Zones', ['$q', '$http', 'BASE_URL', function ($q, $http, BASE_URL) {
         var url = BASE_URL + 'rest/zones';
 
         var _get = function (extension) {
@@ -22,4 +22,4 @@ angular.module('web')
                 return _get("/current");
             }
         }
-    });
+    }]);

@@ -1,7 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr, $window) {
+    .controller('LoginController', ['$scope', '$state', '$stateParams', '$stomp', 'Auth', 'System', 'Storage', 'toastr', '$window',
+        function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr, $window) {
 
         //LOGING OUT ---------------------
         if ($stateParams.err && $stateParams.err == 'session') {
@@ -50,4 +51,4 @@ angular.module('web')
                 $scope.password = "";
             });
         }
-    });
+    }]);
