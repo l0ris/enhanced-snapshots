@@ -1,4 +1,4 @@
-# Enhanced Snapshots
+# Enhanced Snapshots ##
 
 ![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10324458/c19466ca-6c57-11e5-8318-a2eb1cd9e99b.png)
 
