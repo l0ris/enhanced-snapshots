@@ -42,8 +42,7 @@ public class CopyCatWrapper implements ClusterEventListener {
         if (configurationMediator.isClusterMode()) {
             for (NodeEntry node : nodeRepository.findAll()) {
                 try {
-                    //TODO remove password hardcode
-                    Server server = new Server(node.getSdfsVolumeId(), getHostName(node.getNodeId()), port, "PASSWORD", true, true);
+                    Server server = new Server(node.getSdfsVolumeId(), getHostName(node.getNodeId()), port, configurationMediator.getConfigurationId(), true, true);
                     serverMap.put(node.getNodeId(), server);
                 } catch (Exception e) {
                     LOG.error(e);
@@ -56,8 +55,7 @@ public class CopyCatWrapper implements ClusterEventListener {
     @Override
     public void launched(EventEntry eventEntry) {
         try {
-            //TODO remove password hardcode
-            Server server = new Server(eventEntry.getVolumeId(), getHostName(eventEntry.getInstanceId()), port, "PASSWORD", true, true);
+            Server server = new Server(eventEntry.getVolumeId(), getHostName(eventEntry.getInstanceId()), port, configurationMediator.getConfigurationId(), true, true);
             serverMap.put(eventEntry.getInstanceId(), server);
         } catch (Exception e) {
             LOG.error(e);
