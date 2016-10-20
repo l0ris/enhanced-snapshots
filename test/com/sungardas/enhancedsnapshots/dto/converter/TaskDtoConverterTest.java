@@ -1,15 +1,14 @@
-package com.sungardas.snapdirector.dto.converter;
-
-import java.util.Arrays;
-import java.util.List;
+package enhancedsnapshots.dto.converter;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class TaskDtoConverterTest {
 

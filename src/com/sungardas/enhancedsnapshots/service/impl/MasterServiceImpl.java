@@ -68,7 +68,7 @@ public class MasterServiceImpl implements MasterService {
     }
 
 
-    private void taskDistribution() {
+    public void taskDistribution() {
         List<TaskEntry> unassignedTasks = taskRepository.findByWorkerIsNull();
         List<NodeEntry> nodes = new ArrayList<>();
         nodes.addAll(nodeRepository.findAll());
