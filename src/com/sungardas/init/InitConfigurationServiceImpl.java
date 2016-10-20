@@ -496,9 +496,13 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setStoreSnapshot(storeSnapshot);
         configuration.setLogFile(logFile);
         configuration.setLogsBufferSize(bufferSize);
-        configuration.setClusterMode(SystemUtils.clusterMode());
-        configuration.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
-        configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
+        if (SystemUtils.clusterMode()) {
+            configuration.setClusterMode(SystemUtils.clusterMode());
+            configuration.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
+            configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
+            configuration.setChunkStoreEncryptionKey(SDFSStateService.generateChunkStoreEncryptionKey());
+            configuration.setChunkStoreIV(SDFSStateService.generateChunkStoreIV());
+        }
         // saving configuration to DB
         mapper.save(configuration);
     }

@@ -113,7 +113,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     private void startSDFS(Boolean restore) {
         try {
-            if (sdfsIsRunnig()){
+            if (sdfsIsRunnig()) {
                 LOG.info("SDFS is already running");
                 return;
             }
@@ -121,6 +121,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                 configureSDFS();
             }
             String[] parameters = {getSdfsScriptFile(sdfsScript).getAbsolutePath(), MOUNT_CMD, restore.toString()};
+
             Process p = executeScript(parameters);
             switch (p.exitValue()) {
                 case 0:
@@ -136,14 +137,21 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public void startSDFS (){
+    public void startSDFS() {
         startSDFS(false);
     }
 
 
     private void configureSDFS() throws IOException, InterruptedException {
-        String[] parameters = {getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
-                getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize()};
+        String[] parameters;
+        if (configurationMediator.isClusterMode()) {
+            parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
+                    getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize(), configurationMediator.getChunkStoreEncryptionKey(),
+                    configurationMediator.getChunkStoreIV(), configurationMediator.getConfigurationId()};
+        } else {
+            parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
+                    getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize()};
+        }
         Process p = executeScript(parameters);
         switch (p.exitValue()) {
             case 0:
@@ -157,7 +165,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public void stopSDFS() {
         try {
-            if (!sdfsIsRunnig()){
+            if (!sdfsIsRunnig()) {
                 LOG.info("SDFS is already stopped");
                 return;
             }

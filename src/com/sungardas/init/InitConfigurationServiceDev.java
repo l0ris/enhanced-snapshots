@@ -11,6 +11,7 @@ import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
+import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,6 +172,8 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
             configuration.setClusterMode(true);
             configuration.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
             configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
+            configuration.setChunkStoreEncryptionKey(SDFSStateService.generateChunkStoreEncryptionKey());
+            configuration.setChunkStoreIV(SDFSStateService.generateChunkStoreIV());
         }
         mapper.save(configuration);
 

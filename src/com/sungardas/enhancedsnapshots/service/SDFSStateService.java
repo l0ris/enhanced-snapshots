@@ -6,6 +6,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.List;
+import java.util.UUID;
 
 public interface SDFSStateService {
 
@@ -92,4 +93,13 @@ public interface SDFSStateService {
      * @return
      */
     String getSDFSVolumeId();
+
+
+    static String generateChunkStoreEncryptionKey(){
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    static String generateChunkStoreIV(){
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 14);
+    }
 }

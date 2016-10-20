@@ -32,6 +32,8 @@ public class Configuration {
     private int sdfsSize;
     private String sdfsConfigPath;
     private String sdfsBackupFileName;
+    private String chunkStoreEncryptionKey;
+    private String chunkStoreIV;
 
     // amazon settings
     private String region;
@@ -53,6 +55,7 @@ public class Configuration {
     private boolean clusterMode;
     private int minNodeNumber;
     private int maxNodeNumber;
+
 
     @DynamoDBAttribute
     private String domain;
@@ -327,5 +330,20 @@ public class Configuration {
         this.maxNodeNumber = maxNodeNumber;
     }
 
+    public String getChunkStoreEncryptionKey() {
+        return chunkStoreEncryptionKey;
+    }
+
+    public void setChunkStoreEncryptionKey(String chunkStoreEncryptionKey) {
+        this.chunkStoreEncryptionKey = chunkStoreEncryptionKey;
+    }
+
+    public String getChunkStoreIV() {
+        return chunkStoreIV;
+    }
+
+    public void setChunkStoreIV(String chunkStoreIV) {
+        this.chunkStoreIV = chunkStoreIV;
+    }
 
 }

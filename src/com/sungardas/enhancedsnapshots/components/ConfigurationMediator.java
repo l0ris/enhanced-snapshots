@@ -73,4 +73,9 @@ public interface ConfigurationMediator {
     int getMaxNodeNumberInCluster();
 
     boolean isClusterMode();
+
+    String getChunkStoreEncryptionKey();
+
+    String getChunkStoreIV();
+
 }

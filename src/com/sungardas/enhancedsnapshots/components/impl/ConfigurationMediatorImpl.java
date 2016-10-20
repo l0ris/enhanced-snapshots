@@ -198,4 +198,14 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public boolean isClusterMode() {
         return currentConfiguration.isClusterMode();
     }
+
+    @Override
+    public String getChunkStoreEncryptionKey() {
+        return currentConfiguration.getChunkStoreEncryptionKey();
+    }
+
+    @Override
+    public String getChunkStoreIV() {
+        return currentConfiguration.getChunkStoreIV();
+    }
 }
