@@ -124,6 +124,33 @@ case "$commandName" in
     fi
     ;;
 
+############################# configure sdfs node  ####################################
+--configurenode) echo "Configure SDFS node"
+    sdfs_volume_size="$2"
+    bucket_name="$3"
+    location="${4:-US Standard}"
+    localCacheSize="${5:-1GB}"
+    encryptionKey="$6"
+    storeIV="$7"
+    cliPass="${8:-apassword}"
+    echo 'SDFS volume size: ' $2
+    echo 'Bucket name: ' $3
+    echo 'Location: ' $4
+    echo 'Local cache size: '$5
+    echo 'Encryption Key: '$6
+    echo 'StoreIV: '$7
+    echo 'CLI password: '$8
+
+    ### creating SDFS file system
+    if [[ -e /etc/sdfs/awspool-volume-cfg.xml ]]; then
+        echo 'SDFS node already configured'
+        exit 0
+    else
+        /sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --aws-aim --cloud-bucket-name=$bucket_name --aws-bucket-location=$location --local-cache-size=$localCacheSize --chunk-store-encrypt=true --chunk-store-encryption-key=$encryptionKey --chunk-store-iv=$storeIV --enable-replication-master --sdfscli-password=$cliPass
+        echo 'SDFS node is configured'
+        exit 0
+    fi
+    ;;
 
 ############################# expand volume ####################################
 --expandvolume) echo "Expanding volume"
