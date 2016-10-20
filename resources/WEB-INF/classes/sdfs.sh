@@ -152,6 +152,16 @@ case "$commandName" in
     fi
     ;;
 
+############################# list volumes (you can use regexp pattern for true/false column)  ####################################
+--showvolumes) echo "Volumes"
+    cliPass="${2:-apassword}"
+    # true cause that local volume is listed, false remote, .* all
+    pattern="${3:-true}"
+    echo 'CLI pass: '$2
+    echo "Pattern: $pattern"
+    /sbin/sdfscli --list-cloud-volumes --password=$cliPass | awk 'NR > 3 && $12~/'"$pattern"'/ {print $4}' | grep -v '^$'
+    ;;
+
 ############################# expand volume ####################################
 --expandvolume) echo "Expanding volume"
     sdfs_mount_point="$2"
