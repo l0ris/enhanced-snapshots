@@ -12,6 +12,8 @@ import java.util.List;
 public interface TaskRepository extends CrudRepository<TaskEntry, String> {
     List<TaskEntry> findByStatusAndRegular(String status, String regular);
 
+    List<TaskEntry> findByStatusAndRegularAndWorker(String status, String regular, String worker);
+
     List<TaskEntry> findByStatusNotAndRegular(String status, String regular);
 
     List<TaskEntry> findByRegularAndVolume(String regular, String volumeId);
@@ -25,4 +27,8 @@ public interface TaskRepository extends CrudRepository<TaskEntry, String> {
     List<TaskEntry> findByRegular(String regular);
 
     Long countByRegularAndTypeAndStatus(String regular, String type, String status);
+
+    List<TaskEntry> findByWorker(String worker);
+
+    List<TaskEntry> findByWorkerIsNull();
 }

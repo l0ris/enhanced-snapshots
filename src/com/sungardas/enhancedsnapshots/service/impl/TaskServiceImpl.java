@@ -2,9 +2,11 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.EventEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.cluster.ClusterEventListener;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
@@ -29,7 +31,7 @@ import java.util.stream.Collectors;
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.CANCELED;
 
 @Service
-public class TaskServiceImpl implements TaskService {
+public class TaskServiceImpl implements TaskService, ClusterEventListener {
 
     private static final Logger LOG = LogManager.getLogger(TaskServiceImpl.class);
 
@@ -77,7 +79,9 @@ public class TaskServiceImpl implements TaskService {
                 notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
                 break;
             }
-            taskEntry.setWorker(configurationId);
+            if (configurationMediator.isClusterMode()) {
+                taskEntry.setWorker(configurationId);
+            }
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
             taskEntry.setId(UUID.randomUUID().toString());
 
@@ -257,5 +261,20 @@ public class TaskServiceImpl implements TaskService {
     private void updateCanceledTasks() {
         canceledTasks = taskRepository.findByStatusAndRegular(CANCELED.toString(), Boolean.FALSE.toString())
                 .stream().map(t -> t.getId()).collect(Collectors.toSet());
+    }
+
+    @Override
+    public void launched(EventEntry eventEntry) {
+
+    }
+
+    @Override
+    public void terminated(EventEntry eventEntry) {
+        List<TaskEntry> partiallyFinishedTasks = taskRepository.findByWorker(configurationMediator.getConfigurationId());
+        partiallyFinishedTasks.forEach(t -> {
+            t.setStatus(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.toString());
+            t.setWorker(null);
+        });
+        taskRepository.save(partiallyFinishedTasks);
     }
 }

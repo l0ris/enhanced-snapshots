@@ -15,4 +15,5 @@ public interface ClusterConfigurationService {
      */
     void configureClusterInfrastructure ();
 
+    void updateCloudWatchMetric();
 }

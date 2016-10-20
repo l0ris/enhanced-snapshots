@@ -1,30 +1,37 @@
 package com.sungardas.enhancedsnapshots.cluster;
 
 import com.amazonaws.services.autoscaling.AmazonAutoScaling;
-import com.amazonaws.services.autoscaling.model.*;
+import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import com.amazonaws.services.autoscaling.model.DeletePolicyRequest;
+import com.amazonaws.services.autoscaling.model.PutScalingPolicyRequest;
+import com.amazonaws.services.autoscaling.model.UpdateAutoScalingGroupRequest;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.model.*;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.model.Topic;
 import com.amazonaws.services.sns.util.Topics;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.*;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+import com.sungardas.enhancedsnapshots.service.MasterService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Service("clusterConfigurationServiceImpl")
 @DependsOn("SystemService")
@@ -54,6 +61,8 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     @Autowired
     private ClusterEventPublisher clusterEventPublisher;
     @Autowired
+    private MasterService masterService;
+    @Autowired
     private SDFSStateService sdfsStateService;
     @Value("${enhancedsnapshots.default.backup.threadPool.size}")
     private int backupThreadPoolSize;
@@ -67,6 +76,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
         if (configurationMediator.isClusterMode() && !clusterIsConfigured()) {
             configureClusterInfrastructure();
             nodeRepository.save(getMasterNodeInfo());
+            masterService.init();
         } else if (configurationMediator.isClusterMode()) {
             joinCluster();
         }
@@ -167,6 +177,18 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
         Topics.subscribeQueue(amazonSNS, amazonSQS, getEssTopicArn(), amazonSQS.getQueueUrl(ESS_QUEUE_NAME).getQueueUrl());
 
         LOG.info("Cluster infrastructure successfully configured.");
+    }
+
+    @Override
+    public void updateCloudWatchMetric() {
+        MetricDatum metricDatum = new MetricDatum();
+        metricDatum.setValue(getSystemLoadLevel());
+        metricDatum.setUnit(StandardUnit.Count);
+        metricDatum.setTimestamp(new Date());
+        metricDatum.setMetricName(METRIC_DATA_NAME);
+        cloudWatch.putMetricData(new PutMetricDataRequest()
+                .withNamespace("ESS/Tasks").withMetricData(metricDatum));
+        LOG.info("Custom metric added: {}", metricDatum.toString());
     }
 
     /**

@@ -1,19 +1,9 @@
 package com.sungardas.enhancedsnapshots.components;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import com.amazonaws.AmazonClientException;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
@@ -22,7 +12,7 @@ import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.TaskExecutor;
-
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +21,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.WAITING;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
 
 
 @Service
@@ -69,11 +65,14 @@ public class WorkersDispatcher {
     private TaskRepository taskRepository;
     @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private NodeRepository nodeRepository;
+
 
     private ExecutorService executor;
 
-    private ExecutorService backupExecutor;
-    private ExecutorService restoreExecutor;
+    private ThreadPoolExecutor backupExecutor;
+    private ThreadPoolExecutor restoreExecutor;
 
     @Value("${enhancedsnapshots.default.backup.threadPool.size}")
     private int backupThreadPoolSize;
@@ -86,8 +85,8 @@ public class WorkersDispatcher {
         executor = Executors.newSingleThreadExecutor();
         executor.execute(new TaskWorker());
 
-        backupExecutor = Executors.newFixedThreadPool(backupThreadPoolSize);
-        restoreExecutor = Executors.newFixedThreadPool(restoreThreadPoolSize);
+        backupExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(backupThreadPoolSize);
+        restoreExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(restoreThreadPoolSize);
     }
 
     @PreDestroy
@@ -115,11 +114,17 @@ public class WorkersDispatcher {
                 if (Thread.interrupted()) {
                     throw new EnhancedSnapshotsInterruptedException("Task interrupted");
                 }
+                if (configurationMediator.isClusterMode()) {
+                    NodeEntry nodeEntry = nodeRepository.findOne(SystemUtils.getSystemId());
+                    nodeEntry.setFreeBackupWorkers(backupThreadPoolSize - backupExecutor.getActiveCount());
+                    nodeEntry.setFreeRestoreWorkers(restoreThreadPoolSize - restoreExecutor.getActiveCount());
+                    nodeRepository.save(nodeEntry);
+                }
                 TaskEntry entry = null;
                 try {
                     List<TaskEntry> taskEntries = new ArrayList<>();
-                    taskEntries.addAll(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString()));
-                    taskEntries.addAll(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus(), Boolean.FALSE.toString()));
+                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString(), configurationMediator.getConfigurationId()));
+                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus(), Boolean.FALSE.toString(), configurationMediator.getConfigurationId()));
                     Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskEntries);
                     while (!taskEntrySet.isEmpty()) {
                         entry = taskEntrySet.iterator().next();
