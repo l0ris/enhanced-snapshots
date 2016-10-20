@@ -1,7 +1,7 @@
 ---
 - name: download maven
   get_url: >
-    url=http://apache.ip-connect.vn.ua/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
+    url=http://www-eu.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
     dest=/opt/apache-maven-3.3.9-bin.tar.gz
 
 - name: extract archive
