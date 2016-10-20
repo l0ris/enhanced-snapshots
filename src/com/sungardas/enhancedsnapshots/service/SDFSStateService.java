@@ -91,5 +91,5 @@ public interface SDFSStateService {
      *
      * @return
      */
-    String getSDFSVolumeId();
+    long getSDFSVolumeId();
 }

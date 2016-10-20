@@ -309,9 +309,9 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public String getSDFSVolumeId() {
+    public long getSDFSVolumeId() {
         //TODO: implement
-        return String.valueOf(System.currentTimeMillis());
+        return System.currentTimeMillis();
     }
 
     private BackupEntry getBackupFromFile(File file) {

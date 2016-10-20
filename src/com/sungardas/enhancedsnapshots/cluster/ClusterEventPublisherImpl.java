@@ -22,12 +22,12 @@ public class ClusterEventPublisherImpl implements ClusterEventPublisher {
 
     public void settingsUpdated() {
         long time = System.currentTimeMillis();
-        EventEntry eventEntry = new EventEntry(String.valueOf(time), time, ClusterEvents.SETTINGS_UPDATED.getEvent(), null, null);
+        EventEntry eventEntry = new EventEntry(String.valueOf(time), time, ClusterEvents.SETTINGS_UPDATED.getEvent(), null, 0);
         eventsRepository.save(eventEntry);
         LOG.info("Settings update event was published");
     }
 
-    public void nodeLaunched(String nodeId, String volumeId, String msgId) {
+    public void nodeLaunched(String nodeId, long volumeId, String msgId) {
         long time = System.currentTimeMillis();
         EventEntry eventEntry = new EventEntry(msgId != null ? msgId : String.valueOf(time), time, ClusterEvents.NODE_LAUNCHED.getEvent(), nodeId, volumeId);
         eventsRepository.save(eventEntry);

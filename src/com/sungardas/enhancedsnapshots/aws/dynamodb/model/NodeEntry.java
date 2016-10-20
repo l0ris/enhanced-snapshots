@@ -16,12 +16,12 @@ public class NodeEntry {
     @DynamoDBAttribute
     private int freeBackupWorkers;
     @DynamoDBAttribute
-    private String sdfsVolumeId;
+    private long sdfsVolumeId;
 
     public NodeEntry() {
     }
 
-    public NodeEntry(String nodeId, boolean isMaster, int freeRestoreWorkers, int freeBackupWorkers, String sdfsVolumeId) {
+    public NodeEntry(String nodeId, boolean isMaster, int freeRestoreWorkers, int freeBackupWorkers, long sdfsVolumeId) {
         this.nodeId = nodeId;
         this.isMaster = isMaster;
         this.freeRestoreWorkers = freeRestoreWorkers;
@@ -61,12 +61,11 @@ public class NodeEntry {
         this.freeBackupWorkers = freeBackupWorkers;
     }
 
-    public String getSdfsVolumeId() {
+    public long getSdfsVolumeId() {
         return sdfsVolumeId;
     }
 
-    public void setSdfsVolumeId(String sdfsVolumeId) {
+    public void setSdfsVolumeId(long sdfsVolumeId) {
         this.sdfsVolumeId = sdfsVolumeId;
     }
-
 }

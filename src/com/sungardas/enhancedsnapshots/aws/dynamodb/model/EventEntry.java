@@ -18,7 +18,7 @@ public class EventEntry {
     private String instanceId;
 
     @DynamoDBAttribute
-    private String volumeId;
+    private long volumeId;
 
     @DynamoDBAttribute
     private long time;
@@ -26,7 +26,7 @@ public class EventEntry {
     public EventEntry() {
     }
 
-    public EventEntry(String id, long time, String event, String instanceId, String volumeId) {
+    public EventEntry(String id, long time, String event, String instanceId, long volumeId) {
         this.id = id;
         this.time = time;
         this.event = event;
@@ -65,11 +65,11 @@ public class EventEntry {
         this.instanceId = instanceId;
     }
 
-    public String getVolumeId() {
+    public long getVolumeId() {
         return volumeId;
     }
 
-    public void setVolumeId(String volumeId) {
+    public void setVolumeId(long volumeId) {
         this.volumeId = volumeId;
     }
 
