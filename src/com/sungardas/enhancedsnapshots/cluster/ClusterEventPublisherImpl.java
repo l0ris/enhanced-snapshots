@@ -37,9 +37,11 @@ public class ClusterEventPublisherImpl implements ClusterEventPublisher {
     public void nodeTerminated(String nodeId, String msgId) {
         long time = System.currentTimeMillis();
         NodeEntry terminatedNode = nodeRepository.findOne(nodeId);
-        EventEntry eventEntry = new EventEntry(msgId != null ? msgId : String.valueOf(time), time, ClusterEvents.NODE_TERMINATED.getEvent(), nodeId, terminatedNode.getSdfsVolumeId());
-        eventsRepository.save(eventEntry);
-        nodeRepository.delete(terminatedNode);
-        LOG.info("Node terminated event published");
+        if (terminatedNode != null) {
+            EventEntry eventEntry = new EventEntry(msgId != null ? msgId : String.valueOf(time), time, ClusterEvents.NODE_TERMINATED.getEvent(), nodeId, terminatedNode.getSdfsVolumeId());
+            eventsRepository.save(eventEntry);
+            nodeRepository.delete(terminatedNode);
+            LOG.info("Node terminated event published");
+        }
     }
 }

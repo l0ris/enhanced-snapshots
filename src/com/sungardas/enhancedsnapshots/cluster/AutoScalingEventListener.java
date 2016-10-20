@@ -66,6 +66,7 @@ public class AutoScalingEventListener implements Runnable {
                                 amazonSQS.deleteMessage(new DeleteMessageRequest()
                                         .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
                             }
+                            break;
                         }
                         default: {
                             LOG.warn("New AutoScaling event: {}", message.toString());

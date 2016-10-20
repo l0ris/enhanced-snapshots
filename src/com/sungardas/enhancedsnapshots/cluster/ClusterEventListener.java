@@ -53,6 +53,7 @@ public class ClusterEventListener implements Runnable {
                             NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
                             LOG.info("node launched event: {}", eventEntry.toString());
                             //TODO: update copycat
+                            break;
                         }
                         case NODE_TERMINATED: {
                             NodeEntry terminatedNode = nodeRepository.findOne(eventEntry.getInstanceId());
@@ -66,13 +67,16 @@ public class ClusterEventListener implements Runnable {
                             }
                             //TODO: update copycat
                             LOG.info("Node terminated event: {}", eventEntry.toString());
+                            break;
                         }
                         case SETTINGS_UPDATED: {
                             systemService.refreshSystemConfiguration();
                             LOG.info("System settings synchronized with DB");
+                            break;
                         }
                         default: {
                             LOG.warn("Unknown event type: {}", event);
+                            break;
                         }
                     }
                     if (eventEntry.getTime() > lastCheckTime) {
