@@ -1,11 +1,20 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
-import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+
+@Service("SystemService")
 @DependsOn("CreateAppConfiguration")
+@Profile("dev")
 public class SystemServiceDev extends SystemServiceImpl {
+
+    @PostConstruct
+    private void init() {
+        System.out.println("ololo");
+    }
 
     @Override
     public void backup(final String taskId) {

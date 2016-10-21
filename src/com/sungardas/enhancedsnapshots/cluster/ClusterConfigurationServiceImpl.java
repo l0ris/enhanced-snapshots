@@ -33,7 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-@Service("clusterConfigurationServiceImpl")
+@Service("ClusterConfigurationService")
 @DependsOn("SystemService")
 public class ClusterConfigurationServiceImpl implements ClusterConfigurationService {
 
@@ -77,7 +77,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
             configureClusterInfrastructure();
             nodeRepository.save(getMasterNodeInfo());
             masterService.init();
-        } else if (configurationMediator.isClusterMode()) {
+        } else if (configurationMediator.isClusterMode() && !masterService.getMasterId().equals(SystemUtils.getInstanceId())) {
             joinCluster();
         }
     }

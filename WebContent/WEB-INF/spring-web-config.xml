@@ -27,12 +27,12 @@
     <!--To secure uninstall function and User remove-->
     <security:global-method-security secured-annotations="enabled" jsr250-annotations="enabled"/>
 
-    <beans profile="prod">
-        <bean id = "CreateAppConfiguration" class="com.sungardas.enhancedsnapshots.service.impl.CreateAppConfigurationImpl"/>
-        <bean id="SystemService" class="com.sungardas.enhancedsnapshots.service.impl.SystemServiceImpl"/>
-    </beans>
+    <!--<beans profile="prod">-->
+        <!--<bean id = "CreateAppConfiguration" class="com.sungardas.enhancedsnapshots.service.impl.CreateAppConfigurationImpl"/>-->
+        <!--<bean id="SystemService" class="com.sungardas.enhancedsnapshots.service.impl.SystemServiceImpl" init-method="init"/>-->
+    <!--</beans>-->
 
-    <beans profile="dev">
-      <bean id="SystemService" class="com.sungardas.enhancedsnapshots.service.impl.SystemServiceDev"/>
-    </beans>
+    <!--<beans profile="dev">-->
+      <!--<bean id="SystemService" class="com.sungardas.enhancedsnapshots.service.impl.SystemServiceDev"/>-->
+    <!--</beans>-->
 </beans>

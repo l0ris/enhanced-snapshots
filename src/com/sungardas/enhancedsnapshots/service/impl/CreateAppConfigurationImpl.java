@@ -12,6 +12,8 @@ import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 
 import java.util.ArrayList;
@@ -20,7 +22,8 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 
-
+@Service("CreateAppConfiguration")
+@Profile("prod")
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
 

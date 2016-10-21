@@ -10,7 +10,7 @@ public class NodeEntry {
     @DynamoDBHashKey()
     private String nodeId;
     @DynamoDBAttribute
-    private boolean isMaster;
+    private boolean master;
     @DynamoDBAttribute
     private int freeRestoreWorkers;
     @DynamoDBAttribute
@@ -23,18 +23,18 @@ public class NodeEntry {
 
     public NodeEntry(String nodeId, boolean isMaster, int freeRestoreWorkers, int freeBackupWorkers, long sdfsVolumeId) {
         this.nodeId = nodeId;
-        this.isMaster = isMaster;
+        this.master = isMaster;
         this.freeRestoreWorkers = freeRestoreWorkers;
         this.freeBackupWorkers = freeBackupWorkers;
         this.sdfsVolumeId = sdfsVolumeId;
     }
 
     public boolean isMaster() {
-        return isMaster;
+        return master;
     }
 
     public void setMaster(boolean master) {
-        isMaster = master;
+        master = master;
     }
 
     public String getNodeId() {

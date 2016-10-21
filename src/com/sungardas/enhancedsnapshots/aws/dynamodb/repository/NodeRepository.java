@@ -12,4 +12,5 @@ import java.util.List;
 @EnableScanCount
 public interface NodeRepository extends CrudRepository<NodeEntry, String> {
     List<NodeEntry> findAll();
+    List<NodeEntry> findByMaster(boolean master);
 }

@@ -25,7 +25,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.PropertySource;
+import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.annotation.PostConstruct;
@@ -48,7 +50,9 @@ import java.util.zip.ZipOutputStream;
 /**
  * Implementation for {@link SystemService}
  */
+@Service("SystemService")
 @DependsOn("CreateAppConfiguration")
+@Profile("prod")
 public class SystemServiceImpl implements SystemService {
     private static final Logger LOG = LogManager.getLogger(SystemServiceImpl.class);
 
@@ -91,7 +95,7 @@ public class SystemServiceImpl implements SystemService {
     @Autowired
     private SDFSStateService sdfsStateService;
 
-    @Autowired
+   //@Autowired
     private NotificationService notificationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -106,7 +110,7 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private MailService mailService;
-    @Autowired
+   @Autowired
     private ClusterEventPublisher clusterEventPublisher;
 
 
@@ -328,18 +332,18 @@ public class SystemServiceImpl implements SystemService {
 
     @Override
     public void systemUninstall(boolean removeS3Bucket) {
-        LOG.info("Uninstalling system. S3 bucket will be removed: {}", removeS3Bucket);
-        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
-        applicationContext.getAutowireCapableBeanFactory().destroyBean(WorkersDispatcher.class);
-        new Thread() {
-            @Override
-            public void run() {
-                applicationContext.getEnvironment().getPropertySources().addLast(
-                        new DestroyContextPropertySource(removeS3Bucket));
-                LOG.info("Context refresh started");
-                applicationContext.refresh();
-            }
-        }.start();
+//        LOG.info("Uninstalling system. S3 bucket will be removed: {}", removeS3Bucket);
+//        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
+//        applicationContext.getAutowireCapableBeanFactory().destroyBean(WorkersDispatcher.class);
+//        new Thread() {
+//            @Override
+//            public void run() {
+//                applicationContext.getEnvironment().getPropertySources().addLast(
+//                        new DestroyContextPropertySource(removeS3Bucket));
+//                LOG.info("Context refresh started");
+//                applicationContext.refresh();
+//            }
+//        }.start();
     }
 
     @Override

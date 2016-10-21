@@ -6,11 +6,13 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.MasterService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@DependsOn({"ClusterConfigurationService", "SystemService"})
 public class MasterServiceImpl implements MasterService {
 
     private static final String TASK_DISTRIBUTION_ID = "taskDistribution";
@@ -37,6 +40,10 @@ public class MasterServiceImpl implements MasterService {
 
     @Autowired
     private ClusterConfigurationService clusterConfigurationService;
+
+    @Autowired
+    private AWSCommunicationService awsCommunicationService;
+
 
     @Override
     public void init() {
@@ -65,6 +72,30 @@ public class MasterServiceImpl implements MasterService {
                 }
             }, "*/5 * * * *");
         }
+    }
+
+    @Override
+    public String getMasterId() {
+        List<NodeEntry> nodes = nodeRepository.findByMaster(true);
+        if (nodes.size() > 0) {
+            return nodes.get(0).getNodeId();
+        }
+        return null;
+    }
+
+    @Override
+    public String getNodeHostname(String instanceId) {
+        return awsCommunicationService.getInstance(instanceId).getPrivateDnsName();
+    }
+
+    @Override
+    public String getMasterHostname() {
+        return getNodeHostname(getMasterId());
+    }
+
+    @Override
+    public boolean isClusterMode() {
+        return configurationMediator.isClusterMode();
     }
 
 

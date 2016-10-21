@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@DependsOn({"clusterConfigurationServiceImpl", "SystemService"})
+@DependsOn("ClusterConfigurationService")
 public class AutoScalingEventListener implements Runnable {
 
     private static final Logger LOG = LogManager.getLogger(AutoScalingEventListener.class);
