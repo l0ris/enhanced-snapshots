@@ -270,11 +270,15 @@ public class TaskServiceImpl implements TaskService, ClusterEventListener {
 
     @Override
     public void terminated(EventEntry eventEntry) {
-        List<TaskEntry> partiallyFinishedTasks = taskRepository.findByWorker(configurationMediator.getConfigurationId());
-        partiallyFinishedTasks.forEach(t -> {
-            t.setStatus(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.toString());
-            t.setWorker(null);
-        });
-        taskRepository.save(partiallyFinishedTasks);
+        try {
+            List<TaskEntry> partiallyFinishedTasks = taskRepository.findByWorker(configurationMediator.getConfigurationId());
+            partiallyFinishedTasks.forEach(t -> {
+                t.setStatus(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.toString());
+                t.setWorker(null);
+            });
+            taskRepository.save(partiallyFinishedTasks);
+        } catch (Exception e) {
+            LOG.error(e);
+        }
     }
 }

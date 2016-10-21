@@ -14,7 +14,7 @@ public interface ClusterEventPublisher {
      * @param volumeId SDFS volume id of launched node
      * @param msgId SQS message id, null in case event was not received from SQS
      */
-    void nodeLaunched(String nodeId, String volumeId, String msgId);
+    void nodeLaunched(String nodeId, long volumeId, String msgId);
 
     /**
      * Publish node terminated event
