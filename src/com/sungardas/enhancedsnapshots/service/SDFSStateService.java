@@ -93,7 +93,7 @@ public interface SDFSStateService {
      * @return
      */
 
-    String getSDFSVolumeId();
+    long getSDFSVolumeId();
 
     static String generateChunkStoreEncryptionKey(){
         return UUID.randomUUID().toString().replace("-", "");

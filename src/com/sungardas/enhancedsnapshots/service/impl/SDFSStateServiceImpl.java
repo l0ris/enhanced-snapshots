@@ -8,6 +8,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.SDFSException;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import org.apache.logging.log4j.LogManager;
@@ -42,6 +43,8 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final String CONFIGURE_CMD = "--configure";
     private static final String EXPAND_VOLUME_CMD = "--expandvolume";
     private static final String CLOUD_SYNC_CMD = "--cloudsync";
+    private static final String SHOW_VOLUME_ID_CMD = "sdfs --showvolumes \"{PASSWORD}\"";
+
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
     private int sdfsMountTime;
@@ -318,8 +321,16 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public long getSDFSVolumeId() {
-        //TODO: implement
-        return System.currentTimeMillis();
+        try {
+            String[] parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), SHOW_VOLUME_ID_CMD.replace("{PASSWORD}", configurationMediator.getConfigurationId())};
+            Process p = executeScript(parameters);
+            String line = new BufferedReader(new InputStreamReader(p.getInputStream())).lines().skip(3).findFirst().get();
+
+            return Long.parseLong(line);
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new EnhancedSnapshotsException("Unable to get SDFS volumeId", e);
+        }
     }
 
     private BackupEntry getBackupFromFile(File file) {
