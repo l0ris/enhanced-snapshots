@@ -34,6 +34,12 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         return deferred.promise;
     }];
 
+    var isSSOSaved = ['Storage', function (Storage) {
+        var sso = Storage.get("ssoMode");
+        return !!(sso && sso.ssoMode);
+
+    }];
+
     $stateProvider
         .state('app', {
             abstract: true,
@@ -116,7 +122,8 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         .state('login', {
             url: "/login?err",
             templateUrl: "partials/login.html",
-            controller: "LoginController"
+            controller: "LoginController",
+            params: {showLoader: isSSOSaved}
         })
         .state('registration', {
             url: "/registration",

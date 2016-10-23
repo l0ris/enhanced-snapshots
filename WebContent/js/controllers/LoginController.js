@@ -4,7 +4,7 @@ angular.module('web')
     .controller('LoginController', ['$scope', '$state', '$stateParams', '$stomp', 'Auth', 'System', 'Storage', 'toastr', '$window',
         function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr, $window) {
 
-        //LOGING OUT ---------------------
+        //LOGGING OUT ---------------------
         if ($stateParams.err && $stateParams.err == 'session') {
             toastr.warning('You were logged out. Please re-login', 'Session expired.');
         }
@@ -26,6 +26,10 @@ angular.module('web')
             Auth.logOut();
         }
         //------------------------------------
+
+        // Show loader instead of login page if ssoMode is true ----------
+            $scope.isLoading = $stateParams.showLoader;
+        //---------------------------------------------
 
         $scope.clearErr = function () {
             $scope.error = "";

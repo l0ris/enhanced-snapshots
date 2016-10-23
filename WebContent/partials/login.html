@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" ng-hide="isLoading">
     <div class="row centered-form">
         <div class="col-xs-12 col-sm-8 col-md-5 col-sm-offset-2 col-md-offset-4">
             <div class="panel panel-default">
@@ -49,5 +49,11 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="loading" ng-show="isLoading">
+    <div class="text-center spinner-container">
+        <span class="glyphicon glyphicon-refresh text-muted spin"></span>
     </div>
 </div>
