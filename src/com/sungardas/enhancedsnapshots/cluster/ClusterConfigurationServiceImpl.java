@@ -38,13 +38,13 @@ import java.util.Optional;
 public class ClusterConfigurationServiceImpl implements ClusterConfigurationService {
 
     private static final Logger LOG = LogManager.getLogger(ClusterConfigurationServiceImpl.class);
-    private static final String SCALE_UP_POLICY = "ESS-ScaleUpPolicy-" + SystemUtils.getInstanceId();
-    private static final String SCALE_DOWN_POLICY = "ESS-ScaleDownPolicy-" + SystemUtils.getInstanceId();
-    private static final String METRIC_DATA_NAME = "ESS-Load-Metric-" + SystemUtils.getInstanceId();
-    private static final String ESS_OVERLOAD_ALARM = "ESS-Overload-Alarm-" + SystemUtils.getInstanceId();
-    private static final String ESS_IDLE_ALARM = "ESS-Idle-Alarm-" + SystemUtils.getInstanceId();
-    private static final String ESS_TOPIC_NAME = "ESS-" + SystemUtils.getInstanceId() + "-topic";
-    private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getInstanceId() + "-queue";
+    private static final String SCALE_UP_POLICY = "ESS-ScaleUpPolicy-" + SystemUtils.getSystemId();
+    private static final String SCALE_DOWN_POLICY = "ESS-ScaleDownPolicy-" + SystemUtils.getSystemId();
+    private static final String METRIC_DATA_NAME = "ESS-Load-Metric-" + SystemUtils.getSystemId();
+    private static final String ESS_OVERLOAD_ALARM = "ESS-Overload-Alarm-" + SystemUtils.getSystemId();
+    private static final String ESS_IDLE_ALARM = "ESS-Idle-Alarm-" + SystemUtils.getSystemId();
+    private static final String ESS_TOPIC_NAME = "ESS-" + SystemUtils.getSystemId() + "-topic";
+    private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getSystemId() + "-queue";
 
     @Autowired
     private AmazonSNS amazonSNS;
@@ -58,11 +58,11 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     private NodeRepository nodeRepository;
     @Autowired
     private ConfigurationMediator configurationMediator;
-    @Autowired
+    @Autowired(required = false)
     private ClusterEventPublisher clusterEventPublisher;
-    @Autowired
+    @Autowired(required = false)
     private MasterService masterService;
-    @Autowired
+    @Autowired(required = false)
     private SDFSStateService sdfsStateService;
     @Value("${enhancedsnapshots.default.backup.threadPool.size}")
     private int backupThreadPoolSize;
@@ -83,11 +83,16 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     }
 
     private void joinCluster() {
-        LOG.info("Joining cluster {}", SystemUtils.getSystemId());
-        NodeEntry newNode = new NodeEntry(SystemUtils.getInstanceId(), false,
-                restoreThreadPoolSize, backupThreadPoolSize, sdfsStateService.getSDFSVolumeId());
-        nodeRepository.save(newNode);
-        clusterEventPublisher.nodeLaunched(newNode.getNodeId(), sdfsStateService.getSDFSVolumeId(), null);
+        String instanceId = SystemUtils.getInstanceId();
+        if (nodeRepository.exists(instanceId)) {
+            LOG.warn("Instance {} already present in cluster", instanceId);
+        } else {
+            LOG.info("Joining cluster {}", instanceId);
+            NodeEntry newNode = new NodeEntry(instanceId, false,
+                    restoreThreadPoolSize, backupThreadPoolSize, sdfsStateService.getSDFSVolumeId());
+            nodeRepository.save(newNode);
+            clusterEventPublisher.nodeLaunched(newNode.getNodeId(), sdfsStateService.getSDFSVolumeId(), null);
+        }
     }
 
     protected NodeEntry getMasterNodeInfo() {
