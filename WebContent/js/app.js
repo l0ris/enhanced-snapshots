@@ -42,7 +42,7 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
             resolve: {
                 authenticated: authenticated
             },
-            controller: function ($scope, $rootScope, Storage, toastr) {
+            controller: ['$scope', '$rootScope', 'Storage', 'toastr', function ($scope, $rootScope, Storage, toastr) {
                 $rootScope.$on('$stateChangeSuccess',
                     function(){
                         var notification = Storage.get("notification");
@@ -54,7 +54,7 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
                             Storage.remove("notification");
                         }
                     });
-            }
+            }]
         })
         .state('app.volume', {
             abstract: true,
