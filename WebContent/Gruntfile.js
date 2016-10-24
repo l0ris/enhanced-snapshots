@@ -75,6 +75,47 @@ module.exports = function(grunt) {
                     'stomp-websocket': 'lib/stomp.min.js'
                 }
 
+            },
+            dev: {
+                dest: {
+                    js: 'lib/vendor.min.js',
+                    css: 'lib/vendor.css'
+                },
+                bowerOptions: {
+                    relative: false
+                },
+                mainFiles: {
+                    'jquery': 'dist/jquery.js',
+                    'angular': 'angular.js',
+                    'angular-ui-router': 'release/angular-ui-router.js',
+                    'bootstrap': [
+                        'dist/css/bootstrap.css',
+                        'dist/js/bootstrap.js'
+                    ],
+                    'angular-bootstrap': 'ui-bootstrap-tpls.js',
+                    'angular-smart-table': 'dist/smart-table.js',
+                    'angular-toastr': [
+                        'dist/angular-toastr.min.css',
+                        'dist/angular-toastr.tpls.js'
+                    ],
+                    'jquery-cron': [
+                        'cron/jquery-cron.css',
+                        'cron/jquery-cron-min.js'
+                    ],
+                    'ng-tags-input': [
+                        'ng-tags-input.min.css',
+                        'ng-tags-input.bootstrap.min.css',
+                        'ng-tags-input.js'
+                    ],
+                    'angular-awesome-slider': [
+                        'dist/css/angular-awesome-slider.min.css',
+                        'dist/angular-awesome-slider.js'
+                    ],
+                    'ng-stomp': 'ng-stomp.js',
+                    'sockjs': 'sockjs.js',
+                    'stomp-websocket': 'lib/stomp.js'
+                }
+
             }
         }
     });
@@ -83,6 +124,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-bower-concat');
 
-    grunt.registerTask('default', ['concat', 'uglify', 'bower_concat']);
-    grunt.registerTask('dev', ['concat:dev', 'bower_concat']);
+    grunt.registerTask('prod', ['concat', 'uglify', 'bower_concat:all']);
+    grunt.registerTask('dev', ['concat:dev', 'bower_concat:dev']);
 };
