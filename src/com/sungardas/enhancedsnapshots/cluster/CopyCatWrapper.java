@@ -32,7 +32,7 @@ public class CopyCatWrapper implements ClusterEventListener {
     @Value("${enhancedsnapshots.copycat.persist.path}")
     private String persistPath;
 
-    @Value("enhancedsnapshots.copycat.port")
+    @Value("${enhancedsnapshots.copycat.port}")
     private int port;
 
     private ConcurrentHashMap<String, Server> serverMap = new ConcurrentHashMap<>();
