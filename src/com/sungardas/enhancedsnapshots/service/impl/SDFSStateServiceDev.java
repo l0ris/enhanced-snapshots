@@ -42,4 +42,8 @@ public class SDFSStateServiceDev extends SDFSStateServiceImpl {
         return true;
     }
 
+    @Override
+    public long getSDFSVolumeId() {
+        return 1000000;
+    }
 }
