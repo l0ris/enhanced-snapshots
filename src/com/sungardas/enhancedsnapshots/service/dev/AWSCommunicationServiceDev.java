@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.service.dev;
 
 import com.amazonaws.services.ec2.model.*;
 import com.sungardas.enhancedsnapshots.service.impl.AWSCommunicationServiceImpl;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,9 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("dev")
 public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
+
+    @Value("${enhancedsnapshots.dev.hostname:localhost}")
+    private String hostname;
 
     @Override
     public void createTemporaryTag(final String resourceId, final String description) {
@@ -146,6 +150,10 @@ public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
 
     private Volume getVolume() {
         return new Volume().withSize(100).withVolumeType("gp2").withVolumeId("DEV_VOLUME_ID").withAvailabilityZone("");
+    }
+
+    public String getDNSName(String instanceId) {
+        return hostname;
     }
 
 }

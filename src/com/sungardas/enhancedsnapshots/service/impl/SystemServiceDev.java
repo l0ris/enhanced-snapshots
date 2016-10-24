@@ -11,11 +11,6 @@ import javax.annotation.PostConstruct;
 @Profile("dev")
 public class SystemServiceDev extends SystemServiceImpl {
 
-    @PostConstruct
-    private void init() {
-        System.out.println("ololo");
-    }
-
     @Override
     public void backup(final String taskId) {
 

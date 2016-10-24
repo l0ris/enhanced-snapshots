@@ -87,7 +87,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @PostConstruct
     protected void init() {
         DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
-                withTableNamePrefix(AmazonConfigProviderDEV.getDynamoDbPrefix("DEV"))).build();
+                withTableNamePrefix(AmazonConfigProviderDEV.getDynamoDbPrefix(SystemUtils.getSystemId()))).build();
         mapper = new DynamoDBMapper(amazonDynamoDB, config);
     }
 
@@ -129,7 +129,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     }
 
     protected Configuration getConfiguration(){
-        return mapper.load(Configuration.class, "DEV");
+        return mapper.load(Configuration.class, SystemUtils.getSystemId());
     }
 
     @Override
@@ -178,7 +178,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         mapper.save(configuration);
 
         User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev");
-        user.setId("DEV");
+        user.setId(SystemUtils.getInstanceId());
         mapper.save(user);
     }
 
@@ -188,7 +188,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     private Configuration getDevConf() {
         Configuration configuration = new Configuration();
-        configuration.setConfigurationId("DEV");
+        configuration.setConfigurationId(SystemUtils.getSystemId());
         configuration.setEc2Region(Regions.EU_WEST_1.getName());
         configuration.setSdfsMountPoint("");
         configuration.setSdfsVolumeName("");

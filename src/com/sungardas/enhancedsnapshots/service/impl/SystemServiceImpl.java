@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
@@ -51,7 +52,7 @@ import java.util.zip.ZipOutputStream;
  * Implementation for {@link SystemService}
  */
 @Service("SystemService")
-@DependsOn("CreateAppConfiguration")
+@DependsOn({"CreateAppConfiguration", "ConfigurationMediator"})
 @Profile("prod")
 public class SystemServiceImpl implements SystemService {
     private static final Logger LOG = LogManager.getLogger(SystemServiceImpl.class);
@@ -81,6 +82,7 @@ public class SystemServiceImpl implements SystemService {
     private String samlIdpMetadata;
 
     @Autowired
+    @Qualifier("amazonDynamoDbMapper")
     private IDynamoDBMapper dynamoDBMapper;
 
     @Autowired
@@ -95,7 +97,7 @@ public class SystemServiceImpl implements SystemService {
     @Autowired
     private SDFSStateService sdfsStateService;
 
-   //@Autowired
+    @Autowired
     private NotificationService notificationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -116,7 +118,7 @@ public class SystemServiceImpl implements SystemService {
 
     @PostConstruct
     private void init() {
-        refreshSystemConfiguration();
+        currentConfiguration = configurationMediator.getCurrentConfiguration();
         mailService.reconnect();
     }
 

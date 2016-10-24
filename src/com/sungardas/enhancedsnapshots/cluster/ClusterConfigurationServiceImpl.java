@@ -17,7 +17,6 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
-import com.sungardas.enhancedsnapshots.service.MasterService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service("ClusterConfigurationService")
-@DependsOn("SystemService")
+@DependsOn("ConfigurationMediator")
 public class ClusterConfigurationServiceImpl implements ClusterConfigurationService {
 
     private static final Logger LOG = LogManager.getLogger(ClusterConfigurationServiceImpl.class);
@@ -60,8 +59,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     private ConfigurationMediator configurationMediator;
     @Autowired(required = false)
     private ClusterEventPublisher clusterEventPublisher;
-    @Autowired(required = false)
-    private MasterService masterService;
+
     @Autowired(required = false)
     private SDFSStateService sdfsStateService;
     @Value("${enhancedsnapshots.default.backup.threadPool.size}")
@@ -76,10 +74,17 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
         if (configurationMediator.isClusterMode() && !clusterIsConfigured()) {
             configureClusterInfrastructure();
             nodeRepository.save(getMasterNodeInfo());
-            masterService.init();
-        } else if (configurationMediator.isClusterMode() && !masterService.getMasterId().equals(SystemUtils.getInstanceId())) {
+        } else if (configurationMediator.isClusterMode() && nodeRepository.findOne(SystemUtils.getInstanceId()) == null) {
             joinCluster();
         }
+    }
+
+    private String getMasterId() {
+        List<NodeEntry> nodes = nodeRepository.findByMaster(true);
+        if (nodes.size() > 0) {
+            return nodes.get(0).getNodeId();
+        }
+        return null;
     }
 
     private void joinCluster() {

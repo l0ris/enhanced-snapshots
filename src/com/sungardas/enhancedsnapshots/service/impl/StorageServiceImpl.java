@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Service
-@DependsOn("SystemService")
+@DependsOn("ConfigurationMediator")
 @Profile("prod")
 public class StorageServiceImpl implements StorageService {
 

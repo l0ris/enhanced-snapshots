@@ -22,7 +22,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
 @Service
-@DependsOn("SystemService")
+@DependsOn("ConfigurationMediator")
 public class SpringSchedulerService implements SchedulerService {
 
     private static final Logger LOG = LogManager.getLogger(SpringSchedulerService.class);

@@ -5,6 +5,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
+import com.sungardas.enhancedsnapshots.cluster.WebSocketNotificationsBroker;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.MasterService;
@@ -16,11 +17,12 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@DependsOn({"ClusterConfigurationService", "SystemService"})
+@Service("MasterService")
+@DependsOn({"ClusterConfigurationService"})
 public class MasterServiceImpl implements MasterService {
 
     private static final String TASK_DISTRIBUTION_ID = "taskDistribution";
@@ -28,26 +30,25 @@ public class MasterServiceImpl implements MasterService {
 
     @Autowired
     private ConfigurationMediator configurationMediator;
-
     @Autowired
     private SchedulerService schedulerService;
-
     @Autowired
     private TaskRepository taskRepository;
-
     @Autowired
     private NodeRepository nodeRepository;
-
     @Autowired
     private ClusterConfigurationService clusterConfigurationService;
-
     @Autowired
     private AWSCommunicationService awsCommunicationService;
+    @Autowired
+    private WebSocketNotificationsBroker broker;
 
 
     @Override
+    @PostConstruct
     public void init() {
         if (configurationMediator.isClusterMode() && nodeRepository.findOne(SystemUtils.getInstanceId()).isMaster()) {
+            broker.startBroker();
             schedulerService.addTask(new Task() {
                 @Override
                 public void run() {

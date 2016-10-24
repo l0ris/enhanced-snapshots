@@ -1,30 +1,47 @@
 package com.sungardas.enhancedsnapshots.components.impl;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.MailConfigurationDocument;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 
 import static com.sungardas.enhancedsnapshots.service.SystemService.VOLUME_SIZE_UNIT;
 
+
+
 /**
  * implementation for {@link ConfigurationMediatorConfigurator}
  */
-
-
-@Service
+@Service("ConfigurationMediator")
 public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigurator {
 
+    private static final Logger LOG = LogManager.getLogger(ConfigurationMediatorImpl.class);
+    @Autowired
+    @Qualifier("dbMapperWithoutProxy")
+    private IDynamoDBMapper dbMapper;
     private Configuration currentConfiguration;
 
+
     @PostConstruct
-    private void init() {
-        //Default values for first connection to DB
-        currentConfiguration = new Configuration();
-        currentConfiguration.setAmazonRetryCount(30);
-        currentConfiguration.setAmazonRetrySleep(15);
+    private void init() throws Throwable {
+        for (int i = 0; i < 30; i++) {
+            try {
+                currentConfiguration = dbMapper.load(Configuration.class, SystemUtils.getSystemId());
+                return;
+            } catch (Exception e) {
+                LOG.warn("Failed to get configuration: ", e);
+                Thread.sleep(5000);
+            }
+        }
     }
 
     @Override
@@ -145,6 +162,11 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     @Override
     public void setCurrentConfiguration(final Configuration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
+    }
+
+    @Override
+    public Configuration getCurrentConfiguration() {
+        return currentConfiguration;
     }
 
     @Override

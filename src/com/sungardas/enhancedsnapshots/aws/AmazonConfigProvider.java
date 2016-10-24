@@ -89,7 +89,7 @@ public class AmazonConfigProvider {
         return builder.build();
     }
 
-    @Bean
+    @Bean (name = "amazonDynamoDbMapper")
     public ProxyFactoryBean amazonDynamoDbMapperProxy() {
         ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
 
@@ -106,7 +106,8 @@ public class AmazonConfigProvider {
         return amazonDynamoDB;
     }
 
-    private DynamoDBMapper dynamoDBMapper() {
+    @Bean(name = "dbMapperWithoutProxy")
+    public DynamoDBMapper dynamoDBMapper() {
         return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
     }
 

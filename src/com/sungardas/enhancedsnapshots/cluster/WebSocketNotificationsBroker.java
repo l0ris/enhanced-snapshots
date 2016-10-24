@@ -3,7 +3,6 @@ package com.sungardas.enhancedsnapshots.cluster;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

@@ -33,7 +33,7 @@ import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskE
 
 
 @Service
-@DependsOn("SystemService")
+@DependsOn({"ConfigurationMediator", "MasterService"})
 public class WorkersDispatcher {
 
     private static final Comparator<TaskEntry> taskComparatorByTimeAndPriority = (o1, o2) -> {

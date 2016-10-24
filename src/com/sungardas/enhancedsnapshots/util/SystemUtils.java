@@ -7,6 +7,7 @@ public class SystemUtils {
 
     private static String CLUSTER_ID = System.getenv("CLUSTER_ID");
     private static String STACK_NAME = System.getenv("STACK_NAME");
+    private static String DEV_SYSTEM_ID = "DEV";
 
     public static String getSystemId() {
         if (CLUSTER_ID != null) {
@@ -42,6 +43,6 @@ public class SystemUtils {
         if (EC2MetadataUtils.getInstanceId() != null) {
             return EC2MetadataUtils.getInstanceId();
         }
-        return "DEV";
+        return DEV_SYSTEM_ID;
     }
 }

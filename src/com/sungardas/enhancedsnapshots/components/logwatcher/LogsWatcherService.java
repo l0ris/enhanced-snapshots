@@ -28,7 +28,7 @@ import static java.util.Collections.*;
 
 
 @Service
-@DependsOn("SystemService")
+@DependsOn({"ConfigurationMediator", "MasterService"})
 public class LogsWatcherService implements TailerListener, ApplicationListener<SessionUnsubscribeEvent> {
 
     private static final Logger LOG = LogManager.getLogger(LogsWatcherService.class);

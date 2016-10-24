@@ -355,6 +355,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     }
 
+    @Override
+    public String getDNSName(String instanceId) {
+        return getInstance(instanceId).getPrivateDnsName();
+    }
+
 
     @Override
     public boolean volumeExists(String volumeId) {

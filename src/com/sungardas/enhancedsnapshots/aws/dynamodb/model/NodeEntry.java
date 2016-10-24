@@ -34,7 +34,7 @@ public class NodeEntry {
     }
 
     public void setMaster(boolean master) {
-        master = master;
+        this.master = master;
     }
 
     public String getNodeId() {
