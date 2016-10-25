@@ -139,14 +139,26 @@ angular.module('web')
                     return $scope.settings.mailConfiguration
                 }
             };
+
+            var getClusterNodes = function () {
+
+                if ($scope.settings.clusterMode) {
+                    var clusterNodes;
+
+                    clusterNodes = {
+                        minNodeNumber: $scope.settings.cluster.minNodeNumber,
+                        maxNodeNumber: $scope.settings.cluster.maxNodeNumber
+                    };
+
+                    return clusterNodes
+                }
+                return null
+            };
+
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
-                cluster: {
-                    minNodeNumber: $scope.settings.cluster.minNodeNumber,
-                    maxNodeNumber: $scope.settings.cluster.maxNodeNumber
-                },
-
+                cluster: getClusterNodes(),
                 ssoMode: $scope.isSSO,
                 domain: $scope.settings.domain,
                 spEntityId: $scope.entityId || null,
