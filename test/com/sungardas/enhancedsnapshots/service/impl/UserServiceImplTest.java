@@ -11,6 +11,7 @@ import com.sungardas.enhancedsnapshots.exception.UniqueConstraintViolationExcept
 import com.sungardas.enhancedsnapshots.service.impl.UserServiceImpl;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 
+@Ignore
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceImplTest {
 
