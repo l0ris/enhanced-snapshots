@@ -73,6 +73,6 @@ public class CopyCatWrapper implements ClusterEventListener {
     }
 
     private String getHostName(String nodeId) {
-        return awsCommunicationService.getInstance(nodeId).getPrivateDnsName();
+        return awsCommunicationService.getDNSName(nodeId);
     }
 }

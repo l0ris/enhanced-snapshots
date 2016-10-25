@@ -12,8 +12,6 @@ import java.util.Collection;
 @Controller
 public class LogsController {
 
-    private final static String SUBSCRIBTIONS_MSG = "subscribed";
-
     @Autowired
     private LogsWatcherService logsWatcherService;
 

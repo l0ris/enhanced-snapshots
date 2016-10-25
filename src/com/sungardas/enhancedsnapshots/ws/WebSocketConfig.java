@@ -3,8 +3,11 @@ package com.sungardas.enhancedsnapshots.ws;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
+import org.apache.activemq.broker.BrokerService;
+import org.apache.activemq.broker.jmx.ManagementContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.AbstractWebSocketMessageBrokerConfigurer;
@@ -38,6 +41,15 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
             config.enableSimpleBroker(ERROR_DESTINATION, TASK_PROGRESS_DESTINATION, LOGS_DESTINATION);
         }
     }
+
+    @Bean
+    public BrokerService broker() throws Exception {
+        BrokerService broker = new BrokerService();
+        broker.addConnector("stomp://localhost:" + brokerPort);
+        broker.setPersistent( false );
+        return broker;
+    }
+
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {

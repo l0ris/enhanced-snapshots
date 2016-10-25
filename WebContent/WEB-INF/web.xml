@@ -19,6 +19,7 @@
     <filter>
         <filter-name>springSecurityFilterChain</filter-name>
         <filter-class>com.sungardas.enhancedsnapshots.security.RefreshingDelegatingFilterProxy</filter-class>
+        <async-supported>true</async-supported>
     </filter>
 
     <filter-mapping>

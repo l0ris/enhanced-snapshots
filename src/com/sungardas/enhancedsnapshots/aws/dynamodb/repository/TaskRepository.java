@@ -31,4 +31,10 @@ public interface TaskRepository extends CrudRepository<TaskEntry, String> {
     List<TaskEntry> findByWorker(String worker);
 
     List<TaskEntry> findByWorkerIsNull();
+
+    default void save(List<TaskEntry> tasks) {
+        for (TaskEntry taskEntry : tasks) {
+            this.save(taskEntry);
+        }
+    }
 }

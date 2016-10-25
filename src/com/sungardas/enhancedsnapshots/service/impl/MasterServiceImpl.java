@@ -5,13 +5,15 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
-import com.sungardas.enhancedsnapshots.cluster.WebSocketNotificationsBroker;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.MasterService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
+import org.apache.activemq.broker.BrokerService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.support.CronTrigger;
@@ -25,6 +27,7 @@ import java.util.List;
 @DependsOn({"ClusterConfigurationService"})
 public class MasterServiceImpl implements MasterService {
 
+    private static final Logger LOG = LogManager.getLogger(MasterServiceImpl.class);
     private static final String TASK_DISTRIBUTION_ID = "taskDistribution";
     private static final String METRIC_UPDATE_ID = "metricUpdate";
 
@@ -41,14 +44,14 @@ public class MasterServiceImpl implements MasterService {
     @Autowired
     private AWSCommunicationService awsCommunicationService;
     @Autowired
-    private WebSocketNotificationsBroker broker;
+    private BrokerService broker;
 
 
     @Override
     @PostConstruct
     public void init() {
         if (configurationMediator.isClusterMode() && nodeRepository.findOne(SystemUtils.getInstanceId()).isMaster()) {
-            broker.startBroker();
+            startBroker();
             schedulerService.addTask(new Task() {
                 @Override
                 public void run() {
@@ -72,6 +75,16 @@ public class MasterServiceImpl implements MasterService {
                     clusterConfigurationService.updateCloudWatchMetric();
                 }
             }, "*/5 * * * *");
+        }
+    }
+
+
+    private void startBroker() {
+        try {
+            broker.start();
+            LOG.info("Broker successfully started");
+        } catch (Exception e) {
+            LOG.error("Failed to start broker:", e);
         }
     }
 
