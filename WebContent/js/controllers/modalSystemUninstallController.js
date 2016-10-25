@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalSystemUninstallCtrl', function ($scope, $modalInstance, System) {
+    .controller('modalSystemUninstallCtrl', ['$scope', '$modalInstance', 'System', function ($scope, $modalInstance, System) {
         $scope.state = 'ask';
 
         $scope.deletionOptions = [{
@@ -25,4 +25,4 @@ angular.module('web')
                 $scope.state = "failed";
             });
         }
-    });
+    }]);

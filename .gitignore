@@ -13,7 +13,11 @@ build/
 
 
 # Misc
-WebContent/lib/
+WebContent/lib/*
+WebContent/node_modules/
+!WebContent/lib/vendor.css
+!WebContent/lib/vendor.min.js
+
 .vagrant/
 /bin/
 

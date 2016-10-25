@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalSettingsUpdateCtrl', function ($scope, $modalInstance, System, Tasks, $rootScope) {
+    .controller('modalSettingsUpdateCtrl', ['$scope', '$modalInstance', 'System', 'Tasks', '$rootScope', function ($scope, $modalInstance, System, Tasks, $rootScope) {
         $scope.state = 'ask';
 
         var newSettings = angular.copy($scope.settings);
@@ -41,4 +41,4 @@ angular.module('web')
             }
 
         }
-    });
+    }]);

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('ScheduleController', function ($scope, $rootScope, $stateParams, $filter, Tasks, $modal) {
+    .controller('ScheduleController', ['$scope', '$rootScope', '$stateParams', '$filter', 'Tasks', '$modal', function ($scope, $rootScope, $stateParams, $filter, Tasks, $modal) {
 
         $scope.volumeId = $stateParams.volumeId;
         $scope.schedules = [];
@@ -98,4 +98,4 @@ angular.module('web')
                 });
             });
         };
-    });
+    }]);

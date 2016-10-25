@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalVolumeFilterCtrl', function ($scope, $modalInstance, Regions, Storage, tags, instances) {
+    .controller('modalVolumeFilterCtrl', ['$scope', '$modalInstance', 'Regions', 'Storage', 'tags', 'instances', function ($scope, $modalInstance, Regions, Storage, tags, instances) {
         $scope.tags = tags;
         $scope.instances = instances;
         $scope.globalRegion = {
@@ -78,4 +78,4 @@ angular.module('web')
         }
 
 
-    });
+    }]);

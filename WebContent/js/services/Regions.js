@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .service('Regions', function ($q, $http, BASE_URL) {
+    .service('Regions', ['$q', '$http', 'BASE_URL', function ($q, $http, BASE_URL) {
         var url = BASE_URL + 'rest/regions';
 
         return {
@@ -14,4 +14,4 @@ angular.module('web')
 
             }
         }
-    });
+    }]);
