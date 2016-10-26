@@ -242,7 +242,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     public void configureSystem(ConfigDto config) {
         if (systemIsConfigured()){
             LOG.info("System is already configured");
-            syncSettingsInDbAndConfigFile();
+            if (getPropertyFile().exists()) {
+                syncSettingsInDbAndConfigFile();
+            } else {
+                storePropertiesEditableFromConfigFile();
+            }
             Configuration conf = getConfiguration();
             refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
             return;

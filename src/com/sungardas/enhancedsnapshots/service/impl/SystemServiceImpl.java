@@ -334,18 +334,18 @@ public class SystemServiceImpl implements SystemService {
 
     @Override
     public void systemUninstall(boolean removeS3Bucket) {
-//        LOG.info("Uninstalling system. S3 bucket will be removed: {}", removeS3Bucket);
-//        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
-//        applicationContext.getAutowireCapableBeanFactory().destroyBean(WorkersDispatcher.class);
-//        new Thread() {
-//            @Override
-//            public void run() {
-//                applicationContext.getEnvironment().getPropertySources().addLast(
-//                        new DestroyContextPropertySource(removeS3Bucket));
-//                LOG.info("Context refresh started");
-//                applicationContext.refresh();
-//            }
-//        }.start();
+        LOG.info("Uninstalling system. S3 bucket will be removed: {}", removeS3Bucket);
+        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
+        applicationContext.getAutowireCapableBeanFactory().destroyBean(WorkersDispatcher.class);
+        new Thread() {
+            @Override
+            public void run() {
+                applicationContext.getEnvironment().getPropertySources().addLast(
+                        new DestroyContextPropertySource(removeS3Bucket));
+                LOG.info("Context refresh started");
+                applicationContext.refresh();
+            }
+        }.start();
     }
 
     @Override

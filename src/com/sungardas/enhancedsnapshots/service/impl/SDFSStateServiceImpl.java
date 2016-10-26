@@ -43,7 +43,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final String CONFIGURE_CMD = "--configure";
     private static final String EXPAND_VOLUME_CMD = "--expandvolume";
     private static final String CLOUD_SYNC_CMD = "--cloudsync";
-    private static final String SHOW_VOLUME_ID_CMD = "sdfs --showvolumes \"{PASSWORD}\"";
+    private static final String SHOW_VOLUME_ID_CMD = "--showvolumes";
 
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
@@ -148,10 +148,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private void configureSDFS() throws IOException, InterruptedException {
         String[] parameters;
         if (configurationMediator.isClusterMode()) {
+            LOG.info("Configuring SDFS in cluster mode...");
             parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
                     getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize(), configurationMediator.getChunkStoreEncryptionKey(),
                     configurationMediator.getChunkStoreIV(), configurationMediator.getConfigurationId()};
         } else {
+            LOG.info("Configuring SDFS in standalone mode...");
             parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
                     getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize()};
         }
@@ -322,8 +324,10 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public long getSDFSVolumeId() {
         try {
-            String[] parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), SHOW_VOLUME_ID_CMD.replace("{PASSWORD}", configurationMediator.getConfigurationId())};
-            Process p = executeScript(parameters);
+            String[] parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), SHOW_VOLUME_ID_CMD, configurationMediator.getConfigurationId()};
+            LOG.info("Executing script: {}", Arrays.toString(parameters));
+            Process p = Runtime.getRuntime().exec(parameters);
+            p.waitFor();
             String line = new BufferedReader(new InputStreamReader(p.getInputStream())).lines().skip(3).findFirst().get();
 
             return Long.parseLong(line);
