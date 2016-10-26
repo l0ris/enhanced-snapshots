@@ -566,8 +566,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         if (!SystemUtils.clusterMode()) {
             return getPropertyFile().exists();
         } else {
-            return tableExists(mapper.generateCreateTableRequest(NodeEntry.class).getTableName())
-                    && (mapper.load(NodeEntry.class, SystemUtils.getSystemId()) != null) ? true : false;
+            return tableExists(mapper.generateCreateTableRequest(NodeEntry.class).getTableName());
         }
     }
 

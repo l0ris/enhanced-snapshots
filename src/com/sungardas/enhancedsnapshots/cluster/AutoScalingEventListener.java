@@ -43,7 +43,7 @@ public class AutoScalingEventListener implements Runnable {
     private EventsRepository eventsRepository;
 
 
-    private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getInstanceId() + "-queue";
+    private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getSystemId() + "-queue";
     private boolean receiveMessages = false;
     private ExecutorService executor;
     @Value("${enhancedsnapshots.default.polling.rate}")
