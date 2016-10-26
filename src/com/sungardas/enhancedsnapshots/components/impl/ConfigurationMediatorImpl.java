@@ -1,11 +1,11 @@
 package com.sungardas.enhancedsnapshots.components.impl;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.MailConfigurationDocument;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,13 +33,17 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
 
     @PostConstruct
     private void init() throws Throwable {
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 3; i++) {
             try {
                 currentConfiguration = dbMapper.load(Configuration.class, SystemUtils.getSystemId());
                 return;
+            } catch (ResourceNotFoundException e) {
+                currentConfiguration = new Configuration();
+                currentConfiguration.setAmazonRetryCount(30);
+                currentConfiguration.setAmazonRetrySleep(15000);
             } catch (Exception e) {
                 LOG.warn("Failed to get configuration: ", e);
-                Thread.sleep(5000);
+                Thread.sleep(1000);
             }
         }
     }
