@@ -8,27 +8,21 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.util.EnhancedSnapshotSystemMetadataUtil;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.annotation.PostConstruct;
 
 
 @Service("CreateAppConfiguration")
 @Profile("prod")
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
-
-    @Autowired
-    private SDFSStateService sdfsService;
 
     @Autowired
     private ConfigurationMediator configurationMediator;
@@ -61,11 +55,11 @@ class CreateAppConfigurationImpl {
             LOG.info("Initialization restore");
             if (isBucketContainsSDFSMetadata) {
                 LOG.info("Restoring SDFS state");
-                sdfsService.restoreSDFS();
+                sdfsStateService.restoreSDFS();
                 syncBackupsInDBWithExistingOnes();
             } else {
                 LOG.info("Starting SDFS");
-                sdfsService.startSDFS();
+                sdfsStateService.startSDFS();
             }
             LOG.info("Initialization finished");
         }

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service("ClusterConfigurationService")
-@DependsOn("ConfigurationMediator")
+@DependsOn({"ConfigurationMediator", "CreateAppConfiguration"})
 public class ClusterConfigurationServiceImpl implements ClusterConfigurationService {
 
     private static final Logger LOG = LogManager.getLogger(ClusterConfigurationServiceImpl.class);
