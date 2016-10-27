@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.components.logwatcher;
 
+import com.sungardas.enhancedsnapshots.cluster.ClusterEventPublisher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.commons.io.input.Tailer;
@@ -34,13 +35,14 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
     private static final Logger LOG = LogManager.getLogger(LogsWatcherService.class);
     private static final String LOGS_DESTINATION = "/logs";
     private File logFile;
-
     private Tailer tailer;
 
     @Autowired
     private ConfigurationMediator configurationMediator;
     @Autowired
     private SimpMessagingTemplate template;
+    @Autowired
+    private ClusterEventPublisher clusterEventPublisher;
     @Value("${catalina.home}")
     private String catalinaHome;
 
@@ -110,6 +112,10 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
 
     @Override
     public void onApplicationEvent(SessionUnsubscribeEvent event) {
+
+        if(configurationMediator.isClusterMode()){
+            clusterEventPublisher.logWatcherStopped();
+        }
         stop();
     }
 }

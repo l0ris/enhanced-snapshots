@@ -5,6 +5,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.EventsRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.components.logwatcher.LogsWatcherService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,8 @@ public class ClusterEventService implements Runnable {
     private long lastCheckTime;
     @Autowired
     private ConfigurationMediator configurationMediator;
+    @Autowired
+    private LogsWatcherService logsWatcherService;
 
     @Autowired
     private List<ClusterEventListener> listeners;
@@ -50,7 +53,7 @@ public class ClusterEventService implements Runnable {
             List<EventEntry> events = eventsRepository.findByTimeGreaterThan(lastCheckTime);
             try {
                 for (EventEntry eventEntry : events) {
-                    ClusterEvents event = ClusterEvents.valueOf(eventEntry.getEvent());
+                    ClusterEvents event = eventEntry.getEvent();
                     switch (event) {
                         case NODE_LAUNCHED: {
                             NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
@@ -77,6 +80,16 @@ public class ClusterEventService implements Runnable {
                         case SETTINGS_UPDATED: {
                             systemService.refreshSystemConfiguration();
                             LOG.info("System settings synchronized with DB");
+                            break;
+                        }
+                        case LOGS_WATCHER_STARTED: {
+                            logsWatcherService.start();
+                            LOG.info("Logs watcher service started");
+                            break;
+                        }
+                        case LOGS_WATCHER_STOPPED: {
+                            logsWatcherService.stop();
+                            LOG.info("Logs watcher service stopped");
                             break;
                         }
                         default: {

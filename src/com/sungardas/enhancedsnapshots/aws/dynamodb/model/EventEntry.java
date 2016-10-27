@@ -3,7 +3,11 @@ package com.sungardas.enhancedsnapshots.aws.dynamodb.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.ClusterEventMarshaller;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.TaskProgressMarshaller;
+import com.sungardas.enhancedsnapshots.cluster.ClusterEvents;
 
 @DynamoDBTable(tableName = "Events")
 public class EventEntry {
@@ -12,7 +16,8 @@ public class EventEntry {
     private String id;
 
     @DynamoDBAttribute
-    private String event;
+    @DynamoDBMarshalling(marshallerClass = ClusterEventMarshaller.class)
+    private ClusterEvents event;
     // for node added/removed events
     @DynamoDBAttribute
     private String instanceId;
@@ -26,7 +31,7 @@ public class EventEntry {
     public EventEntry() {
     }
 
-    public EventEntry(String id, long time, String event, String instanceId, long volumeId) {
+    public EventEntry(String id, long time, ClusterEvents event, String instanceId, long volumeId) {
         this.id = id;
         this.time = time;
         this.event = event;
@@ -49,11 +54,11 @@ public class EventEntry {
         this.time = id;
     }
 
-    public String getEvent() {
+    public ClusterEvents getEvent() {
         return event;
     }
 
-    public void setEvent(String event) {
+    public void setEvent(ClusterEvents event) {
         this.event = event;
     }
 

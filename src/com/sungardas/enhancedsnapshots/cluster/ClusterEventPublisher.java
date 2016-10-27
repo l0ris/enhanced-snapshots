@@ -22,4 +22,14 @@ public interface ClusterEventPublisher {
      * @param msgId SQS message id, null in case event was not received from SQS
      */
     void nodeTerminated(String nodeId, String msgId);
+
+    /**
+     * Logs watcher started event
+     */
+    void logWatcherStarted();
+
+    /**
+     * Logs watcher stopped event
+     */
+    void logWatcherStopped();
 }

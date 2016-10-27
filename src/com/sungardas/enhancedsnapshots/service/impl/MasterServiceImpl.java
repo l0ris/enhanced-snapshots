@@ -20,6 +20,7 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +77,11 @@ public class MasterServiceImpl implements MasterService {
                 }
             }, "*/5 * * * *");
         }
+    }
+
+    @PreDestroy
+    private void cleanUp() throws Exception {
+       broker.stop();
     }
 
 
