@@ -42,7 +42,9 @@ public class CopyCatWrapper implements ClusterEventListener {
         if (configurationMediator.isClusterMode()) {
             for (NodeEntry node : nodeRepository.findAll()) {
                 try {
-                    Server server = new Server(node.getSdfsVolumeId(), getHostName(node.getNodeId()), port, configurationMediator.getConfigurationId(), true, true);
+                    String hostName = getHostName(node.getNodeId());
+                    Server server = new Server(node.getSdfsVolumeId(), hostName, port, configurationMediator.getConfigurationId(), true, true);
+                    LOG.info("CopyCat server, volumeId={}, hostName={}, port={} started", node.getSdfsVolumeId(), hostName, port);
                     serverMap.put(node.getNodeId(), server);
                 } catch (Exception e) {
                     LOG.error(e);

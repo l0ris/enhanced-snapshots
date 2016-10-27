@@ -45,6 +45,8 @@ class InitController {
         if (initConfigurationService.systemIsConfigured()) {
             LOG.info("System is already configured.");
             initConfigurationService.configureSystem(null);
+        } else {
+            LOG.info("System is not configured");
         }
     }
 

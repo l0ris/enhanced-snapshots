@@ -80,13 +80,17 @@ public class WorkersDispatcher {
     @Value("${enhancedsnapshots.default.restore.threadPool.size}")
     private int restoreThreadPoolSize;
 
+    private String instanceId;
+
     @PostConstruct
     private void init() {
+        instanceId = SystemUtils.getInstanceId();
+        backupExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(backupThreadPoolSize);
+        restoreExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(restoreThreadPoolSize);
+
         executor = Executors.newSingleThreadExecutor();
         executor.execute(new TaskWorker());
 
-        backupExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(backupThreadPoolSize);
-        restoreExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(restoreThreadPoolSize);
     }
 
     @PreDestroy
@@ -115,7 +119,7 @@ public class WorkersDispatcher {
                     throw new EnhancedSnapshotsInterruptedException("Task interrupted");
                 }
                 if (configurationMediator.isClusterMode()) {
-                    NodeEntry nodeEntry = nodeRepository.findOne(SystemUtils.getSystemId());
+                    NodeEntry nodeEntry = nodeRepository.findOne(instanceId);
                     nodeEntry.setFreeBackupWorkers(backupThreadPoolSize - backupExecutor.getActiveCount());
                     nodeEntry.setFreeRestoreWorkers(restoreThreadPoolSize - restoreExecutor.getActiveCount());
                     nodeRepository.save(nodeEntry);
@@ -123,8 +127,8 @@ public class WorkersDispatcher {
                 TaskEntry entry = null;
                 try {
                     List<TaskEntry> taskEntries = new ArrayList<>();
-                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString(), configurationMediator.getConfigurationId()));
-                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus(), Boolean.FALSE.toString(), configurationMediator.getConfigurationId()));
+                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString(), instanceId));
+                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus(), Boolean.FALSE.toString(), instanceId));
                     Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskEntries);
                     while (!taskEntrySet.isEmpty()) {
                         entry = taskEntrySet.iterator().next();
