@@ -16,4 +16,11 @@ public interface ClusterConfigurationService {
     void configureClusterInfrastructure ();
 
     void updateCloudWatchMetric();
+
+    /**
+     * Updates nodes number in cluster
+     * @param minNodeNumber
+     * @param maxNodeNumber
+     */
+    void updateAutoScalingSettings(int minNodeNumber, int maxNodeNumber);
 }

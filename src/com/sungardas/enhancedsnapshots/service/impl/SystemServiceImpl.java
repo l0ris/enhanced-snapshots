@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
 import com.sungardas.enhancedsnapshots.cluster.ClusterEventPublisher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
@@ -112,8 +113,11 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private MailService mailService;
-   @Autowired
+    @Autowired
     private ClusterEventPublisher clusterEventPublisher;
+
+    @Autowired
+    private ClusterConfigurationService clusterConfigurationService;
 
 
     @PostConstruct
@@ -319,9 +323,12 @@ public class SystemServiceImpl implements SystemService {
 
         // update bucket
         currentConfiguration.setS3Bucket(configuration.getS3().getBucketName());
-        
-        currentConfiguration.setMaxNodeNumber(configuration.getCluster().getMaxNodeNumber());
-        currentConfiguration.setMinNodeNumber(configuration.getCluster().getMinNodeNumber());
+        if (configurationMediator.isClusterMode()) {
+            currentConfiguration.setMaxNodeNumber(configuration.getCluster().getMaxNodeNumber());
+            currentConfiguration.setMinNodeNumber(configuration.getCluster().getMinNodeNumber());
+            clusterConfigurationService.updateAutoScalingSettings(configuration.getCluster().getMinNodeNumber(),
+                    configuration.getCluster().getMaxNodeNumber());
+        }
 
         configurationRepository.save(currentConfiguration);
 

@@ -113,7 +113,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
                 .withAutoScalingGroupName(getAutoScalingGroup().getAutoScalingGroupName())
                 .withMaxSize(configurationMediator.getMaxNodeNumberInCluster())
                 .withMinSize(configurationMediator.getMinNodeNumberInCluster())
-                .withDesiredCapacity(configurationMediator.getMaxNodeNumberInCluster()));
+                .withDesiredCapacity(configurationMediator.getMinNodeNumberInCluster()));
         LOG.info("AutoScalingGroup {} updated: {}", autoScalingGroup.getAutoScalingGroupName(), autoScalingGroup.toString());
 
         // we create this infrustructure from JAVA since currently we can not get arn when we create policy from CFT
@@ -199,6 +199,16 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
         cloudWatch.putMetricData(new PutMetricDataRequest()
                 .withNamespace("ESS/Tasks").withMetricData(metricDatum));
         LOG.info("Custom metric added: {}", metricDatum.toString());
+    }
+
+    @Override
+    public void updateAutoScalingSettings(int minNodeNumber, int maxNodeNumber) {
+        autoScaling.updateAutoScalingGroup(new UpdateAutoScalingGroupRequest()
+                .withAutoScalingGroupName(getAutoScalingGroup().getAutoScalingGroupName())
+                .withMaxSize(maxNodeNumber)
+                .withMinSize(minNodeNumber)
+                .withDesiredCapacity(minNodeNumber));
+
     }
 
     /**

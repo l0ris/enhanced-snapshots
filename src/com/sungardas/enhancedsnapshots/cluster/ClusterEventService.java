@@ -84,12 +84,10 @@ public class ClusterEventService implements Runnable {
                         }
                         case LOGS_WATCHER_STARTED: {
                             logsWatcherService.start();
-                            LOG.info("Logs watcher service started");
                             break;
                         }
                         case LOGS_WATCHER_STOPPED: {
                             logsWatcherService.stop();
-                            LOG.info("Logs watcher service stopped");
                             break;
                         }
                         default: {

@@ -2,7 +2,7 @@
 <Configuration status="info">
   <Appenders>
     <Console target="SYSTEM_OUT" name="console">
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1} - %msg%n"/>
+      <PatternLayout pattern="${hostName} [%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%t] %c{1} - %msg%n"/>
     </Console>
     <RollingFile name="RollingFile" fileName="${sys:catalina.home}/logs/enhancedsnapshots.log"
                  filePattern="${sys:catalina.home}/logs/$${date:yyyy-MM}/enhancedsnapshots-%d{MM-dd-yyyy}-%i.log.gz">
