@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.model.*;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public String getCurrentAvailabilityZone() {
-        return getInstance(configurationMediator.getConfigurationId()).getPlacement()
+        return getInstance(SystemUtils.getInstanceId()).getPlacement()
                 .getAvailabilityZone();    }
 
     @Override
@@ -84,7 +85,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
 
     private Volume createVolume(int size, int iiops, VolumeType type) {
-        String availabilityZone = getInstance(configurationMediator.getConfigurationId()).getPlacement()
+        String availabilityZone = getInstance(SystemUtils.getInstanceId()).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
