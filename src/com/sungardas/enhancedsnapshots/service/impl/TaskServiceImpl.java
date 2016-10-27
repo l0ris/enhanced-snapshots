@@ -79,7 +79,7 @@ public class TaskServiceImpl implements TaskService, ClusterEventListener {
                 notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
                 break;
             }
-            if (configurationMediator.isClusterMode()) {
+            if (!configurationMediator.isClusterMode()) {
                 taskEntry.setWorker(configurationId);
             }
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());

@@ -16,6 +16,7 @@ import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -254,7 +255,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
     private Volume attachingVolumeStep(TaskEntry taskEntry, Volume tempVolume) {
         checkThreadInterruption(taskEntry);
         setProgress(taskEntry, TaskProgress.ATTACHING_VOLUME);
-        awsCommunication.attachVolume(awsCommunication.getInstance(configurationMediator.getConfigurationId()), tempVolume);
+        awsCommunication.attachVolume(awsCommunication.getInstance(SystemUtils.getInstanceId()), tempVolume);
 
         tempVolume = awsCommunication.syncVolume(tempVolume);
 

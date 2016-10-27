@@ -14,6 +14,7 @@ import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,8 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
 
     @Autowired
     private MailService mailService;
+
+    private String instanceId = SystemUtils.getInstanceId();
 
 
     @Override
@@ -247,10 +250,10 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         // create volume
         checkThreadInterruption(taskEntry);
         setProgress(taskEntry, TaskProgress.CREATING_TEMP_VOLUME);
-        Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
+        Instance instance = awsCommunication.getInstance(instanceId);
         if (instance == null) {
-            LOG.error("Can't get access to {} instance" + configurationMediator.getConfigurationId());
-            throw new AWSBackupVolumeException(MessageFormat.format("Can't get access to {} instance", configurationMediator.getConfigurationId()));
+            LOG.error("Can't get access to {} instance" + instanceId);
+            throw new AWSBackupVolumeException(MessageFormat.format("Can't get access to {} instance", instanceId));
         }
         String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
         Volume tempVolume = awsCommunication.createVolumeFromSnapshot(taskEntry.getTempSnapshotId(), instanceAvailabilityZone,
@@ -274,7 +277,7 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         checkThreadInterruption(taskEntry);
         setProgress(taskEntry, TaskProgress.ATTACHING_VOLUME);
         // mount volume
-        awsCommunication.attachVolume(awsCommunication.getInstance(configurationMediator.getConfigurationId()), tempVolume);
+        awsCommunication.attachVolume(awsCommunication.getInstance(instanceId), tempVolume);
 
         tempVolume = awsCommunication.syncVolume(tempVolume);
 
@@ -331,7 +334,7 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         LOG.info(format("Backup process for volume %s finished successfully ", taskEntry.getVolume()));
         LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
         LOG.info("Cleaning up previously created snapshots");
-        LOG.info("Storing snapshot data: [{},{},{}]", taskEntry.getVolume(), taskEntry.getTempSnapshotId(), configurationMediator.getConfigurationId());
+        LOG.info("Storing snapshot data: [{},{},{}]", taskEntry.getVolume(), taskEntry.getTempSnapshotId(), instanceId);
     }
 
     private void detachingTempVolumeStep(TaskEntry taskEntry, Volume tempVolume) {

@@ -41,6 +41,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final String UNMOUNT_CMD = "--unmount";
     private static final String GET_SATE_CMD = "--state";
     private static final String CONFIGURE_CMD = "--configure";
+    private static final String CONFIGURE_CLUSTER_CMD = "--configurenode";
     private static final String EXPAND_VOLUME_CMD = "--expandvolume";
     private static final String CLOUD_SYNC_CMD = "--cloudsync";
     private static final String SHOW_VOLUME_ID_CMD = "--showvolumes";
@@ -149,7 +150,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         String[] parameters;
         if (configurationMediator.isClusterMode()) {
             LOG.info("Configuring SDFS in cluster mode...");
-            parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
+            parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CLUSTER_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
                     getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize(), configurationMediator.getChunkStoreEncryptionKey(),
                     configurationMediator.getChunkStoreIV(), configurationMediator.getConfigurationId()};
         } else {
