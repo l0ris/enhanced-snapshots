@@ -3,8 +3,10 @@ package com.sungardas.enhancedsnapshots.service;
 import com.sun.management.OperatingSystemMXBean;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.UUID;
 
@@ -96,11 +98,12 @@ public interface SDFSStateService {
     long getSDFSVolumeId();
 
     static String generateChunkStoreEncryptionKey(){
-        return UUID.randomUUID().toString().replace("-", "");
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 14);
     }
 
     static String generateChunkStoreIV(){
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 14);
+        SecureRandom secureRandom = new SecureRandom();
+        return DatatypeConverter.printHexBinary(secureRandom.generateSeed(16));
     }
 
 }
