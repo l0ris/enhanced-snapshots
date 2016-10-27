@@ -126,10 +126,7 @@ public class WorkersDispatcher {
                 }
                 TaskEntry entry = null;
                 try {
-                    List<TaskEntry> taskEntries = new ArrayList<>();
-                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString(), instanceId));
-                    taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus(), Boolean.FALSE.toString(), instanceId));
-                    Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskEntries);
+                    Set<TaskEntry> taskEntrySet = getAssignedTasks();
                     while (!taskEntrySet.isEmpty()) {
                         entry = taskEntrySet.iterator().next();
 
@@ -184,7 +181,7 @@ public class WorkersDispatcher {
                             //skip if task canceled
                             LOGtw.debug("Task canceled: {}", entry);
                         }
-                        taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString()));
+                        taskEntrySet = getAssignedTasks();
                     }
                     sleep();
                 } catch (AmazonClientException e) {
@@ -203,6 +200,13 @@ public class WorkersDispatcher {
                     }
                 }
             }
+        }
+
+        private Set<TaskEntry> getAssignedTasks() {
+            List<TaskEntry> taskEntries = new ArrayList<>();
+            taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString(), instanceId));
+            taskEntries.addAll(taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus(), Boolean.FALSE.toString(), instanceId));
+            return sortByTimeAndPriority(taskEntries);
         }
 
         private void sleep() {

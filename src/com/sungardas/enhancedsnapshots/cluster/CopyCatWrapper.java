@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -45,6 +46,7 @@ public class CopyCatWrapper implements ClusterEventListener {
                 try {
                     String hostName = getHostName(node.getNodeId());
                     LOG.info("CopyCat server, volumeId={}, hostName={}, port={} started", node.getSdfsVolumeId(), hostName, port);
+                    deleteCopyCatTempData(node.getSdfsVolumeId());
                     Server server = new Server(node.getSdfsVolumeId(), hostName, port, configurationMediator.getConfigurationId(), true, true);
                     serverMap.put(node.getNodeId(), server);
                 } catch (Exception e) {
@@ -55,13 +57,24 @@ public class CopyCatWrapper implements ClusterEventListener {
 
     }
 
+    private void deleteCopyCatTempData(long volumeId) {
+        try {
+            new File(Server.PERSISTENCE_PATH + File.separator + volumeId + ".db").delete();
+        } catch (Exception e) {
+            //skip
+        }
+    }
+
     @Override
     public void launched(EventEntry eventEntry) {
         try {
-            Server server = new Server(eventEntry.getVolumeId(), getHostName(eventEntry.getInstanceId()), port, configurationMediator.getConfigurationId(), true, true);
+            String hostName = getHostName(eventEntry.getInstanceId());
+            deleteCopyCatTempData(eventEntry.getVolumeId());
+            LOG.info("CopyCat server, volumeId={}, hostName={}, port={} started", eventEntry.getVolumeId(), hostName, port);
+            Server server = new Server(eventEntry.getVolumeId(), hostName, port, configurationMediator.getConfigurationId(), true, true);
             serverMap.put(eventEntry.getInstanceId(), server);
         } catch (Exception e) {
-            LOG.error(e);
+            LOG.error("CopyCat server start failed", e);
         }
     }
 
@@ -70,8 +83,9 @@ public class CopyCatWrapper implements ClusterEventListener {
     public void terminated(EventEntry eventEntry) {
         try {
             serverMap.remove(eventEntry.getInstanceId()).close();
+            deleteCopyCatTempData(eventEntry.getVolumeId());
         } catch (Exception e) {
-            LOG.error(e);
+            LOG.error("CopyCat server stop failed", e);
         }
     }
 
