@@ -5,6 +5,7 @@ public class SystemConfiguration {
     private S3 s3;
     private SDFS sdfs;
     private Long lastBackup;
+    private String systemId;
     private EC2Instance ec2Instance;
     private SystemProperties systemProperties;
     private String currentVersion;
@@ -72,6 +73,13 @@ public class SystemConfiguration {
         this.s3 = s3;
     }
 
+    public String getSystemId() {
+        return systemId;
+    }
+
+    public void setSystemId(String systemId) {
+        this.systemId = systemId;
+    }
 
     public Long getLastBackup() {
         return lastBackup;
@@ -205,14 +213,14 @@ public class SystemConfiguration {
     }
 
     public static class EC2Instance {
-        private String instanceID;
+        private String[] instanceIDs;
 
-        public String getInstanceID() {
-            return instanceID;
+        public String[] getInstanceIDs() {
+            return instanceIDs;
         }
 
-        public void setInstanceID(String instanceID) {
-            this.instanceID = instanceID;
+        public void setInstanceIDs(String[] instanceID) {
+            this.instanceIDs = instanceID;
         }
     }
 

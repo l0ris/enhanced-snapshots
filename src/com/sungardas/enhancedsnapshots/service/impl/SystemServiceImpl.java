@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
 import com.sungardas.enhancedsnapshots.cluster.ClusterEventPublisher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
@@ -41,10 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -91,6 +89,8 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private ConfigurationRepository configurationRepository;
+    @Autowired
+    private NodeRepository nodeRepository;
 
     @Autowired
     private ConfigurationMediatorConfigurator configurationMediator;
@@ -242,6 +242,7 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public SystemConfiguration getSystemConfiguration() {
         SystemConfiguration configuration = new SystemConfiguration();
+        configuration.setSystemId(configurationMediator.getConfigurationId());
 
         configuration.setS3(new SystemConfiguration.S3());
         configuration.getS3().setBucketName(configurationMediator.getS3Bucket());
@@ -259,7 +260,7 @@ public class SystemServiceImpl implements SystemService {
         configuration.getSdfs().setMinSdfsLocalCacheSize(configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
 
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
-        configuration.getEc2Instance().setInstanceID(getSystemId());
+        configuration.getEc2Instance().setInstanceIDs(getInstanceIDs());
 
         configuration.setLastBackup(getBackupTime());
         configuration.setCurrentVersion(CURRENT_VERSION);
@@ -287,6 +288,12 @@ public class SystemServiceImpl implements SystemService {
         configuration.setCluster(clusterDto);
         configuration.setClusterMode(SystemUtils.clusterMode());
         return configuration;
+    }
+
+    private String[] getInstanceIDs() {
+        List<String> ids = new ArrayList<>();
+        nodeRepository.findAll().stream().forEach(node -> ids.add(node.getNodeId()));
+        return ids.toArray(new String[ids.size()]);
     }
 
     @Override
