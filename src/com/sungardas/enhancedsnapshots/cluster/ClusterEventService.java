@@ -6,7 +6,9 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.EventsRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.components.logwatcher.LogsWatcherService;
+import com.sungardas.enhancedsnapshots.service.MasterService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
+import com.sungardas.enhancedsnapshots.service.impl.MasterServiceImpl;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +45,8 @@ public class ClusterEventService implements Runnable {
     private ConfigurationMediator configurationMediator;
     @Autowired
     private LogsWatcherService logsWatcherService;
+    @Autowired
+    private MasterService masterService;
 
     @Autowired
     private List<ClusterEventListener> listeners;
@@ -72,6 +76,7 @@ public class ClusterEventService implements Runnable {
                                     .findFirst().get().getNodeId().toLowerCase().equals(SystemUtils.getInstanceId().toLowerCase())) {
                                 NodeEntry currentNode = nodeRepository.findOne(SystemUtils.getInstanceId());
                                 currentNode.setMaster(true);
+                                masterService.init();
                                 nodeRepository.save(currentNode);
                             }
                             LOG.info("Node terminated event: {}", eventEntry.toString());
