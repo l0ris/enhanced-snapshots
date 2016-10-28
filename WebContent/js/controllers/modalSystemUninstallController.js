@@ -14,7 +14,7 @@ angular.module('web')
 
         $scope.delete = function () {
             var deletionData = {
-                instanceId: $scope.instanceId,
+                instanceId: $scope.systemId,
                 removeS3Bucket: $scope.removeS3Bucket.value
             };
 

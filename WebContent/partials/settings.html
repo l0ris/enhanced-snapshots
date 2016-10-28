@@ -39,17 +39,14 @@
             <div class="flex-5 card-content flex-center">
 
                 <div class="full-width">
-                    <h3>EC2 Instance</h3>
-                    <div class="col-sm-12 form-group">
-                        <div class="col-sm-5 text-right">Instance ID:</div>
+                    <h3>AWS Resources</h3>
+                    <div class="col-sm-12">
+                        <div class="col-sm-5 text-right">EC2 Instance IDs:</div>
                         <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceID || 'unknown'}}</div>
                     </div>
-                </div>
 
-                <div class="full-width">
-                    <h3>S3</h3>
                     <div class="col-sm-12 form-group">
-                        <div class="col-sm-5 text-right">Bucket:</div>
+                        <div class="col-sm-5 text-right">S3 Bucket:</div>
                         <div class="col-sm-7 text-left">{{settings.s3.bucketName || 'unknown'}}</div>
                     </div>
                 </div>
@@ -243,8 +240,8 @@
                                 <input class="settings form-control"
                                        type="number"
                                        min="1"
-                                       max="{{settings.systemProperties.cluster.maxNodeNumber}}"
-                                       ng-model="settings.systemProperties.cluster.minNodeNumber"
+                                       max="{{settings.cluster.maxNodeNumber}}"
+                                       ng-model="settings.cluster.minNodeNumber"
                                        name="minNodeNumber"
                                        ng-required="settings.clusterMode">
                             </div>
@@ -255,8 +252,8 @@
                             <div class="col-sm-2 text-left">
                                 <input class="settings form-control"
                                        type="number"
-                                       min="{{settings.systemProperties.cluster.minNodeNumber}}"
-                                       ng-model="settings.systemProperties.cluster.maxNodeNumber"
+                                       min="{{settings.cluster.minNodeNumber}}"
+                                       ng-model="settings.cluster.maxNodeNumber"
                                        name="maxNodeNumber"
                                        ng-required="settings.clusterMode">
                             </div>
