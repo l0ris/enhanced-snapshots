@@ -99,7 +99,9 @@ public class BackupServiceImpl implements BackupService {
         taskEntry.setSchedulerName(user);
         taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
         taskEntry.setPriority(1);
-        taskEntry.setWorker(configurationMediator.getConfigurationId());
+        if (!configurationMediator.isClusterMode()) {
+            taskEntry.setWorker(configurationMediator.getConfigurationId());
+        }
 
         //TODO Remove hardcode
         taskEntry.setSchedulerManual(schedulerManual);
