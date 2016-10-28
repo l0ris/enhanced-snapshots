@@ -136,6 +136,12 @@ class InitController {
         return new ResponseEntity(initConfigurationService.containsMetadata(bucketName), HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/user/currentUser", method = RequestMethod.GET)
+    public ResponseEntity getCurrentUser() {
+        return new ResponseEntity<>("{ \"role\":\"configurator"
+                + "\", \"email\":\"admin@enhancedsnapshots\" }", HttpStatus.OK);
+    }
+
     private InitConfigurationDto getInitConfigurationDTO() {
         if (configurationDto == null) {
             configurationDto = initConfigurationService.getInitConfigurationDto();
