@@ -38,11 +38,18 @@
         <div class="flex-container">
             <div class="flex-5 card-content flex-center">
 
+                <div class="full-width form-group">
+                    <div class="col-sm-12">
+                        <div class="col-sm-5 text-right">System ID</div>
+                        <div class="col-sm-7 text-left">{{settings.systemId || 'unknown'}}</div>
+                    </div>
+                </div>
+
                 <div class="full-width">
                     <h3>AWS Resources</h3>
                     <div class="col-sm-12">
                         <div class="col-sm-5 text-right">EC2 Instance IDs:</div>
-                        <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceID || 'unknown'}}</div>
+                        <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceIDs || 'unknown'}}</div>
                     </div>
 
                     <div class="col-sm-12 form-group">
@@ -245,6 +252,7 @@
                                        name="minNodeNumber"
                                        ng-required="settings.clusterMode">
                             </div>
+                            <div class="col-sm-12 text-danger small" ng-show="otherSettings.minNodeNumber.$error.min"> Should be greater than 0 </div>
                         </div>
 
                         <div class="col-sm-12 form-group" ng-show="settings.clusterMode">

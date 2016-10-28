@@ -37,7 +37,7 @@ angular.module('web')
         var loader = progressLoader();
         System.get().then(function (data) {
             $scope.settings = data;
-
+            $scope.settings.ec2Instance.instanceIDs =  $scope.settings.ec2Instance.instanceIDs.join(", ");
             if (!$scope.settings.mailConfiguration) {
                 $scope.emails = [];
                 $scope.settings.mailConfiguration = {

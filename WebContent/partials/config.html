@@ -150,29 +150,30 @@
                                             <span class="chb-text">Enable Sinle Sign On</span>
                                         </label>
                                     </div>
-                                </div>
 
-                                <div ng-if="isSSO" class="SSO">
-                                    <form name="sso">
-                                        <p><strong>SAML2 Web SSO Configuration:</strong></p>
 
-                                        <p class="text-muted">1. Upload identity provider metadata</p>
-                                        <input type="file" uploaded-file="settings.sso.idMetadata" name="idMetadata"
-                                               accept=".xml" ng-required="isSSO">
+                                    <div ng-if="isSSO" class="SSO">
+                                        <form name="sso">
+                                            <p><strong>SAML2 Web SSO Configuration:</strong></p>
 
-                                        <p class="text-muted">2. Upload X.509 certificate with private key in PEM
-                                            format</p>
-                                        <input type="file" uploaded-file="settings.sso.x509certificate" name="file"
-                                               accept=".pem" ng-required="isSSO">
+                                            <p class="text-muted">1. Upload identity provider metadata</p>
+                                            <input type="file" uploaded-file="settings.sso.idMetadata" name="idMetadata"
+                                                   accept=".xml" ng-required="isSSO">
 
-                                        <p class="text-muted">3. Entity ID</p>
-                                        <input type="text" class="form-control" ng-model="$parent.entityId"
-                                               name="entityId" ng-required="isSSO">
+                                            <p class="text-muted">2. Upload X.509 certificate with private key in PEM
+                                                format</p>
+                                            <input type="file" uploaded-file="settings.sso.x509certificate" name="file"
+                                                   accept=".pem" ng-required="isSSO">
 
-                                        <p class="text-muted">4. Administrator E-mail</p>
-                                        <input type="email" class="form-control" ng-model="$parent.adminEmail"
-                                               name="adminEmail" ng-required="isSSO">
-                                    </form>
+                                            <p class="text-muted">3. Entity ID</p>
+                                            <input type="text" class="form-control" ng-model="$parent.entityId"
+                                                   name="entityId" ng-required="isSSO">
+
+                                            <p class="text-muted">4. Administrator E-mail</p>
+                                            <input type="email" class="form-control" ng-model="$parent.adminEmail"
+                                                   name="adminEmail" ng-required="isSSO">
+                                        </form>
+                                    </div>
                                 </div>
 
                                 <div class="flex-1 flex-center">
