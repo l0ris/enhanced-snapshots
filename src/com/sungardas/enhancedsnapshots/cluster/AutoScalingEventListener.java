@@ -76,7 +76,7 @@ public class AutoScalingEventListener implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                LOG.error(e);
+                LOG.error("Unable to process AutoScaling event", e);
             }
             sleep();
         }
@@ -118,7 +118,8 @@ public class AutoScalingEventListener implements Runnable {
     public enum AutoScalingEvents {
 
         EC2_INSTANCE_LAUNCH("autoscaling:EC2_INSTANCE_LAUNCH"), EC2_INSTANCE_LAUNCH_ERROR("autoscaling:EC2_INSTANCE_LAUNCH_ERROR"),
-        EC2_INSTANCE_TERMINATE("autoscaling:EC2_INSTANCE_TERMINATE"), EC2_INSTANCE_TERMINATE_ERROR("autoscaling:EC2_INSTANCE_TERMINATE_ERROR");
+        EC2_INSTANCE_TERMINATE("autoscaling:EC2_INSTANCE_TERMINATE"), EC2_INSTANCE_TERMINATE_ERROR("autoscaling:EC2_INSTANCE_TERMINATE_ERROR"),
+        UNKNOWN("unknown");
 
         public String getAutoScalingEvent() {
             return autoScalingEvent;
@@ -138,7 +139,7 @@ public class AutoScalingEventListener implements Runnable {
                     }
                 }
             }
-            return null;
+            return UNKNOWN;
         }
     }
 

@@ -68,4 +68,15 @@ public class NodeEntry {
     public void setSdfsVolumeId(long sdfsVolumeId) {
         this.sdfsVolumeId = sdfsVolumeId;
     }
+
+    @Override
+    public String toString() {
+        return "NodeEntry{" +
+                "nodeId='" + nodeId + '\'' +
+                ", master=" + master +
+                ", freeRestoreWorkers=" + freeRestoreWorkers +
+                ", freeBackupWorkers=" + freeBackupWorkers +
+                ", sdfsVolumeId=" + sdfsVolumeId +
+                '}';
+    }
 }

@@ -13,6 +13,7 @@ public class SystemConfiguration {
     private String domain;
     private MailConfigurationDto mailConfiguration;
     private Cluster cluster;
+    private boolean clusterMode;
 
 
     public Cluster getCluster() {
@@ -94,6 +95,14 @@ public class SystemConfiguration {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public boolean isClusterMode() {
+        return clusterMode;
+    }
+
+    public void setClusterMode(boolean clusterMode) {
+        this.clusterMode = clusterMode;
     }
 
     public MailConfigurationDto getMailConfiguration() {

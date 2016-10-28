@@ -18,6 +18,7 @@ import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeStrategyTaskExecutor;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,15 @@ public class TaskServiceImpl implements TaskService, ClusterEventListener {
 
     @PostConstruct
     private void init() {
+        List<TaskEntry> partiallyFinished = taskRepository.findByStatusAndRegularAndWorker(TaskEntry.TaskEntryStatus.RUNNING.getStatus(), Boolean.FALSE.toString(), SystemUtils.getInstanceId());
+        partiallyFinished.forEach(t -> t.setStatus(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.getStatus()));
+
+        // method save(Iterable<S> var1) in spring-data-dynamodb 4.4.1 does not work correctly, that's why we have to save every taskEntry separately
+        // this should be changed once save(Iterable<S> var1) in spring-data-dynamodb is fixed
+        for(TaskEntry taskEntry: partiallyFinished){
+            taskRepository.save(taskEntry);
+        }
+
         schedulerService.addTask(new Task() {
             @Override
             public String getId() {

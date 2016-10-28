@@ -58,21 +58,22 @@ public class ClusterEventService implements Runnable {
                         case NODE_LAUNCHED: {
                             NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
                             LOG.info("node launched event: {}", eventEntry.toString());
-                            //TODO: update copycat
                             listeners.forEach(l -> l.launched(eventEntry));
                             break;
                         }
                         case NODE_TERMINATED: {
-                            NodeEntry terminatedNode = nodeRepository.findOne(eventEntry.getInstanceId());
+                            List<NodeEntry> masters = nodeRepository.findByMaster(true);
+                            if(masters.size() > 1) {
+                                LOG.warn("System has more than one master[{}]", masters);
+                            }
                             // check whether terminated node was master one and current node should become a new master
-                            if (terminatedNode.isMaster() && StreamSupport.stream(nodeRepository.findAll().spliterator(), false)
+                            if (masters.size() == 0 && StreamSupport.stream(nodeRepository.findAll().spliterator(), false)
                                     .sorted(Comparator.comparing(node -> node.getNodeId()))
                                     .findFirst().get().getNodeId().toLowerCase().equals(SystemUtils.getInstanceId().toLowerCase())) {
                                 NodeEntry currentNode = nodeRepository.findOne(SystemUtils.getInstanceId());
                                 currentNode.setMaster(true);
                                 nodeRepository.save(currentNode);
                             }
-                            //TODO: update copycat
                             LOG.info("Node terminated event: {}", eventEntry.toString());
                             listeners.forEach(l -> l.terminated(eventEntry));
                             break;
@@ -100,7 +101,7 @@ public class ClusterEventService implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                LOG.error(e);
+                LOG.error("Unable to process cluster event", e);
             }
             sleep();
         }
