@@ -8,6 +8,8 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.autoscaling.AmazonAutoScaling;
 import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
+import com.amazonaws.services.cloudformation.AmazonCloudFormation;
+import com.amazonaws.services.cloudformation.AmazonCloudFormationClient;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -166,6 +168,14 @@ public class AmazonConfigProvider {
         return proxyFactoryBean;
     }
 
+    @Bean
+    public ProxyFactoryBean amazonCloudFormation() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+        proxyFactoryBean.setTarget(amazonCloudFormationClient());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+        return proxyFactoryBean;
+    }
+
     private AmazonSNS amazonSNSClient() {
         AmazonSNSClient snsClient = new AmazonSNSClient(awsCredentials());
         snsClient.setRegion(getRegion());
@@ -187,6 +197,12 @@ public class AmazonConfigProvider {
         AmazonElasticLoadBalancingClient elasticLoadBalancingClient = new AmazonElasticLoadBalancingClient(awsCredentials());
         elasticLoadBalancingClient.setRegion(getRegion());
         return elasticLoadBalancingClient;
+    }
+
+    private AmazonCloudFormation amazonCloudFormationClient(){
+        AmazonCloudFormation amazonCloudFormation = new AmazonCloudFormationClient(awsCredentials());
+        amazonCloudFormation.setRegion(getRegion());
+        return amazonCloudFormation;
     }
 
     private AmazonCloudWatch cloudWatchClient() {

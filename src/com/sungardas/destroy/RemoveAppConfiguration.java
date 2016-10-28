@@ -62,6 +62,7 @@ public class RemoveAppConfiguration {
             case CLUSTER:
                 clusterConfigurationService.removeClusterInfrastructure();
                 terminateNodes();
+                dropConfiguration(removeS3Bucket);
             case STANDALONE:
                 dropConfiguration(removeS3Bucket);
         }

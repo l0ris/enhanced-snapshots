@@ -1,10 +1,9 @@
 package com.sungardas.enhancedsnapshots.cluster;
 
 import com.amazonaws.services.autoscaling.AmazonAutoScaling;
-import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
-import com.amazonaws.services.autoscaling.model.DeletePolicyRequest;
-import com.amazonaws.services.autoscaling.model.PutScalingPolicyRequest;
-import com.amazonaws.services.autoscaling.model.UpdateAutoScalingGroupRequest;
+import com.amazonaws.services.autoscaling.model.*;
+import com.amazonaws.services.cloudformation.AmazonCloudFormation;
+import com.amazonaws.services.cloudformation.model.DeleteStackRequest;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.model.*;
 import com.amazonaws.services.sns.AmazonSNS;
@@ -44,6 +43,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     private static final String ESS_IDLE_ALARM = "ESS-Idle-Alarm-" + SystemUtils.getSystemId();
     private static final String ESS_TOPIC_NAME = "ESS-" + SystemUtils.getSystemId() + "-topic";
     private static final String ESS_QUEUE_NAME = "ESS-" + SystemUtils.getSystemId() + "-queue";
+    private static final String ESS_LB_NAME = SystemUtils.getSystemId() + "-lb";
 
     @Autowired
     private AmazonSNS amazonSNS;
@@ -59,10 +59,12 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     private ConfigurationMediator configurationMediator;
     @Autowired(required = false)
     private ClusterEventPublisher clusterEventPublisher;
-
     @Autowired(required = false)
     private SDFSStateService sdfsStateService;
-    @Value("${enhancedsnapshots.default.backup.threadPool.size}")
+    @Autowired
+    private AmazonCloudFormation cloudFormation;
+
+        @Value("${enhancedsnapshots.default.backup.threadPool.size}")
     private int backupThreadPoolSize;
     @Value("${enhancedsnapshots.default.restore.threadPool.size}")
     private int restoreThreadPoolSize;
@@ -260,12 +262,12 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
 
     @Override
     public void removeClusterInfrastructure() {
-        autoScaling.deletePolicy(new DeletePolicyRequest().withPolicyName(SCALE_UP_POLICY));
-        autoScaling.deletePolicy(new DeletePolicyRequest().withPolicyName(SCALE_DOWN_POLICY));
+        autoScaling.deletePolicy(new DeletePolicyRequest().withAutoScalingGroupName(getAutoScalingGroup().getAutoScalingGroupName()).withPolicyName(SCALE_UP_POLICY));
+        autoScaling.deletePolicy(new DeletePolicyRequest().withAutoScalingGroupName(getAutoScalingGroup().getAutoScalingGroupName()).withPolicyName(SCALE_DOWN_POLICY));
         cloudWatch.deleteAlarms(new DeleteAlarmsRequest().withAlarmNames(ESS_OVERLOAD_ALARM, ESS_IDLE_ALARM));
         // CloudWatch metrics are stored for two weeks. Old data will be removed automatically.
 
-        amazonSNS.unsubscribe(getEssTopicArn());
         amazonSQS.deleteQueue(new DeleteQueueRequest().withQueueUrl(ESS_QUEUE_NAME));
+        cloudFormation.deleteStack(new DeleteStackRequest().withStackName(SystemUtils.getCloudFormationStackName()));
     }
 }
