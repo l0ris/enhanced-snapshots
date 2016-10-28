@@ -64,7 +64,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     @Autowired
     private AmazonCloudFormation cloudFormation;
 
-        @Value("${enhancedsnapshots.default.backup.threadPool.size}")
+    @Value("${enhancedsnapshots.default.backup.threadPool.size}")
     private int backupThreadPoolSize;
     @Value("${enhancedsnapshots.default.restore.threadPool.size}")
     private int restoreThreadPoolSize;
@@ -164,7 +164,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
                                 .getAutoScalingGroupName()))
                 .withAlarmActions(scaleUpPolicyARN));
         LOG.info("Load alarm added: ", cloudWatch.describeAlarms().getMetricAlarms()
-                .stream().filter(alarm->alarm.getAlarmName().equals(ESS_OVERLOAD_ALARM)).findFirst().get().toString());
+                .stream().filter(alarm -> alarm.getAlarmName().equals(ESS_OVERLOAD_ALARM)).findFirst().get().toString());
 
         // create custom alarm
         cloudWatch.putMetricAlarm(new PutMetricAlarmRequest()
@@ -182,7 +182,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
                                 .getAutoScalingGroupName()))
                 .withAlarmActions(scaleDownPolicyARN));
         LOG.info("Alarm for idle resources added: ", cloudWatch.describeAlarms().getMetricAlarms()
-                .stream().filter(alarm->alarm.getAlarmName().equals(ESS_IDLE_ALARM)).findFirst().get().toString());
+                .stream().filter(alarm -> alarm.getAlarmName().equals(ESS_IDLE_ALARM)).findFirst().get().toString());
 
         // subscribe to topic
         amazonSQS.createQueue(new CreateQueueRequest().withQueueName(ESS_QUEUE_NAME));
@@ -215,9 +215,10 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
 
     /**
      * Returns ARN of topic where AutoScaling publishes system events
+     *
      * @return
      */
-    private String getEssTopicArn(){
+    private String getEssTopicArn() {
         Topic ess_topic = amazonSNS.listTopics().getTopics()
                 .stream().filter(topic -> topic.getTopicArn().endsWith(ESS_TOPIC_NAME)).findFirst()
                 .orElseThrow(() -> new ConfigurationException("Topic " + ESS_TOPIC_NAME + " does not exist."));
@@ -232,10 +233,10 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     private double getSystemLoadLevel() {
         List<NodeEntry> nodes = new ArrayList<>();
         nodeRepository.findAll().forEach(nodes::add);
-        double backupLoad = nodes.size() * backupThreadPoolSize - nodes.stream().reduce(0, (sum, node) -> sum + node.getFreeBackupWorkers(),
-                (sum1, sum2) -> sum1 + sum2) / nodes.size() * backupThreadPoolSize;
-        double restoreLoad = nodes.size() * backupThreadPoolSize - nodes.stream().reduce(0, (sum, node) -> sum + node.getFreeRestoreWorkers(),
-                (sum1, sum2) -> sum1 + sum2) / nodes.size() * restoreThreadPoolSize;
+        double backupLoad = (nodes.size() * backupThreadPoolSize - nodes.stream().reduce(0, (sum, node) -> sum + node.getFreeBackupWorkers(),
+                (sum1, sum2) -> sum1 + sum2)) / (nodes.size() * backupThreadPoolSize);
+        double restoreLoad = (nodes.size() * backupThreadPoolSize - nodes.stream().reduce(0, (sum, node) -> sum + node.getFreeRestoreWorkers(),
+                (sum1, sum2) -> sum1 + sum2)) / (nodes.size() * restoreThreadPoolSize);
         return backupLoad > restoreLoad ? backupLoad : restoreLoad;
     }
 
