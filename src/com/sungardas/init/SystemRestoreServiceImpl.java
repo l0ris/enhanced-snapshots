@@ -16,7 +16,7 @@ import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
-import com.sungardas.enhancedsnapshots.service.upgrade.UpgradeSystemTo002;
+import com.sungardas.enhancedsnapshots.service.upgrade.UpgradeSystemTo003;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,7 +71,7 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
         if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
             amazonS3.setRegion(current);
         }
-        systemUpgrade = new UpgradeSystemTo002();
+        systemUpgrade = new UpgradeSystemTo003();
     }
 
     public DynamoDBMapperConfig dynamoDBMapperConfig() {

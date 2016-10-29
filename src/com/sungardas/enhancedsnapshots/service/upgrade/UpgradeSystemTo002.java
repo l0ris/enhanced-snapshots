@@ -19,7 +19,6 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
     @Override
     public void upgrade(Path tempFolder, String initVersion) {
         if (stringVersionToInt(initVersion) >= stringVersionToInt(upgradeVersion)) {
-            LOG.info("No need to upgrade to {}", upgradeVersion);
             return;
         }
         LOG.info("Upgrading system to version {}", upgradeVersion);

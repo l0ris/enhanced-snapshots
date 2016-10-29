@@ -1,23 +1,32 @@
 package com.sungardas.enhancedsnapshots.service.upgrade;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.nio.file.Path;
 
 public class UpgradeSystemTo003 extends UpgradeSystemTo002 {
 
-    private static final String currentInitVersion = "0.0.2";
 
-    /**
-     * This is an example for future update logic
-     */
+    private static final Logger LOG = LogManager.getLogger(UpgradeSystemTo003.class);
+    private static final String upgradeVersion = "0.0.3";
+
+
+    //TODO: no special logic required any more, consider to remove this class
     @Override
     public void upgrade(Path tempFolder, String initVersion) {
-        if (stringVersionToInt(initVersion) < stringVersionToInt(currentInitVersion)) {
-            super.upgrade(tempFolder, initVersion);
+        if (stringVersionToInt(initVersion) >= stringVersionToInt(upgradeVersion)) {
+            return;
         }
-        // further upgrade logic
-
+        LOG.info("Upgrading system to version {}", upgradeVersion);
     }
+
+
+    protected int stringVersionToInt(String version){
+        return Integer.parseInt(version.replace(".", ""));
+    }
+
 
 
 

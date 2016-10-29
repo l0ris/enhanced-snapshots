@@ -286,7 +286,7 @@ public class SystemServiceImpl implements SystemService {
         clusterDto.setMaxNodeNumber(configurationMediator.getMaxNodeNumberInCluster());
         clusterDto.setMinNodeNumber(configurationMediator.getMinNodeNumberInCluster());
         configuration.setCluster(clusterDto);
-        configuration.setClusterMode(SystemUtils.clusterMode());
+        configuration.setClusterMode(configurationMediator.isClusterMode());
         return configuration;
     }
 

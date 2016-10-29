@@ -89,7 +89,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
             }
             completeTask(taskEntry);
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
-            if (!SystemUtils.clusterMode()) {
+            if (!configurationMediator.isClusterMode()) {
                 interruptedCleaningStep(taskEntry);
             }
         } catch (Exception e) {

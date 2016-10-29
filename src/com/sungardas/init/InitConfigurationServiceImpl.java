@@ -592,7 +592,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             }
             for (Bucket bucket : allBuckets) {
                 try {
-
                     if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix001) || bucket.getName().startsWith(enhancedSnapshotBucketPrefix002)) {
                         String location = amazonS3.getBucketLocation(bucket.getName());
 
@@ -690,10 +689,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private void configureAWSLogAgent() {
         try {
-            replaceInFile(new File(awscliConfPath), "<region>", region.toString());
+            replaceInFile(new File(awscliConfPath), "<region>", Regions.getCurrentRegion().toString());
             replaceInFile(new File(awslogsConfPath), "<instance-id>", SystemUtils.getSystemId());
         } catch (Exception e) {
-            LOG.warn("Cant initialize AWS Log agent");
+            LOG.warn("Cant initialize AWS Log agent", e);
         }
     }
 
@@ -820,7 +819,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         } else {
             return db;
         }
-
     }
 
     // there is bug at US_EAST_1 AWS S3 endpoint, we should not check buckets existence with it
