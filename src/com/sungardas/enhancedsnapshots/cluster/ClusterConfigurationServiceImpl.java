@@ -29,7 +29,6 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -161,10 +160,6 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
                 .withEvaluationPeriods(2)
                 .withStatistic(Statistic.Average)
                 .withNamespace("ESS/Tasks")
-                .withDimensions(new Dimension()
-                        .withName("AutoScalingGroupName")
-                        .withValue(getAutoScalingGroup()
-                                .getAutoScalingGroupName()))
                 .withAlarmActions(scaleUpPolicyARN));
         LOG.info("Load alarm added: ", cloudWatch.describeAlarms().getMetricAlarms()
                 .stream().filter(alarm -> alarm.getAlarmName().equals(ESS_OVERLOAD_ALARM)).findFirst().get().toString());
@@ -173,16 +168,12 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
         cloudWatch.putMetricAlarm(new PutMetricAlarmRequest()
                 .withAlarmName(ESS_IDLE_ALARM)
                 .withMetricName(METRIC_DATA_NAME)
-                .withComparisonOperator(ComparisonOperator.GreaterThanOrEqualToThreshold)
+                .withComparisonOperator(ComparisonOperator.LessThanThreshold)
                 .withThreshold(40.0)
                 .withPeriod(300)
                 .withEvaluationPeriods(2)
                 .withStatistic(Statistic.Average)
                 .withNamespace("ESS/Tasks")
-                .withDimensions(new Dimension()
-                        .withName("AutoScalingGroupName")
-                        .withValue(getAutoScalingGroup()
-                                .getAutoScalingGroupName()))
                 .withAlarmActions(scaleDownPolicyARN));
         LOG.info("Alarm for idle resources added: ", cloudWatch.describeAlarms().getMetricAlarms()
                 .stream().filter(alarm -> alarm.getAlarmName().equals(ESS_IDLE_ALARM)).findFirst().get().toString());
@@ -234,13 +225,19 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
      * @return
      */
     private double getSystemLoadLevel() {
-        List<NodeEntry> nodes = new ArrayList<>();
-        nodeRepository.findAll().forEach(nodes::add);
-        double backupLoad = (nodes.size() * backupThreadPoolSize - nodes.stream().reduce(0, (sum, node) -> sum + node.getFreeBackupWorkers(),
-                (sum1, sum2) -> sum1 + sum2)) / (nodes.size() * backupThreadPoolSize);
-        double restoreLoad = (nodes.size() * backupThreadPoolSize - nodes.stream().reduce(0, (sum, node) -> sum + node.getFreeRestoreWorkers(),
-                (sum1, sum2) -> sum1 + sum2)) / (nodes.size() * restoreThreadPoolSize);
-        return backupLoad > restoreLoad ? backupLoad : restoreLoad;
+        List<NodeEntry> nodes = nodeRepository.findAll();
+        int freeBackupWorkers = 0;
+        int freeRestoreWorkers = 0;
+        for (NodeEntry n : nodes) {
+            freeBackupWorkers += n.getFreeBackupWorkers();
+            freeRestoreWorkers += n.getFreeRestoreWorkers();
+        }
+        int backupWorkers = backupThreadPoolSize * nodes.size();
+        int restoreWorkers = restoreThreadPoolSize * nodes.size();
+        double backupLoadLevel = (double) (backupWorkers - freeBackupWorkers) / backupWorkers;
+        double restoreLoadLevel = (double) (restoreWorkers - freeRestoreWorkers) / restoreWorkers;
+
+        return Math.max(backupLoadLevel, restoreLoadLevel);
     }
 
     private AutoScalingGroup getAutoScalingGroup() {

@@ -58,21 +58,28 @@ public class AutoScalingEventListener implements Runnable {
                 for (Message message : messages) {
                     JSONObject obj = new JSONObject(message.getBody());
                     String msg = obj.get("Message").toString();
-                    AutoScalingEvents event = AutoScalingEvents.fromString((String) new JSONObject(msg).get("Event"));
-                    switch (event) {
-                        case EC2_INSTANCE_TERMINATE: {
-                            if (eventsRepository.findOne(message.getMessageId()) == null) {
-                                clusterEventPublisher.nodeTerminated((String) new JSONObject(msg).get("EC2InstanceId"), message.getMessageId());
+                    JSONObject jsonMessage = new JSONObject(msg);
+                    if (jsonMessage.has("Event")) {
+                        AutoScalingEvents event = AutoScalingEvents.fromString((String) jsonMessage.get("Event"));
+                        switch (event) {
+                            case EC2_INSTANCE_TERMINATE: {
+                                if (eventsRepository.findOne(message.getMessageId()) == null) {
+                                    clusterEventPublisher.nodeTerminated((String) jsonMessage.get("EC2InstanceId"), message.getMessageId());
+                                    amazonSQS.deleteMessage(new DeleteMessageRequest()
+                                            .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
+                                }
+                                break;
+                            }
+                            default: {
+                                LOG.warn("New AutoScaling event: {}", message.toString());
                                 amazonSQS.deleteMessage(new DeleteMessageRequest()
                                         .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
                             }
-                            break;
                         }
-                        default: {
-                            LOG.warn("New AutoScaling event: {}", message.toString());
-                            amazonSQS.deleteMessage(new DeleteMessageRequest()
-                                    .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
-                        }
+                    } else {
+                        LOG.warn("Unknown event: {}", message.toString());
+                        amazonSQS.deleteMessage(new DeleteMessageRequest()
+                                .withQueueUrl(getQueueUrl()).withReceiptHandle(message.getReceiptHandle()));
                     }
                 }
             } catch (Exception e) {

@@ -63,7 +63,7 @@ public class MasterServiceImpl implements MasterService {
                 public String getId() {
                     return TASK_DISTRIBUTION_ID;
                 }
-            }, new CronTrigger("*/5 * * * * *"));
+            }, new CronTrigger("*/30 * * * * *"));
 
             schedulerService.addTask(new Task() {
                 @Override
@@ -75,7 +75,7 @@ public class MasterServiceImpl implements MasterService {
                 public void run() {
                     clusterConfigurationService.updateCloudWatchMetric();
                 }
-            }, "*/5 * * * *");
+            }, "*/1 * * * *");
         }
     }
 
