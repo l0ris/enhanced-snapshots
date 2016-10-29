@@ -70,8 +70,7 @@ public class RemoveAppConfiguration {
 
     private void terminateNodes() {
         String instanceId = SystemUtils.getInstanceId();
-        terminateInstance((String[]) nodeRepository.findAll().stream().map(n -> n.getNodeId()).filter(id -> !id.equals(instanceId)).toArray());
-
+        nodeRepository.findAll().stream().map(n -> n.getNodeId()).filter(id -> !id.equals(instanceId)).forEach(id->terminateInstance(id));
     }
 
     private void dropConfiguration(boolean withS3Bucket) {
