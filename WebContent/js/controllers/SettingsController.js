@@ -36,8 +36,8 @@ angular.module('web')
         $scope.progressState = 'loading';
         var loader = progressLoader();
         System.get().then(function (data) {
+            data.ec2Instance.instanceIDs = data.ec2Instance.instanceIDs.join(", ");
             $scope.settings = data;
-            $scope.settings.ec2Instance.instanceIDs =  $scope.settings.ec2Instance.instanceIDs.join(", ");
             if (!$scope.settings.mailConfiguration) {
                 $scope.emails = [];
                 $scope.settings.mailConfiguration = {
@@ -89,6 +89,8 @@ angular.module('web')
             });
 
             settingsUpdateModal.result.then(function () {
+                $scope.initialSettings = angular.copy($scope.settings);
+            }, function () {
                 $scope.initialSettings = angular.copy($scope.settings);
             });
         };
