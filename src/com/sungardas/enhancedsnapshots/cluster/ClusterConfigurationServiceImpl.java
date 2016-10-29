@@ -1,7 +1,10 @@
 package com.sungardas.enhancedsnapshots.cluster;
 
 import com.amazonaws.services.autoscaling.AmazonAutoScaling;
-import com.amazonaws.services.autoscaling.model.*;
+import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import com.amazonaws.services.autoscaling.model.DeletePolicyRequest;
+import com.amazonaws.services.autoscaling.model.PutScalingPolicyRequest;
+import com.amazonaws.services.autoscaling.model.UpdateAutoScalingGroupRequest;
 import com.amazonaws.services.cloudformation.AmazonCloudFormation;
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
@@ -194,7 +197,7 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
     @Override
     public void updateCloudWatchMetric() {
         MetricDatum metricDatum = new MetricDatum();
-        metricDatum.setValue(getSystemLoadLevel());
+        metricDatum.setValue(getSystemLoadLevel() * 100);
         metricDatum.setUnit(StandardUnit.Count);
         metricDatum.setTimestamp(new Date());
         metricDatum.setMetricName(METRIC_DATA_NAME);
