@@ -181,7 +181,9 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
             }
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Done", 100);
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
-            interruptedCleaningStep(taskEntry, tempVolume);
+            if (!SystemUtils.clusterMode()) {
+                interruptedCleaningStep(taskEntry, tempVolume);
+            }
         } catch (Exception e) {
             failCleaningStep(taskEntry, tempVolume, e);
         }
