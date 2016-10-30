@@ -54,10 +54,10 @@ public class ClusterEventPublisherImpl implements ClusterEventPublisher {
     }
 
     @Override
-    public void logWatcherStopped() {
+    public void masterNodeChanged() {
         long time = System.currentTimeMillis();
-        EventEntry eventEntry = new EventEntry(String.valueOf(time), time, ClusterEvents.LOGS_WATCHER_STOPPED, null, 0);
+        EventEntry eventEntry = new EventEntry(String.valueOf(time), time, ClusterEvents.MASTER_NODE_CHANGED, null, 0);
         eventsRepository.save(eventEntry);
-        LOG.info("Log watcher stopped event published");
+        LOG.info("Master node changed event published");
     }
 }

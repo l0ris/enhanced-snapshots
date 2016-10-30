@@ -30,7 +30,7 @@ import static java.util.Collections.*;
 
 @Service
 @DependsOn({"ConfigurationMediator", "MasterService"})
-public class LogsWatcherService implements TailerListener, ApplicationListener<SessionUnsubscribeEvent> {
+public class LogsWatcherService implements TailerListener {
 
     private static final Logger LOG = LogManager.getLogger(LogsWatcherService.class);
     private static final String LOGS_DESTINATION = "/logs";
@@ -41,8 +41,6 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
     private ConfigurationMediator configurationMediator;
     @Autowired
     private SimpMessagingTemplate template;
-    @Autowired
-    private ClusterEventPublisher clusterEventPublisher;
     @Value("${catalina.home}")
     private String catalinaHome;
 
@@ -59,11 +57,10 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
     }
 
     public void start() {
-        if (tailer != null) {
-            tailer.stop();
+        if (tailer == null) {
+            tailer = Tailer.create(getLogsFile(), this, 500L, true);
+            LOG.info("Logs watcher started. File {} will be tracked for changes.", configurationMediator.getLogFileName());
         }
-        tailer = Tailer.create(getLogsFile(), this, 500L, true);
-        LOG.info("Logs watcher started. File {} will be tracked for changes.", configurationMediator.getLogFileName());
     }
 
     private File getLogsFile() {
@@ -108,14 +105,5 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
             reverse(list);
             template.convertAndSend(LOGS_DESTINATION, list);
         }
-    }
-
-    @Override
-    public void onApplicationEvent(SessionUnsubscribeEvent event) {
-
-        if(configurationMediator.isClusterMode()){
-            clusterEventPublisher.logWatcherStopped();
-        }
-        stop();
     }
 }

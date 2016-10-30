@@ -174,6 +174,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
             configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
             configuration.setChunkStoreEncryptionKey(SDFSStateService.generateChunkStoreEncryptionKey());
             configuration.setChunkStoreIV(SDFSStateService.generateChunkStoreIV());
+            configuration.setSdfsCliPsw(SystemUtils.getSystemId());
         }
         mapper.save(configuration);
 

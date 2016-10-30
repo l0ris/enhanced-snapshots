@@ -152,7 +152,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             LOG.info("Configuring SDFS in cluster mode...");
             parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CLUSTER_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
                     getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize(), configurationMediator.getChunkStoreEncryptionKey(),
-                    configurationMediator.getChunkStoreIV(), configurationMediator.getConfigurationId()};
+                    configurationMediator.getChunkStoreIV(), configurationMediator.getSdfsCliPsw()};
         } else {
             LOG.info("Configuring SDFS in standalone mode...");
             parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),

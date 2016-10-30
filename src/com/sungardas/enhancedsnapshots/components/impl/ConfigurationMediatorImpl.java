@@ -234,4 +234,9 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public String getChunkStoreIV() {
         return currentConfiguration.getChunkStoreIV();
     }
+
+    @Override
+    public String getSdfsCliPsw() {
+        return currentConfiguration.getSdfsCliPsw();
+    }
 }

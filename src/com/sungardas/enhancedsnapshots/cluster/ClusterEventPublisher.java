@@ -29,7 +29,8 @@ public interface ClusterEventPublisher {
     void logWatcherStarted();
 
     /**
-     * Logs watcher stopped event
+     * Master node changed event
      */
-    void logWatcherStopped();
+    void masterNodeChanged();
 }
+

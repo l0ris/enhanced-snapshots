@@ -8,8 +8,8 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.components.logwatcher.LogsWatcherService;
 import com.sungardas.enhancedsnapshots.service.MasterService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
-import com.sungardas.enhancedsnapshots.service.impl.MasterServiceImpl;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
+import com.sungardas.enhancedsnapshots.ws.WebSocketConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,9 +47,12 @@ public class ClusterEventService implements Runnable {
     private LogsWatcherService logsWatcherService;
     @Autowired
     private MasterService masterService;
-
+    @Autowired
+    private WebSocketConfig webSocketConfig;
     @Autowired
     private List<ClusterEventListener> listeners;
+    @Autowired
+    private ClusterEventPublisher clusterEventPublisher;
 
 
     public void run() {
@@ -78,6 +81,7 @@ public class ClusterEventService implements Runnable {
                                 currentNode.setMaster(true);
                                 masterService.init();
                                 nodeRepository.save(currentNode);
+                                clusterEventPublisher.masterNodeChanged();
                             }
                             LOG.info("Node terminated event: {}", eventEntry.toString());
                             listeners.forEach(l -> l.terminated(eventEntry));
@@ -92,8 +96,10 @@ public class ClusterEventService implements Runnable {
                             logsWatcherService.start();
                             break;
                         }
-                        case LOGS_WATCHER_STOPPED: {
-                            logsWatcherService.stop();
+                        case MASTER_NODE_CHANGED: {
+                            // All node in cluster use embedded broker on master node for User notification
+                            // in case master node was changed all nodes in cluster must reconfigure their WebSocket configuration
+                            webSocketConfig.updateWebSocketConfiguration();
                             break;
                         }
                         default: {

@@ -506,6 +506,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
             configuration.setChunkStoreEncryptionKey(SDFSStateService.generateChunkStoreEncryptionKey());
             configuration.setChunkStoreIV(SDFSStateService.generateChunkStoreIV());
+            configuration.setSdfsCliPsw(SystemUtils.getSystemId());
         }
         // saving configuration to DB
         mapper.save(configuration);

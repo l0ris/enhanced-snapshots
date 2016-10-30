@@ -34,6 +34,7 @@ public class Configuration {
     private String sdfsBackupFileName;
     private String chunkStoreEncryptionKey;
     private String chunkStoreIV;
+    private String sdfsCliPsw;
 
     // amazon settings
     private String region;
@@ -59,6 +60,16 @@ public class Configuration {
 
     @DynamoDBAttribute
     private String domain;
+
+
+    public String getSdfsCliPsw() {
+        return sdfsCliPsw;
+    }
+
+    public void setSdfsCliPsw(String sdfsCliPsw) {
+        this.sdfsCliPsw = sdfsCliPsw;
+    }
+
 
     @DynamoDBAttribute
     private MailConfigurationDocument mailConfigurationDocument;

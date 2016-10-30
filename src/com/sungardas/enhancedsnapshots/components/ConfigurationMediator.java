@@ -78,4 +78,6 @@ public interface ConfigurationMediator {
 
     String getChunkStoreIV();
 
+    String getSdfsCliPsw();
+
 }

@@ -37,7 +37,7 @@ public class SystemController {
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody RemoveAppDTO removeAppDTO) {
         if (!configurationMediator.getConfigurationId().equals(removeAppDTO.getSystemId())) {
-            return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("{\"msg\":\"Provided system ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
         systemService.systemUninstall(removeAppDTO.removeS3Bucket);
         return new ResponseEntity<>("", HttpStatus.OK);
