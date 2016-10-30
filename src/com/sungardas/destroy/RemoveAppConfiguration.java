@@ -87,7 +87,7 @@ public class RemoveAppConfiguration {
 
 
     private void terminateInstance() {
-        terminateInstance(configurationId);
+        terminateInstance(SystemUtils.getInstanceId());
     }
 
     private void terminateInstance(String... instanceIds) {
