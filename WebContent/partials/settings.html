@@ -241,7 +241,7 @@
                             <div class="settings field-label col-sm-5 text-left">logs</div>
                         </div>
 
-                        <div class="col-sm-12 form-group" ng-show="settings.clusterMode">
+                        <div class="col-sm-12 form-group" ng-if="settings.clusterMode">
                             <div class="settings field-label col-sm-5 text-right">Minimum node number:</div>
                             <div class="col-sm-2 text-left">
                                 <input class="settings form-control"
@@ -255,7 +255,7 @@
                             <div class="col-sm-12 text-danger small" ng-show="otherSettings.minNodeNumber.$error.min"> Should be greater than 0 </div>
                         </div>
 
-                        <div class="col-sm-12 form-group" ng-show="settings.clusterMode">
+                        <div class="col-sm-12 form-group" ng-if="settings.clusterMode">
                             <div class="settings field-label col-sm-5 text-right">Maximum node number:</div>
                             <div class="col-sm-2 text-left">
                                 <input class="settings form-control"
