@@ -71,10 +71,9 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer im
             if (stompBrokerRelayMessageHandler == null) {
                 stompBrokerRelayMessageHandler = (StompBrokerRelayMessageHandler) applicationContext.getBean("stompBrokerRelayMessageHandler");
             }
-            stompBrokerRelayMessageHandler.getTcpClient().shutdown();
+            stompBrokerRelayMessageHandler.stop();
             stompBrokerRelayMessageHandler.setTcpClient(null);
             stompBrokerRelayMessageHandler.setRelayHost(awsCommunicationService.getDNSName(nodeRepository.findByMaster(true).get(0).getNodeId()));
-            stompBrokerRelayMessageHandler.stop();
             stompBrokerRelayMessageHandler.start();
         } catch (Exception e) {
             LOG.error("Failed to update websocket configuration", e);
