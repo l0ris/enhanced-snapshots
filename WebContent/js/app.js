@@ -34,12 +34,6 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         return deferred.promise;
     }];
 
-    var isSSOSaved = ['Storage', function (Storage) {
-        var sso = Storage.get("ssoMode");
-        return !!(sso && sso.ssoMode);
-
-    }];
-
     $stateProvider
         .state('app', {
             abstract: true,
@@ -122,8 +116,7 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         .state('login', {
             url: "/login?err",
             templateUrl: "partials/login.html",
-            controller: "LoginController",
-            params: {showLoader: isSSOSaved}
+            controller: "LoginController"
         })
         .state('registration', {
             url: "/registration",
@@ -139,8 +132,11 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         $rootScope.isLoading = true;
         var promises = [System.get(), Users.refreshCurrent()];
         $q.all(promises).then(function (results) {
-            Storage.save("ssoMode", {"ssoMode": results[0].ssoMode});
-            if (results[1].email) {
+            if (results[0].ssoMode != undefined) {
+                Storage.save("ssoMode", {"ssoMode": results[0].ssoMode});
+            }
+
+            if (results[1].data && results[1].data.email) {
                 $state.go('app.volume.list');
             }
             $rootScope.isLoading = false;

@@ -50,8 +50,10 @@ angular.module('web')
                 url: url + "/currentUser",
                 method: 'GET'
             }).then(function (result) {
-                Storage.save('currentUser', result.data);
-                deferred.resolve(result.data);
+                if (result.data.email) {
+                    Storage.save('currentUser', result.data);
+                }
+                deferred.resolve(result);
             }, function (e) {
                 deferred.reject(e);
             });

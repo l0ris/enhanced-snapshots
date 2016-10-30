@@ -28,7 +28,7 @@ angular.module('web')
         //------------------------------------
 
         // Show loader instead of login page if ssoMode is true ----------
-            $scope.isLoading = $stateParams.showLoader;
+            $scope.isLoading = !!(ssoMode && ssoMode.ssoMode);
         //---------------------------------------------
 
         $scope.clearErr = function () {
