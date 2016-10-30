@@ -325,7 +325,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public long getSDFSVolumeId() {
         try {
-            String[] parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), SHOW_VOLUME_ID_CMD, configurationMediator.getConfigurationId()};
+            String[] parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), SHOW_VOLUME_ID_CMD, configurationMediator.getSdfsCliPsw()};
             LOG.info("Executing script: {}", Arrays.toString(parameters));
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
