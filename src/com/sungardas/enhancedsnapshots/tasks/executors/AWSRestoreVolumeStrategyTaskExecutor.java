@@ -14,6 +14,7 @@ import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
@@ -88,7 +89,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
                 restoreFromBackupFile(taskEntry);
             }
             completeTask(taskEntry);
-        } catch (EnhancedSnapshotsTaskInterruptedException e) {
+        } catch (EnhancedSnapshotsInterruptedException e) {
             if (!configurationMediator.isClusterMode()) {
                 interruptedCleaningStep(taskEntry);
             }
