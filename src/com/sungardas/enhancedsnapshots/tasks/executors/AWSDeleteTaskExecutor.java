@@ -50,9 +50,21 @@ public class AWSDeleteTaskExecutor extends AbstractAWSVolumeTaskExecutor {
 
         try {
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Deleting file...", 60);
-            storageService.deleteFile(backupEntry.getFileName());
-            snapshotService.deleteSnapshot(backupEntry.getSnapshotId());
-            backupRepository.delete(backupEntry);
+            try {
+                storageService.deleteFile(backupEntry.getFileName());
+            } catch (Exception e) {
+                // skip
+            }
+            try {
+                snapshotService.deleteSnapshot(backupEntry.getSnapshotId());
+            } catch (Exception e) {
+                // skip
+            }
+            try {
+                backupRepository.delete(backupEntry);
+            } catch (Exception e) {
+                // skip
+            }
             taskService.complete(taskEntry);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);

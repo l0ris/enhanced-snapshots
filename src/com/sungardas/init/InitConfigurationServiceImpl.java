@@ -18,6 +18,7 @@ import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.S3Object;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
@@ -55,6 +56,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.InetAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -257,6 +259,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             systemRestoreService.restore(config.getBucketName());
             Configuration conf = mapper.load(Configuration.class, SystemUtils.getSystemId());
             storePropertiesEditableFromConfigFile();
+            if (conf.isSsoLoginMode() && conf.isClusterMode()) {
+                downloadFromS3(conf.getS3Bucket(), samlCertPem, System.getProperty(catalinaHomeEnvPropName));
+                downloadFromS3(conf.getS3Bucket(), samlIdpMetadata, System.getProperty(catalinaHomeEnvPropName));
+            }
+
             refreshContext(conf.isSsoLoginMode(), conf.getEntityId());
             LOG.info("System is successfully restored.");
             return;
@@ -288,10 +295,15 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
         storePropertiesEditableFromConfigFile();
         createDBAndStoreSettings(config);
+        if (config.isSsoMode()) {
+            //upload certificate and metadata to bucket
+            uploadToS3(config.getBucketName(), Paths.get(System.getProperty(catalinaHomeEnvPropName), samlIdpMetadata));
+            uploadToS3(config.getBucketName(), Paths.get(System.getProperty(catalinaHomeEnvPropName), samlCertPem));
+        }
+
         refreshContext(config.isSsoMode(), config.getSpEntityId());
         LOG.info("System is successfully configured");
     }
-
 
     @Override
     public void checkMailConfiguration(MailConfigurationDto configuration) {
@@ -302,6 +314,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             throw new ConfigurationException("Mail server is not reachable");
         }
     }
+
 
     private void refreshContext(boolean ssoMode, String entityId){
         try {
@@ -453,7 +466,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             throw new ConfigurationException("Failed to create table" + createTableRequest.getTableName(), e);
         }
     }
-
 
     private void storeAdminUserIfProvided() {
         if (userDto != null) {
@@ -675,7 +687,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         return !users.isEmpty();
     }
 
-
     private boolean sdfsAlreadyExists() {
         LOG.info("sdfs already exists...");
         File configf = new File(sdfsConfigPath);
@@ -683,10 +694,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         return configf.exists() && mountPointf.exists();
     }
 
+
     private File getPropertyFile() {
         return Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
     }
-
 
     private void configureAWSLogAgent() {
         try {
@@ -696,6 +707,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             LOG.warn("Cant initialize AWS Log agent", e);
         }
     }
+
 
     protected void validateVolumeSize(final int volumeSize) {
         int min = Integer.parseInt(minVolumeSize);
@@ -789,7 +801,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
-
     protected void createBucket(String bucketName) {
         if (!bucketExists(bucketName)) {
             LOG.info("Creating bucket {} in {} region", bucketName, region);
@@ -805,6 +816,22 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private void saveFileOnServer(String fileName, MultipartFile fileToSave) throws IOException {
         fileToSave.transferTo(Paths.get(System.getProperty(catalinaHomeEnvPropName), fileName).toFile());
+    }
+
+
+    private void uploadToS3(String bucketName, Path filePath) {
+        File file = filePath.toFile();
+        amazonS3.putObject(bucketName, file.getName(), file);
+    }
+
+    private void downloadFromS3(String bucket, String fileName, String destinationPath) {
+        S3Object object = amazonS3.getObject(bucket, fileName);
+        try {
+            FileUtils.copyInputStreamToFile(object.getObjectContent(), Paths.get(destinationPath, fileName).toFile());
+        } catch (IOException e) {
+            LOG.error("Download {} from {} failed", fileName, bucket, e);
+            throw new ConfigurationException(e);
+        }
     }
 
     public InitConfigurationDto.DB containsMetadata(final String bucketName) {

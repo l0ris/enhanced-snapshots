@@ -78,7 +78,7 @@ public class MasterServiceImpl implements MasterService {
                 public String getId() {
                     return TERMINATED_NODE_TASK_REASSIGN_ID;
                 }
-            }, new CronTrigger("* */5 * * * *"));
+            }, new CronTrigger("0 */5 * * * *"));
 
             schedulerService.addTask(new Task() {
                 @Override
@@ -191,7 +191,7 @@ public class MasterServiceImpl implements MasterService {
         Set<String> nodeIds = nodeRepository.findAll().stream().map(n -> n.getNodeId()).collect(Collectors.toSet());
         List<TaskEntry> taskEntries = taskRepository.findByStatusNotAndRegular(TaskEntry.TaskEntryStatus.COMPLETE.toString(), Boolean.FALSE.toString());
         List<TaskEntry> unassignedTasks = taskEntries.stream()
-                .filter(t -> !nodeIds.contains(t.getWorker()))
+                .filter(t -> t.getWorker() != null && !nodeIds.contains(t.getWorker()))
                 .peek(t -> {
                     t.setWorker(null);
                     t.setStatus(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.toString());
