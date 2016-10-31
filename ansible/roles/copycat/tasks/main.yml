@@ -13,11 +13,6 @@
   tags:
     - copycat
 
-- name: installing init script
-  copy: src=copycat dest=/etc/init.d/copycat owner=root group=root mode=0700
-  tags:
-    - copycat
-
 - name: installing required packages
   yum: name="{{item}}" state=installed
   with_items:
