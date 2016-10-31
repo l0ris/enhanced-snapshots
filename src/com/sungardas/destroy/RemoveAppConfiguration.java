@@ -60,17 +60,15 @@ public class RemoveAppConfiguration {
         dynamoDB = new DynamoDB(db);
         switch (SystemUtils.getSystemMode()) {
             case CLUSTER:
+                dropConfiguration(removeS3Bucket);
                 clusterConfigurationService.removeClusterInfrastructure();
-                terminateNodes();
-                dropConfiguration(removeS3Bucket);
+                break;
             case STANDALONE:
+                LOG.info("Terminating instance");
+                terminateInstance();
                 dropConfiguration(removeS3Bucket);
+                break;
         }
-    }
-
-    private void terminateNodes() {
-        String instanceId = SystemUtils.getInstanceId();
-        nodeRepository.findAll().stream().map(n -> n.getNodeId()).filter(id -> !id.equals(instanceId)).forEach(id->terminateInstance(id));
     }
 
     private void dropConfiguration(boolean withS3Bucket) {
@@ -80,8 +78,6 @@ public class RemoveAppConfiguration {
         }
         LOG.info("Dropping DB data");
         dropDbData();
-        LOG.info("Terminating instance");
-        terminateInstance();
     }
 
 
