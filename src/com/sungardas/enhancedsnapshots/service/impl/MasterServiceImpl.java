@@ -6,10 +6,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.MasterService;
-import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import com.sungardas.enhancedsnapshots.service.Task;
+import com.sungardas.enhancedsnapshots.service.*;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +20,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service("MasterService")
 @DependsOn({"ClusterConfigurationService"})
@@ -31,6 +30,7 @@ public class MasterServiceImpl implements MasterService {
     private static final Logger LOG = LogManager.getLogger(MasterServiceImpl.class);
     private static final String TASK_DISTRIBUTION_ID = "taskDistribution";
     private static final String METRIC_UPDATE_ID = "metricUpdate";
+    private static final String TERMINATED_NODE_TASK_REASSIGN_ID = "terminatedReassing";
 
     @Autowired
     private ConfigurationMediator configurationMediator;
@@ -46,12 +46,15 @@ public class MasterServiceImpl implements MasterService {
     private AWSCommunicationService awsCommunicationService;
     @Autowired
     private BrokerService broker;
+    @Autowired
+    private List<MasterInitialization> masterInitializations;
 
 
     @Override
     @PostConstruct
     public void init() {
         if (configurationMediator.isClusterMode() && nodeRepository.findOne(SystemUtils.getInstanceId()).isMaster()) {
+            LOG.info("Master node initialization");
             startBroker();
             schedulerService.addTask(new Task() {
                 @Override
@@ -67,6 +70,18 @@ public class MasterServiceImpl implements MasterService {
 
             schedulerService.addTask(new Task() {
                 @Override
+                public void run() {
+                    terminatedNodeTaskReassign();
+                }
+
+                @Override
+                public String getId() {
+                    return TERMINATED_NODE_TASK_REASSIGN_ID;
+                }
+            }, new CronTrigger("* */5 * * * *"));
+
+            schedulerService.addTask(new Task() {
+                @Override
                 public String getId() {
                     return METRIC_UPDATE_ID;
                 }
@@ -76,6 +91,12 @@ public class MasterServiceImpl implements MasterService {
                     clusterConfigurationService.updateCloudWatchMetric();
                 }
             }, "*/1 * * * *");
+
+            masterInitializations.forEach(MasterInitialization::init);
+
+            LOG.info("Master node initialization finished");
+        } else if (!configurationMediator.isClusterMode()) {
+            masterInitializations.forEach(MasterInitialization::init);
         }
     }
 
@@ -120,7 +141,7 @@ public class MasterServiceImpl implements MasterService {
 
 
     public void taskDistribution() {
-        LOG.info("Master task distribution started");
+        LOG.debug("Master task distribution started");
         List<TaskEntry> unassignedTasks = taskRepository.findByWorkerIsNull();
         List<NodeEntry> nodes = new ArrayList<>();
         nodes.addAll(nodeRepository.findAll());
@@ -154,7 +175,7 @@ public class MasterServiceImpl implements MasterService {
             }
         }
         taskRepository.save(unassignedTasks);
-        LOG.info("Master task distribution finished. {} tasks reassigned", unassignedTasks.size());
+        LOG.debug("Master task distribution finished. {} tasks reassigned", unassignedTasks.size());
     }
 
     private NodeEntry getNodeWithMaxAvailableBackupWorkers(List<NodeEntry> nodes) {
@@ -165,4 +186,17 @@ public class MasterServiceImpl implements MasterService {
         return nodes.stream().sorted((n1, n2) -> n2.getFreeRestoreWorkers() - n1.getFreeRestoreWorkers()).findFirst().get();
     }
 
+
+    private void terminatedNodeTaskReassign() {
+        Set<String> nodeIds = nodeRepository.findAll().stream().map(n -> n.getNodeId()).collect(Collectors.toSet());
+        List<TaskEntry> taskEntries = taskRepository.findByStatusNotAndRegular(TaskEntry.TaskEntryStatus.COMPLETE.toString(), Boolean.FALSE.toString());
+        List<TaskEntry> unassignedTasks = taskEntries.stream()
+                .filter(t -> !nodeIds.contains(t.getWorker()))
+                .peek(t -> {
+                    t.setWorker(null);
+                    t.setStatus(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.toString());
+                }).collect(Collectors.toList());
+        LOG.info("Reassigned {} tasks", unassignedTasks.size());
+        taskRepository.save(unassignedTasks);
+    }
 }

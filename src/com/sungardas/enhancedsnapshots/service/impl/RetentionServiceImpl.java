@@ -1,14 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
@@ -17,23 +8,20 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.RetentionReposito
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.RetentionDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
-import com.sungardas.enhancedsnapshots.service.BackupService;
-import com.sungardas.enhancedsnapshots.service.RetentionService;
-import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import com.sungardas.enhancedsnapshots.service.Task;
-import com.sungardas.enhancedsnapshots.service.VolumeService;
-
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.*;
+
 import static com.sungardas.enhancedsnapshots.dto.converter.RetentionConverter.toDto;
 import static com.sungardas.enhancedsnapshots.dto.converter.RetentionConverter.toEntry;
 
 @Service
-public class RetentionServiceImpl implements RetentionService {
+public class RetentionServiceImpl implements RetentionService, MasterInitialization {
 
     public static final String RETENTION_USER = "RETENTION POLICY";
 
@@ -59,8 +47,8 @@ public class RetentionServiceImpl implements RetentionService {
     @Autowired
     private ConfigurationMediator configurationMediator;
 
-    @PostConstruct
-    private void init() {
+    @Override
+    public void init() {
         schedulerService.addTask(getJob(this), configurationMediator.getRetentionCronExpression());
         try {
             apply();
