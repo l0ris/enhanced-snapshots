@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.PropertySource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
@@ -68,6 +69,7 @@ public class ContextManager {
         }
 
         LOG.info("Context refreshed successfully.");
+        SecurityContextHolder.clearContext();
         CONTEXT_REFRESH_IN_PROCESS = false;
     }
 

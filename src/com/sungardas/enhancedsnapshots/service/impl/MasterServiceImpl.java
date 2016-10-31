@@ -120,6 +120,7 @@ public class MasterServiceImpl implements MasterService {
 
 
     public void taskDistribution() {
+        LOG.info("Master task distribution started");
         List<TaskEntry> unassignedTasks = taskRepository.findByWorkerIsNull();
         List<NodeEntry> nodes = new ArrayList<>();
         nodes.addAll(nodeRepository.findAll());
@@ -153,6 +154,7 @@ public class MasterServiceImpl implements MasterService {
             }
         }
         taskRepository.save(unassignedTasks);
+        LOG.info("Master task distribution finished. {} tasks reassigned", unassignedTasks.size());
     }
 
     private NodeEntry getNodeWithMaxAvailableBackupWorkers(List<NodeEntry> nodes) {
