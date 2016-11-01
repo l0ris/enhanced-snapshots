@@ -47,7 +47,7 @@
 
                 <div class="full-width">
                     <h3>AWS Resources</h3>
-                    <div class="col-sm-12">
+                    <div class="col-sm-12" ng-show="settings.ec2Instance.instanceIDs">
                         <div class="col-sm-5 text-right">EC2 Instance IDs:</div>
                         <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceIDs || 'unknown'}}</div>
                     </div>
