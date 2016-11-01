@@ -223,6 +223,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
                 withTableNamePrefix(dbPrefix)).build();
         mapper = new DynamoDBMapper(amazonDynamoDB, config);
         tablesWithPrefix = Arrays.stream(tables).map(s -> dbPrefix.concat(s)).collect(Collectors.toList());
+        if (customBucketName != null) {
+            customBucketName = customBucketName.toLowerCase();
+        }
         if ((customBucketName.isEmpty() || CUSTOM_BUCKET_NAME_DEFAULT_VALUE.equals(customBucketName)) && !validateBucketName(customBucketName).isValid()) {
             customBucketName = null;
         }
