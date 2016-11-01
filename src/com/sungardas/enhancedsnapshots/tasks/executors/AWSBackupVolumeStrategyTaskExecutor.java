@@ -215,9 +215,16 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         notificationService.notifyAboutTaskProgress(dto);
 
         // kill initialization Process if it's alive, should be killed before volume detaching
-        killInitializationVolumeProcessIfAlive(tempVolume);
-        deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
-
+        try {
+            killInitializationVolumeProcessIfAlive(tempVolume);
+        } catch (Exception e1) {
+            LOG.error("Killing initialization process failed", e1);
+        }
+        try {
+            deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
+        } catch (Exception e1) {
+            LOG.error("Delete temp resources failed", e1);
+        }
         dto.setMessage("Done");
         dto.setProgress(100);
         notificationService.notifyAboutTaskProgress(dto);
@@ -411,7 +418,7 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
                     // fio processes are alive
                     LOG.info("Fio processes for volume {} are alive", volume.getVolumeId());
                     Process process = new ProcessBuilder("pkill", "-f", fioProcNamePrefix).start();
-                    process.waitFor();
+                    process.waitFor(3, TimeUnit.MINUTES);
                     switch (process.exitValue()) {
                         case 0:
                             LOG.info("Fio processes for volume {} terminated", volume.getVolumeId());

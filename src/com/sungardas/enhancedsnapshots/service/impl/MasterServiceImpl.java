@@ -30,7 +30,8 @@ public class MasterServiceImpl implements MasterService {
     private static final Logger LOG = LogManager.getLogger(MasterServiceImpl.class);
     private static final String TASK_DISTRIBUTION_ID = "taskDistribution";
     private static final String METRIC_UPDATE_ID = "metricUpdate";
-    private static final String TERMINATED_NODE_TASK_REASSIGN_ID = "terminatedReassing";
+    private static final String TERMINATED_NODE_TASK_REASSIGN_ID = "terminatedReassign";
+    private static final String MASTER_STATUS_CHECK = "masterStatusCheck";
 
     @Autowired
     private ConfigurationMediator configurationMediator;
@@ -56,47 +57,70 @@ public class MasterServiceImpl implements MasterService {
         if (configurationMediator.isClusterMode() && nodeRepository.findOne(SystemUtils.getInstanceId()).isMaster()) {
             LOG.info("Master node initialization");
             startBroker();
-            schedulerService.addTask(new Task() {
-                @Override
-                public void run() {
-                    taskDistribution();
-                }
+            if (!schedulerService.exists(TASK_DISTRIBUTION_ID)) {
+                schedulerService.addTask(new Task() {
+                    @Override
+                    public void run() {
+                        taskDistribution();
+                    }
 
-                @Override
-                public String getId() {
-                    return TASK_DISTRIBUTION_ID;
-                }
-            }, new CronTrigger("*/30 * * * * *"));
+                    @Override
+                    public String getId() {
+                        return TASK_DISTRIBUTION_ID;
+                    }
+                }, new CronTrigger("*/30 * * * * *"));
+            }
 
-            schedulerService.addTask(new Task() {
-                @Override
-                public void run() {
-                    terminatedNodeTaskReassign();
-                }
+            if (!schedulerService.exists(TERMINATED_NODE_TASK_REASSIGN_ID)) {
+                schedulerService.addTask(new Task() {
+                    @Override
+                    public void run() {
+                        terminatedNodeTaskReassign();
+                    }
 
-                @Override
-                public String getId() {
-                    return TERMINATED_NODE_TASK_REASSIGN_ID;
-                }
-            }, new CronTrigger("0 */5 * * * *"));
+                    @Override
+                    public String getId() {
+                        return TERMINATED_NODE_TASK_REASSIGN_ID;
+                    }
+                }, new CronTrigger("0 */5 * * * *"));
+            }
 
-            schedulerService.addTask(new Task() {
-                @Override
-                public String getId() {
-                    return METRIC_UPDATE_ID;
-                }
+            if (!schedulerService.exists(METRIC_UPDATE_ID)) {
+                schedulerService.addTask(new Task() {
+                    @Override
+                    public String getId() {
+                        return METRIC_UPDATE_ID;
+                    }
 
-                @Override
-                public void run() {
-                    clusterConfigurationService.updateCloudWatchMetric();
-                }
-            }, "*/1 * * * *");
+                    @Override
+                    public void run() {
+                        clusterConfigurationService.updateCloudWatchMetric();
+                    }
+                }, "*/1 * * * *");
+            }
 
             masterInitializations.forEach(MasterInitialization::init);
 
             LOG.info("Master node initialization finished");
         } else if (!configurationMediator.isClusterMode()) {
             masterInitializations.forEach(MasterInitialization::init);
+        } else if (SystemUtils.clusterMode()) {
+            if (!schedulerService.exists(MASTER_STATUS_CHECK)) {
+                schedulerService.addTask(new Task() {
+                    @Override
+                    public String getId() {
+                        return MASTER_STATUS_CHECK;
+                    }
+
+                    @Override
+                    public void run() {
+                        NodeEntry nodeEntry = nodeRepository.findOne(SystemUtils.getInstanceId());
+                        if (nodeEntry.isMaster()) {
+                            init();
+                        }
+                    }
+                }, "*/2 * * * *");
+            }
         }
     }
 

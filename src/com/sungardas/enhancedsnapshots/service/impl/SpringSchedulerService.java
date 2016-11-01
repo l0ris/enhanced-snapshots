@@ -103,6 +103,11 @@ public class SpringSchedulerService implements SchedulerService, MasterInitializ
         return result;
     }
 
+    @Override
+    public boolean exists(String taskId) {
+        return jobs.containsKey(taskId);
+    }
+
     private class TaskImpl implements Task {
 
         private TaskEntry taskEntry;
