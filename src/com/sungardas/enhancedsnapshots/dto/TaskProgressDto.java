@@ -9,7 +9,7 @@ public class TaskProgressDto implements Dto {
 
     private double progress;
 
-    private TaskEntryStatus status;
+    private String status;
 
     public TaskProgressDto() {
     }
@@ -18,7 +18,7 @@ public class TaskProgressDto implements Dto {
         this.taskId = taskId;
         this.message = message;
         this.progress = progress;
-        this.status = status;
+        this.status = status.getStatus();
     }
 
     public String getTaskId() {
@@ -45,18 +45,18 @@ public class TaskProgressDto implements Dto {
         this.progress = progress;
     }
 
-    public TaskEntryStatus getStatus() {
+    public String getStatus() {
         return status;
     }
 
     public void setStatus(TaskEntryStatus status) {
-        this.status = status;
+        this.status = status.getStatus();
     }
 
     public void addProgress(double progress) {
         this.progress += progress;
-        if (progress > 100) {
-            progress = 100;
+        if (this.progress > 100) {
+            this.progress = 100;
         }
     }
 }
