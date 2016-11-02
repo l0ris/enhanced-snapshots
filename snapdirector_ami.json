@@ -52,8 +52,7 @@
         "ansible/roles/nginx",
         "ansible/roles/awslogs",
         "ansible/roles/logrotate",
-        "ansible/roles/fio",
-        "ansible/roles/copycat"
+        "ansible/roles/fio"
       ]
           },
     {

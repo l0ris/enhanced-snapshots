@@ -2,7 +2,6 @@
 /opt/tomcat-latest/logs/catalina.out
 /opt/tomcat-latest/logs/*.log
 /var/log/sdfs/*.log
-/var/log/copycat/*.log
 {
         copytruncate
         daily
