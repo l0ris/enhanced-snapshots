@@ -1,22 +1,17 @@
 package com.sungardas.enhancedsnapshots.components.logwatcher;
 
-import com.sungardas.enhancedsnapshots.cluster.ClusterEventPublisher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.commons.io.input.Tailer;
-
 import org.apache.commons.io.input.TailerListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.util.Collections.*;
+import static java.util.Collections.reverse;
 
 
 @Service
