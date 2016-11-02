@@ -15,6 +15,7 @@ public class SystemConfiguration {
     private MailConfigurationDto mailConfiguration;
     private Cluster cluster;
     private boolean clusterMode;
+    private String UUID;
 
 
     public Cluster getCluster() {
@@ -115,6 +116,14 @@ public class SystemConfiguration {
 
     public MailConfigurationDto getMailConfiguration() {
         return mailConfiguration;
+    }
+
+    public String getUUID() {
+        return UUID;
+    }
+
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
     }
 
     public void setMailConfiguration(MailConfigurationDto mailConfiguration) {

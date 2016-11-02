@@ -239,4 +239,14 @@ public class ConfigurationMediatorImpl implements ConfigurationMediatorConfigura
     public String getSdfsCliPsw() {
         return currentConfiguration.getSdfsCliPsw();
     }
+
+    @Override
+    public String getUUID() {
+        return currentConfiguration.getUUID();
+    }
+
+    @Override
+    public boolean isSungardasSSO() {
+        return currentConfiguration.isSungardasSSO();
+    }
 }

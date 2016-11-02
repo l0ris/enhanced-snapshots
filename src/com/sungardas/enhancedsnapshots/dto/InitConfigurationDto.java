@@ -1,9 +1,9 @@
 package com.sungardas.enhancedsnapshots.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Collections;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class InitConfigurationDto {
     private List<S3> s3 = Collections.EMPTY_LIST;
@@ -11,6 +11,7 @@ public class InitConfigurationDto {
     private DB db;
     private String immutableBucketNamePrefix;
     private boolean clusterMode;
+    private String UUID;
 
     public List<S3> getS3() {
         return s3;
@@ -42,6 +43,15 @@ public class InitConfigurationDto {
 
     public void setClusterMode(boolean clusterMode) {
         this.clusterMode = clusterMode;
+    }
+
+
+    public String getUUID() {
+        return UUID;
+    }
+
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
     }
 
     public static class S3 {

@@ -287,6 +287,7 @@ public class SystemServiceImpl implements SystemService {
         clusterDto.setMinNodeNumber(configurationMediator.getMinNodeNumberInCluster());
         configuration.setCluster(clusterDto);
         configuration.setClusterMode(configurationMediator.isClusterMode());
+        configuration.setUUID(configurationMediator.getUUID());
         return configuration;
     }
 
@@ -301,6 +302,7 @@ public class SystemServiceImpl implements SystemService {
         LOG.info("Updating system properties.");
         // mail configuration
         boolean mailReconnect = false;
+        configuration.setUUID(currentConfiguration.getUUID());
         if (configuration.getMailConfiguration() == null) {
             currentConfiguration.setMailConfigurationDocument(null);
             mailService.disconnect();

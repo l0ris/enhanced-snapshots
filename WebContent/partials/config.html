@@ -6,7 +6,6 @@
                     <h2 class="panel-title">Settings</h2>
                 </div>
                 <div class="panel-body">
-
                     <div class="form-horizontal" ng-show="settings && isValidInstance">
                         <form name="configs">
                             <div class="flex-container card">
@@ -169,9 +168,17 @@
                                             <input type="text" class="form-control" ng-model="$parent.entityId"
                                                    name="entityId" ng-required="isSSO">
 
-                                            <p class="text-muted">4. Administrator E-mail</p>
+                                            <p class="text-muted">4. Administrator E-mail
                                             <input type="email" class="form-control" ng-model="$parent.adminEmail"
                                                    name="adminEmail" ng-required="isSSO">
+
+                                            <span class="text-muted"> 5.
+                                                <input type="checkbox" class="chb" ng-model="$parent.sungardasSSO"
+                                                   name="sungardasSSO"> Enable SungardAS SSO
+                                            </span>
+                                            <div class="pull-left">
+                                                <span ng-show="$parent.sungardasSSO" class="label label-success pull-right">UUID: {{settings.uuid}}</span>
+                                            </div>
                                         </form>
                                     </div>
                                 </div>

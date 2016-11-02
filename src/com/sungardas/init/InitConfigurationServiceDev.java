@@ -120,6 +120,8 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         config.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
 
         config.setClusterMode(SystemUtils.clusterMode());
+        config.setUUID(UUID);
+
         return config;
     }
 

@@ -17,7 +17,6 @@
 </div>
 <div class="table-header-placeholder"></div>
 
-
 <div class="container app" ng-show="progressState !== 'loading'">
 
     <div class="card">
@@ -212,6 +211,10 @@
                                        ng-model="settings.systemProperties.storeSnapshots"
                                        name="storeSnapshots">
                             </div>
+                        </div>
+                        <div class="col-sm-12 form-group" ng-show="settings.sungardasSSO" >
+                            <div class="col-sm-5 text-right">SungardAS SSO UUID:</div>
+                            <div class="col-sm-7 text-left">{{settings.uuid}}</div>
                         </div>
 
                         <div class="col-sm-12 form-group">
