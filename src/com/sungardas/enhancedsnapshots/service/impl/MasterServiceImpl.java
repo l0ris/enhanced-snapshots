@@ -6,19 +6,20 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.service.*;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +51,12 @@ public class MasterServiceImpl implements MasterService {
     @Autowired
     private List<MasterInitialization> masterInitializations;
 
+    @Value("${enhancedsnapshots.default.backup.threadPool.size}")
+    private int backupThreadPoolSize;
+
+    @Value("${enhancedsnapshots.default.restore.threadPool.size}")
+    private int restoreThreadPoolSize;
+
 
     @Override
     @PostConstruct
@@ -68,7 +75,7 @@ public class MasterServiceImpl implements MasterService {
                     public String getId() {
                         return TASK_DISTRIBUTION_ID;
                     }
-                }, new CronTrigger("*/30 * * * * *"));
+                }, new CronTrigger("*/20 * * * * *"));
             }
 
             if (!schedulerService.exists(TERMINATED_NODE_TASK_REASSIGN_ID)) {
@@ -167,8 +174,7 @@ public class MasterServiceImpl implements MasterService {
     public void taskDistribution() {
         LOG.debug("Master task distribution started");
         List<TaskEntry> unassignedTasks = taskRepository.findByWorkerIsNull();
-        List<NodeEntry> nodes = new ArrayList<>();
-        nodes.addAll(nodeRepository.findAll());
+        List<NodeEntry> nodes = getNodes();
         for (TaskEntry t : unassignedTasks) {
             if (TaskEntry.TaskEntryType.RESTORE.getType().equals(t.getType())) {
                 NodeEntry node = getNodeWithMaxAvailableRestoreWorkers(nodes);
@@ -222,5 +228,24 @@ public class MasterServiceImpl implements MasterService {
                 }).collect(Collectors.toList());
         LOG.info("Reassigned {} tasks", unassignedTasks.size());
         taskRepository.save(unassignedTasks);
+    }
+
+    public List<NodeEntry> getNodes() {
+        List<NodeEntry> nodes = nodeRepository.findAll();
+        for (NodeEntry node : nodes) {
+            List<TaskEntry> assignedTasks = taskRepository.findByWorkerAndProgressNot(node.getNodeId(), TaskProgress.DONE);
+            node.setFreeBackupWorkers((int) (backupThreadPoolSize - assignedTasks.stream()
+                    .filter(t -> TaskEntry.TaskEntryType.BACKUP.getType().equals(t.getType()))
+                    .count())
+            );
+
+            node.setFreeRestoreWorkers((int) (restoreThreadPoolSize - assignedTasks.stream()
+                    .filter(t -> TaskEntry.TaskEntryType.RESTORE.getType().equals(t.getType()))
+                    .count())
+            );
+        }
+
+
+        return nodes;
     }
 }
