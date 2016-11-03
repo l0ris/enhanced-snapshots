@@ -89,6 +89,8 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
                 restoreFromBackupFile(taskEntry);
             }
             completeTask(taskEntry);
+        } catch (EnhancedSnapshotsTaskInterruptedException e) {
+            interruptedCleaningStep(taskEntry);
         } catch (EnhancedSnapshotsInterruptedException e) {
             if (!configurationMediator.isClusterMode()) {
                 interruptedCleaningStep(taskEntry);
@@ -118,10 +120,12 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
                     taskEntry.getRestoreVolumeIopsPerGb());
             awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + taskEntry.getVolume());
             awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
+            setProgress(taskEntry, TaskProgress.DONE);
         } catch (EnhancedSnapshotsTaskInterruptedException e) {
             LOG.info("Restore task was canceled");
             taskRepository.delete(taskEntry);
             mailService.notifyAboutSystemStatus("Restore task for volume with id" + taskEntry.getVolume() + " was canceled");
+            setProgress(taskEntry, TaskProgress.DONE);
         }
     }
 
@@ -221,7 +225,6 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
             awsCommunication.setResourceName(tempVolume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getFileName());
             awsCommunication.addTag(tempVolume.getVolumeId(), "Created by", "Enhanced Snapshots");
         }
-
     }
 
     private Volume creationTempVolumeStep(TaskEntry taskEntry, BackupEntry backupEntry) {
@@ -280,6 +283,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
 
     private void completeTask(TaskEntry taskEntry) {
         notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Restore complete", 100);
+        taskEntry.setProgress(TaskProgress.DONE);
         taskService.complete(taskEntry);
         LOG.info("{} task {} was completed", taskEntry.getType(), taskEntry.getId());
         mailService.notifyAboutSuccess(taskEntry);

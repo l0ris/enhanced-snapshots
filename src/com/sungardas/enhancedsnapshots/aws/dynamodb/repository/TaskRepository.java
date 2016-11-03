@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.aws.dynamodb.repository;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
 import org.socialsignin.spring.data.dynamodb.repository.EnableScanCount;
 import org.springframework.data.repository.CrudRepository;
@@ -28,13 +29,11 @@ public interface TaskRepository extends CrudRepository<TaskEntry, String> {
 
     Long countByRegularAndTypeAndStatus(String regular, String type, String status);
 
-    List<TaskEntry> findByWorker(String worker);
+    List<TaskEntry> findByWorkerAndProgressNot(String worker, TaskProgress progress);
 
     List<TaskEntry> findByWorkerIsNull();
 
     default void save(List<TaskEntry> tasks) {
-        for (TaskEntry taskEntry : tasks) {
-            this.save(taskEntry);
-        }
+        tasks.forEach(this::save);
     }
 }
