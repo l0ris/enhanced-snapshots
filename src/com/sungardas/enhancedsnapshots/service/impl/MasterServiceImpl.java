@@ -233,7 +233,7 @@ public class MasterServiceImpl implements MasterService {
     public List<NodeEntry> getNodes() {
         List<NodeEntry> nodes = nodeRepository.findAll();
         for (NodeEntry node : nodes) {
-            List<TaskEntry> assignedTasks = taskRepository.findByWorkerAndProgressNot(node.getNodeId(), TaskProgress.DONE);
+            List<TaskEntry> assignedTasks = taskRepository.findByWorkerAndProgressNot(node.getNodeId(), TaskProgress.DONE.name());
             node.setFreeBackupWorkers((int) (backupThreadPoolSize - assignedTasks.stream()
                     .filter(t -> TaskEntry.TaskEntryType.BACKUP.getType().equals(t.getType()))
                     .count())
