@@ -1,8 +1,10 @@
 package com.sungardas.enhancedsnapshots.ws;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +20,8 @@ import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
 import org.springframework.web.socket.config.annotation.AbstractWebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+
+import java.util.List;
 
 
 @Configuration
@@ -43,7 +47,13 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer im
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         if (configurationMediator.isClusterMode()) {
-            String masterId = nodeRepository.findByMaster(true).get(0).getNodeId();
+            List<NodeEntry> nodeEntries = nodeRepository.findByMaster(true);
+            String masterId;
+            if (nodeEntries.isEmpty()) {
+                masterId = SystemUtils.getInstanceId();
+            } else {
+                masterId = nodeEntries.get(0).getNodeId();
+            }
             config.enableStompBrokerRelay(ERROR_DESTINATION, TASK_PROGRESS_DESTINATION, LOGS_DESTINATION)
                     .setRelayHost(awsCommunicationService.getDNSName(masterId)).setRelayPort(brokerPort);
         } else {
