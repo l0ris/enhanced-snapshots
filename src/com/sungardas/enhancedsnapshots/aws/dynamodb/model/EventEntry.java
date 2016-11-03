@@ -6,7 +6,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.ClusterEventMarshaller;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.TaskProgressMarshaller;
 import com.sungardas.enhancedsnapshots.cluster.ClusterEvents;
 
 @DynamoDBTable(tableName = "Events")
