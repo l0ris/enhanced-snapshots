@@ -22,8 +22,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
-
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -100,7 +108,7 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
                 LOG.info("Restoring saml certificate and ipd metadata", 90);
                 restoreSSOFiles(tempDirectory);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("System restore failed");
             LOG.error(e);
             throw new EnhancedSnapshotsException(e);
@@ -143,8 +151,23 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
         currentConfiguration = dynamoDBMapper.load(Configuration.class, SystemUtils.getSystemId());
     }
 
-    private void restoreSDFS(final Path tempDirectory) throws IOException {
+    private void restoreSDFS(final Path tempDirectory) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
         restoreFile(tempDirectory, Paths.get(currentConfiguration.getSdfsConfigPath()));
+        if (currentConfiguration.isClusterMode() && (currentConfiguration.getChunkStoreIV() == null || currentConfiguration.getChunkStoreEncryptionKey() == null)) {
+            DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            File sdfsConfig = new File(currentConfiguration.getSdfsConfigPath());
+            Document document = documentBuilder.parse(sdfsConfig);
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath ivXPath = xPathFactory.newXPath();
+            XPath keyXPath = xPathFactory.newXPath();
+            XPathExpression ivExpression = ivXPath.compile("/subsystem-config/local-chunkstore/@encryption-iv");
+            XPathExpression keyExpression = keyXPath.compile("/subsystem-config/local-chunkstore/@encryption-key");
+            currentConfiguration.setChunkStoreIV(ivExpression.evaluate(document));
+            currentConfiguration.setChunkStoreEncryptionKey(keyExpression.evaluate(document));
+            currentConfiguration.setSdfsCliPsw(SystemUtils.getSystemId());
+            dynamoDBMapper.save(currentConfiguration);
+            sdfsConfig.delete();
+        }
     }
 
 
