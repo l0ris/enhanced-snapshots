@@ -34,6 +34,28 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         return deferred.promise;
     }];
 
+    var doRefresh = ['Users', '$q', 'Storage', function (Users, $q, Storage) {
+        var deferred = $q.defer();
+
+        Users.refreshCurrent().then(function (data) {
+            if (data.status === 302) {
+                Storage.save("ssoMode", {"ssoMode": false});
+            }
+            deferred.resolve(false)
+        }, function (rejection) {
+            if (rejection.status === 401) {
+                var isSso = rejection.data &&
+                    rejection.data.loginMode &&
+                    rejection.data.loginMode === "SSO";
+
+                deferred.resolve(isSso);
+            }
+            deferred.resolve(false)
+        });
+
+        return deferred.promise;
+    }];
+
     $stateProvider
         .state('app', {
             abstract: true,
@@ -116,7 +138,10 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         .state('login', {
             url: "/login?err",
             templateUrl: "partials/login.html",
-            controller: "LoginController"
+            controller: "LoginController",
+            resolve: {
+                refreshUserResult: doRefresh
+            }
         })
         .state('registration', {
             url: "/registration",
@@ -130,17 +155,20 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
     .run(['$rootScope', '$state', '$modal', '$stomp', 'toastr', 'Storage', 'Users', 'System', '$q',
         function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users, System, $q) {
         $rootScope.isLoading = true;
-        var promises = [System.get(), Users.refreshCurrent()];
-        $q.all(promises).then(function (results) {
-            if (results[0].ssoMode != undefined) {
-                Storage.save("ssoMode", {"ssoMode": results[0].ssoMode});
+
+        System.get().then(function (results) {
+            //response for System.get
+            if (results.ssoMode != undefined) {
+                Storage.save("ssoMode", {"ssoMode": results.ssoMode});
             }
 
-            if (results[1].data && results[1].data.email) {
-                $state.go('app.volume.list');
-            }
+            //response for Users.refreshCurrent
+            // if (results[1].data && results[1].data.email) {
+            //     $state.go('app.volume.list');
+            // }
             $rootScope.isLoading = false;
-        }, function () {
+        }, function (err) {
+            console.log(err);
             $rootScope.isLoading = false;
         });
 

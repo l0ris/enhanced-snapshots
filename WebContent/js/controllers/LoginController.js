@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', ['$scope', '$state', '$stateParams', '$stomp', 'Auth', 'System', 'Storage', 'toastr', '$window',
-        function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr, $window) {
+    .controller('LoginController', ['$scope', '$state', '$stateParams', '$stomp', 'Auth', 'System', 'Storage', 'toastr', '$window', 'refreshUserResult',
+        function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr, $window, refreshUserResult) {
 
         //LOGGING OUT ---------------------
         if ($stateParams.err && $stateParams.err == 'session') {
@@ -28,7 +28,13 @@ angular.module('web')
         //------------------------------------
 
         // Show loader instead of login page if ssoMode is true ----------
-            $scope.isLoading = !!(ssoMode && ssoMode.ssoMode);
+            if (refreshUserResult) {
+                $scope.isLoading = true;
+                window.location = "/saml/login";
+            } else {
+                $scope.isLoading = !!(ssoMode && ssoMode.ssoMode);
+            }
+
         //---------------------------------------------
 
         $scope.clearErr = function () {
