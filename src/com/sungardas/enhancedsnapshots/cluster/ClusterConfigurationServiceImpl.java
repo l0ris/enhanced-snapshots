@@ -75,17 +75,19 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
 
     @PostConstruct
     private void init() {
-        if (configurationMediator.isClusterMode() && !clusterIsConfigured()) {
-            configureClusterInfrastructure();
-            nodeRepository.save(getMasterNodeInfo());
-        } else if (configurationMediator.isClusterMode() && nodeRepository.findOne(SystemUtils.getInstanceId()) == null) {
-            joinCluster();
-        } else if (nodeRepository.findByMaster(true).isEmpty()) {
-            NodeEntry node = nodeRepository.findOne(SystemUtils.getInstanceId());
-            if (node == null) {
-                node = getMasterNodeInfo();
+        if (configurationMediator.isClusterMode()) {
+            if (!clusterIsConfigured()) {
+                configureClusterInfrastructure();
+                nodeRepository.save(getMasterNodeInfo());
+            } else if (nodeRepository.findOne(SystemUtils.getInstanceId()) == null) {
+                joinCluster();
+            } else if (nodeRepository.findByMaster(true).isEmpty()) {
+                NodeEntry node = nodeRepository.findOne(SystemUtils.getInstanceId());
+                if (node == null) {
+                    node = getMasterNodeInfo();
+                }
+                nodeRepository.save(node);
             }
-            nodeRepository.save(node);
         }
     }
 
