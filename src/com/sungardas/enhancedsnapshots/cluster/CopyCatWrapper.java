@@ -6,7 +6,6 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.NodeEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CopyCatWrapper implements ClusterEventListener {
 
     private static final Logger LOG = LogManager.getLogger(CopyCatWrapper.class);
-
-    private static String COPYCAT_SYNC_CMD = "sdfscli --sync-remote-cloud-volume={VOLUME_ID} --password={PASSWORD}";
 
     @Autowired
     private ConfigurationMediator configurationMediator;
@@ -52,26 +49,12 @@ public class CopyCatWrapper implements ClusterEventListener {
                     deleteCopyCatTempData(node.getSdfsVolumeId());
                     Server server = new Server(node.getSdfsVolumeId(), hostName, port, configurationMediator.getConfigurationId(), true, true);
                     serverMap.put(node.getNodeId(), server);
-                    synchronizeSdfsVolumes(node);
                 } catch (Exception e) {
                     LOG.error("CopyCat server start failed", e);
                 }
             }
         }
 
-    }
-
-    private void synchronizeSdfsVolumes(NodeEntry node) {
-        try {
-            LOG.info("Synchronization with volume {} started", node.getSdfsVolumeId());
-            Process process = Runtime.getRuntime().exec(COPYCAT_SYNC_CMD
-                    .replace("{VOLUME_ID}", node.getSdfsVolumeId()+"")
-                    .replace("{PASSWORD}", SystemUtils.getSystemId()));
-            process.waitFor();
-            LOG.info("Synchronization with volume {} finished", node.getSdfsVolumeId());
-        } catch (Exception e) {
-            LOG.error("Synchronization with volume failed", e);
-        }
     }
 
     private void deleteCopyCatTempData(long volumeId) {

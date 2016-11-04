@@ -252,16 +252,6 @@ public class TaskEntry {
         this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
-    @DynamoDBIgnore
-    public TaskProgress getProgress() {
-        return TaskProgress.valueOf(progress);
-    }
-
-    @DynamoDBIgnore
-    public void setProgress(final TaskProgress progress) {
-        this.progress = progress.name();
-    }
-
     public void setProgress(String progress) {
         this.progress = progress;
     }
@@ -289,6 +279,10 @@ public class TaskEntry {
 
     public void setTempSnapshotId(final String tempSnapshotId) {
         this.tempSnapshotId = tempSnapshotId;
+    }
+
+    public TaskProgress progress() {
+        return TaskProgress.valueOf(progress);
     }
 
     public enum TaskEntryType {
