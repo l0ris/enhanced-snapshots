@@ -16,7 +16,7 @@ public class SAMLAuthenticationProviderImpl extends SAMLAuthenticationProvider {
 
     private static final Logger LOG = LogManager.getLogger(SAMLAuthenticationProviderImpl.class);
 
-    private static final String ALLOWED_LIST_ATTRIBUTE_NAME = "essaccesslist";
+    private static final String ALLOWED_LIST_ATTRIBUTE_NAME = "ess_instance_guids";
 
     private static final String ADMIN_WILDCARD_EXP = "*";
 
