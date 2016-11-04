@@ -256,6 +256,10 @@ public class TaskEntry {
         this.progress = progress;
     }
 
+    public String getProgress() {
+        return progress;
+    }
+
     public String getTempVolumeId() {
         return tempVolumeId;
     }
