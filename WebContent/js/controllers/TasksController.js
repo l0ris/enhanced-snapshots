@@ -66,7 +66,7 @@ angular.module('web')
 
         var updateTaskStatus = function (msg) {
             var task = $scope.tasks.filter(function (t) {
-                return t.id == msg.taskId && msg.status != "COMPLETE";
+                return t.id == msg.taskId && msg.status != "complete";
             })[0];
 
             if (task) {
@@ -76,6 +76,7 @@ angular.module('web')
                     $timeout(function() {
                         task.progress = msg.progress;
                         task.message = msg.message;
+                        task.status = msg.status;
                     }, 0);
 
                     if (msg.progress == 100) {

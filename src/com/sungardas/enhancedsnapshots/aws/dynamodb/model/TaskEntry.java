@@ -3,10 +3,8 @@ package com.sungardas.enhancedsnapshots.aws.dynamodb.model;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.util.json.Jackson;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.Marshaller.TaskProgressMarshaller;
 import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 
 
@@ -72,8 +70,7 @@ public class TaskEntry {
     private int restoreVolumeIopsPerGb;
 
     @DynamoDBAttribute
-    @DynamoDBMarshalling(marshallerClass = TaskProgressMarshaller.class)
-    private TaskProgress progress = TaskProgress.NONE;
+    private String progress = TaskProgress.NONE.name();
 
     @DynamoDBAttribute
     private String tempVolumeId;
@@ -255,11 +252,17 @@ public class TaskEntry {
         this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
+    @DynamoDBIgnore
     public TaskProgress getProgress() {
-        return progress;
+        return TaskProgress.valueOf(progress);
     }
 
+    @DynamoDBIgnore
     public void setProgress(final TaskProgress progress) {
+        this.progress = progress.name();
+    }
+
+    public void setProgress(String progress) {
         this.progress = progress;
     }
 

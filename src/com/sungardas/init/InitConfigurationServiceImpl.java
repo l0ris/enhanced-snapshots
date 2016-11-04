@@ -212,6 +212,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private List<String> tablesWithPrefix;
     private String dbPrefix;
 
+    protected static final String UUID = java.util.UUID.randomUUID().toString();
+
     @PostConstruct
     protected void init() {
         configureAWSLogAgent();
@@ -270,9 +272,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
                 conf.setClusterMode(true);
                 conf.setMinNodeNumber(config.getCluster().getMinNodeNumber());
                 conf.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
-                conf.setSdfsCliPsw(SystemUtils.getSystemId());
-                conf.setChunkStoreEncryptionKey(SDFSStateService.generateChunkStoreEncryptionKey());
-                conf.setChunkStoreIV(SDFSStateService.generateChunkStoreIV());
                 mapper.save(conf);
             }
 
@@ -532,6 +531,12 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             configuration.setChunkStoreIV(SDFSStateService.generateChunkStoreIV());
             configuration.setSdfsCliPsw(SystemUtils.getSystemId());
         }
+        if (System.getenv("UUID") != null && !System.getenv("UUID").isEmpty()) {
+            configuration.setUUID(System.getenv("UUID"));
+        } else {
+            configuration.setUUID(UUID);
+        }
+        configuration.setSungardasSSO(config.isSungardasSSO());
         // saving configuration to DB
         mapper.save(configuration);
     }
@@ -672,6 +677,12 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         initConfigurationDto.setSdfs(sdfs);
         initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix002);
         initConfigurationDto.setClusterMode(SystemUtils.clusterMode());
+
+        if (System.getenv("UUID") != null && !System.getenv("UUID").isEmpty()) {
+            initConfigurationDto.setUUID(System.getenv("UUID"));
+        } else {
+            initConfigurationDto.setUUID(UUID);
+        }
         return initConfigurationDto;
     }
 

@@ -56,65 +56,69 @@ public class ClusterEventService implements Runnable {
 
 
     public void run() {
-        while (configurationMediator.isClusterMode()) {
-            List<EventEntry> events = eventsRepository.findByTimeGreaterThan(lastCheckTime);
-            try {
-                for (EventEntry eventEntry : events) {
-                    ClusterEvents event = eventEntry.getEvent();
-                    switch (event) {
-                        case NODE_LAUNCHED: {
-                            NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
-                            LOG.info("node launched event: {}", eventEntry.toString());
-                            listeners.forEach(l -> l.launched(eventEntry));
-                            break;
-                        }
-                        case NODE_TERMINATED: {
-                            List<NodeEntry> masters = nodeRepository.findByMaster(true);
-                            if(masters.size() > 1) {
-                                LOG.warn("System has more than one master[{}]", masters);
-                            }
-                            // check whether terminated node was master one and current node should become a new master
-                            if (masters.size() == 0 && StreamSupport.stream(nodeRepository.findAll().spliterator(), false)
-                                    .sorted(Comparator.comparing(node -> node.getNodeId()))
-                                    .findFirst().get().getNodeId().toLowerCase().equals(SystemUtils.getInstanceId().toLowerCase())) {
-                                NodeEntry currentNode = nodeRepository.findOne(SystemUtils.getInstanceId());
-                                currentNode.setMaster(true);
-                                masterService.init();
-                                nodeRepository.save(currentNode);
-                                clusterEventPublisher.masterNodeChanged();
-                            }
-                            LOG.info("Node terminated event: {}", eventEntry.toString());
-                            listeners.forEach(l -> l.terminated(eventEntry));
-                            break;
-                        }
-                        case SETTINGS_UPDATED: {
-                            systemService.refreshSystemConfiguration();
-                            LOG.info("System settings synchronized with DB");
-                            break;
-                        }
-                        case LOGS_WATCHER_STARTED: {
-                            logsWatcherService.start();
-                            break;
-                        }
-                        case MASTER_NODE_CHANGED: {
-                            // All node in cluster use embedded broker on master node for User notification
-                            // in case master node was changed all nodes in cluster must reconfigure their WebSocket configuration
-                            webSocketConfig.updateWebSocketConfiguration();
-                            break;
-                        }
-                        default: {
-                            LOG.warn("Unknown event type: {}", event);
-                            break;
-                        }
+        while (configurationMediator.isClusterMode() && !Thread.interrupted()) {
+            iterate();
+            sleep();
+        }
+    }
+
+    private void iterate() {
+        List<EventEntry> events = eventsRepository.findByTimeGreaterThan(lastCheckTime);
+        try {
+            for (EventEntry eventEntry : events) {
+                ClusterEvents event = eventEntry.getEvent();
+                switch (event) {
+                    case NODE_LAUNCHED: {
+                        NodeEntry nodeEntry = nodeRepository.findOne(eventEntry.getInstanceId());
+                        LOG.info("node launched event: {}", eventEntry.toString());
+                        listeners.forEach(l -> l.launched(eventEntry));
+                        break;
                     }
-                    if (eventEntry.getTime() > lastCheckTime) {
-                        lastCheckTime = eventEntry.getTime();
+                    case NODE_TERMINATED: {
+                        List<NodeEntry> masters = nodeRepository.findByMaster(true);
+                        if (masters.size() > 1) {
+                            LOG.warn("System has more than one master[{}]", masters);
+                        }
+                        // check whether terminated node was master one and current node should become a new master
+                        if (masters.size() == 0 && StreamSupport.stream(nodeRepository.findAll().spliterator(), false)
+                                .sorted(Comparator.comparing(node -> node.getNodeId()))
+                                .findFirst().get().getNodeId().toLowerCase().equals(SystemUtils.getInstanceId().toLowerCase())) {
+                            NodeEntry currentNode = nodeRepository.findOne(SystemUtils.getInstanceId());
+                            currentNode.setMaster(true);
+                            masterService.init();
+                            nodeRepository.save(currentNode);
+                            clusterEventPublisher.masterNodeChanged();
+                        }
+                        LOG.info("Node terminated event: {}", eventEntry.toString());
+                        listeners.forEach(l -> l.terminated(eventEntry));
+                        break;
+                    }
+                    case SETTINGS_UPDATED: {
+                        systemService.refreshSystemConfiguration();
+                        LOG.info("System settings synchronized with DB");
+                        break;
+                    }
+                    case LOGS_WATCHER_STARTED: {
+                        logsWatcherService.start();
+                        break;
+                    }
+                    case MASTER_NODE_CHANGED: {
+                        // All node in cluster use embedded broker on master node for User notification
+                        // in case master node was changed all nodes in cluster must reconfigure their WebSocket configuration
+                        webSocketConfig.updateWebSocketConfiguration();
+                        break;
+                    }
+                    default: {
+                        LOG.warn("Unknown event type: {}", event);
+                        break;
                     }
                 }
-            } catch (Exception e) {
-                LOG.error("Unable to process cluster event", e);
+                if (eventEntry.getTime() > lastCheckTime) {
+                    lastCheckTime = eventEntry.getTime();
+                }
             }
-            sleep();
+        } catch (Exception e) {
+            LOG.error("Unable to process cluster event", e);
         }
     }
 
@@ -122,7 +126,10 @@ public class ClusterEventService implements Runnable {
     @PostConstruct
     public void startListener() {
         if (configurationMediator.isClusterMode()) {
-            lastCheckTime = System.currentTimeMillis();
+            lastCheckTime = System.currentTimeMillis() - 1000 * 60 * 5;
+            LOG.info("ClusterEventService initialization started");
+            iterate();
+            LOG.info("ClusterEventService initialization finished");
             executor = Executors.newSingleThreadExecutor();
             executor.execute(this);
             LOG.info("Cluster events listener started.");

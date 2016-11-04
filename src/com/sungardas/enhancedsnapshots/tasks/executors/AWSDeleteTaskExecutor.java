@@ -5,6 +5,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
@@ -69,12 +70,14 @@ public class AWSDeleteTaskExecutor extends AbstractAWSVolumeTaskExecutor {
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Task complete", 100);
             mailService.notifyAboutSuccess(taskEntry);
+            setProgress(taskEntry, TaskProgress.DONE);
         } catch (EnhancedSnapshotsException e){
             LOG.error(e);
             notificationService.notifyAboutError(new ExceptionDto("Delete task has failed", e.getLocalizedMessage()));
             taskEntry.setStatus(ERROR.getStatus());
             taskRepository.save(taskEntry);
             mailService.notifyAboutError(taskEntry, e);
+            setProgress(taskEntry, TaskProgress.DONE);
         }
     }
 }

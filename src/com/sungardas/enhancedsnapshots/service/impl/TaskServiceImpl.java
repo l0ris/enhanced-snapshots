@@ -11,6 +11,7 @@ import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
@@ -281,7 +282,7 @@ public class TaskServiceImpl implements TaskService, ClusterEventListener {
     @Override
     public void terminated(EventEntry eventEntry) {
         try {
-            List<TaskEntry> partiallyFinishedTasks = taskRepository.findByWorker(eventEntry.getInstanceId());
+            List<TaskEntry> partiallyFinishedTasks = taskRepository.findByWorkerAndProgressNot(eventEntry.getInstanceId(), TaskProgress.DONE.name());
             partiallyFinishedTasks.forEach(t -> {
                 t.setStatus(TaskEntry.TaskEntryStatus.PARTIALLY_FINISHED.toString());
                 t.setWorker(null);

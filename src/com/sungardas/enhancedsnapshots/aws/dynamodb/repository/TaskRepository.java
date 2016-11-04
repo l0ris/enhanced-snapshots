@@ -28,13 +28,11 @@ public interface TaskRepository extends CrudRepository<TaskEntry, String> {
 
     Long countByRegularAndTypeAndStatus(String regular, String type, String status);
 
-    List<TaskEntry> findByWorker(String worker);
+    List<TaskEntry> findByWorkerAndProgressNot(String worker, String progress);
 
     List<TaskEntry> findByWorkerIsNull();
 
     default void save(List<TaskEntry> tasks) {
-        for (TaskEntry taskEntry : tasks) {
-            this.save(taskEntry);
-        }
+        tasks.forEach(this::save);
     }
 }

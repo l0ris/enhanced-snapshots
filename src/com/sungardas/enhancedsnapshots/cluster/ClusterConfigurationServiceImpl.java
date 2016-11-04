@@ -80,15 +80,13 @@ public class ClusterConfigurationServiceImpl implements ClusterConfigurationServ
             nodeRepository.save(getMasterNodeInfo());
         } else if (configurationMediator.isClusterMode() && nodeRepository.findOne(SystemUtils.getInstanceId()) == null) {
             joinCluster();
+        } else if (nodeRepository.findByMaster(true).isEmpty()) {
+            NodeEntry node = nodeRepository.findOne(SystemUtils.getInstanceId());
+            if (node == null) {
+                node = getMasterNodeInfo();
+            }
+            nodeRepository.save(node);
         }
-    }
-
-    private String getMasterId() {
-        List<NodeEntry> nodes = nodeRepository.findByMaster(true);
-        if (nodes.size() > 0) {
-            return nodes.get(0).getNodeId();
-        }
-        return null;
     }
 
     private void joinCluster() {

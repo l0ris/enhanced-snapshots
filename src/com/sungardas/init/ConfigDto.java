@@ -9,6 +9,7 @@ class ConfigDto {
     private String bucketName;
     private int volumeSize;
     private boolean ssoMode;
+    private boolean sungardasSSO;
     private String spEntityId;
     private String domain;
     private MailConfigurationDto mailConfiguration;
@@ -79,4 +80,12 @@ class ConfigDto {
         this.cluster = cluster;
     }
 
+
+    public boolean isSungardasSSO() {
+        return sungardasSSO;
+    }
+
+    public void setSungardasSSO(boolean sungardasSSO) {
+        this.sungardasSSO = sungardasSSO;
+    }
 }

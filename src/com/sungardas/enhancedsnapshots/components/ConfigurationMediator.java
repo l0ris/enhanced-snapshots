@@ -80,4 +80,8 @@ public interface ConfigurationMediator {
 
     String getSdfsCliPsw();
 
+
+    String getUUID();
+
+    boolean isSungardasSSO();
 }

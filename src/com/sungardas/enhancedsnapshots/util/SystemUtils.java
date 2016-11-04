@@ -39,10 +39,17 @@ public class SystemUtils {
         return STACK_NAME;
     }
 
+    private static String instanceId;
+
     public static String getInstanceId() {
-        if (EC2MetadataUtils.getInstanceId() != null) {
-            return EC2MetadataUtils.getInstanceId();
+        if (instanceId == null) {
+            instanceId = EC2MetadataUtils.getInstanceId();
+            if (instanceId != null) {
+                return instanceId;
+            } else {
+                instanceId = DEV_SYSTEM_ID;
+            }
         }
-        return DEV_SYSTEM_ID;
+        return instanceId;
     }
 }

@@ -13,6 +13,7 @@ import com.sungardas.enhancedsnapshots.dto.converter.VolumeDtoConverter;
 import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
@@ -180,12 +181,17 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
                 }
             }
             notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Done", 100);
+            setProgress(taskEntry, TaskProgress.DONE);
+        } catch (EnhancedSnapshotsTaskInterruptedException e) {
+            interruptedCleaningStep(taskEntry, tempVolume);
         } catch (EnhancedSnapshotsInterruptedException e) {
             if (!configurationMediator.isClusterMode()) {
                 interruptedCleaningStep(taskEntry, tempVolume);
             }
+            setProgress(taskEntry, TaskProgress.DONE);
         } catch (Exception e) {
             failCleaningStep(taskEntry, tempVolume, e);
+            setProgress(taskEntry, TaskProgress.DONE);
         }
     }
 
@@ -195,9 +201,19 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         TaskProgressDto dto = new TaskProgressDto(taskEntry.getId(), "Kill initialization process", 20, CANCELED);
         notificationService.notifyAboutTaskProgress(dto);
         // kill initialization Process if it's alive, should be killed before volume detaching
-        killInitializationVolumeProcessIfAlive(tempVolume);
-        deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
-
+        try {
+            killInitializationVolumeProcessIfAlive(tempVolume);
+        } catch (Exception e) {
+            LOG.error("Killing initialization process failed", e);
+        }
+        dto = new TaskProgressDto(taskEntry.getId(), "Deleting temp resources", 50, CANCELED);
+        notificationService.notifyAboutTaskProgress(dto);
+        try {
+            deleteTempResources(tempVolume, getBackupName(taskEntry), dto);
+        } catch (Exception e) {
+            LOG.error("Deleting temp resources failed", e);
+        }
+        taskEntry.setProgress(TaskProgress.DONE);
         taskRepository.delete(taskEntry);
         dto.setMessage("Done");
         dto.setProgress(100);
