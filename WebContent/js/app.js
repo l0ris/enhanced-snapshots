@@ -76,6 +76,7 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
                             Storage.remove("notification");
                         }
                     });
+                $rootScope.isAdmin = (Storage.get("currentUser") || {}).role === 'admin';
             }]
         })
         .state('app.volume', {

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
+import javax.annotation.security.RolesAllowed;
+
 @Controller
 public class LogsController {
 
@@ -18,6 +20,7 @@ public class LogsController {
     @Autowired
     private ConfigurationMediator configurationMediator;
 
+    @RolesAllowed("ROLE_ADMIN")
     @SubscribeMapping("/logs")
     public void subscriptionHandler() {
         if (configurationMediator.isClusterMode()) {
