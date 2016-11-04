@@ -70,6 +70,11 @@ public class VolumeServiceImpl implements VolumeService {
         return getVolumes(amazonEC2);
     }
 
+    @Override
+    public Set<VolumeDto> getExistingVolumes() {
+        return VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes());
+    }
+
     private Set<VolumeDto> getVolumes(AmazonEC2 amazonEC2) {
         if (cache != null) {
             return cache;
@@ -104,7 +109,7 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public boolean volumeExists(String volumeId) {
-        for (VolumeDto dto : getVolumes()) {
+        for (VolumeDto dto : getExistingVolumes()) {
             if (dto.getVolumeId().equals(volumeId)) {
                 return true;
             }
