@@ -81,8 +81,8 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
             taskEntry.setStatus(RUNNING.getStatus());
             taskRepository.save(taskEntry);
 
-            if (taskEntry.getProgress() != TaskProgress.NONE) {
-                switch (taskEntry.getProgress()) {
+            if (taskEntry.progress() != TaskProgress.NONE) {
+                switch (taskEntry.progress()) {
                     case CREATING_TEMP_VOLUME:
                     case WAITING_TEMP_VOLUME:
                     case ATTACHING_VOLUME:
@@ -119,7 +119,7 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
                     }
                 }
             }
-            switch (taskEntry.getProgress()) {
+            switch (taskEntry.progress()) {
                 case INTERRUPTED_CLEANING: {
                     interruptedCleaningStep(taskEntry, tempVolume);
                     break;
@@ -213,7 +213,7 @@ public class AWSBackupVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskEx
         } catch (Exception e) {
             LOG.error("Deleting temp resources failed", e);
         }
-        taskEntry.setProgress(TaskProgress.DONE);
+        taskEntry.setProgress(TaskProgress.DONE.name());
         taskRepository.delete(taskEntry);
         dto.setMessage("Done");
         dto.setProgress(100);

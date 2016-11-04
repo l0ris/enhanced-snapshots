@@ -28,6 +28,8 @@ import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
+import static com.sungardas.enhancedsnapshots.enumeration.TaskProgress.FAIL_CLEANING;
+import static com.sungardas.enhancedsnapshots.enumeration.TaskProgress.INTERRUPTED_CLEANING;
 
 @Service("awsRestoreVolumeTaskExecutor")
 public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskExecutor {
@@ -61,7 +63,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
 
     @Override
     public void execute(TaskEntry taskEntry) {
-        switch (taskEntry.getProgress()) {
+        switch (taskEntry.progress()) {
             case FAIL_CLEANING: {
                 failCleaningStep(taskEntry, new EnhancedSnapshotsException("Restore failed"));
                 return;
@@ -139,8 +141,8 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
                     .stream().sorted((e1, e2) -> e2.getTimeCreated().compareTo(e1.getTimeCreated()))
                     .findFirst().get();
         }
-        if (taskEntry.getProgress() != TaskProgress.NONE) {
-            switch (taskEntry.getProgress()) {
+        if (taskEntry.progress() != TaskProgress.NONE) {
+            switch (taskEntry.progress()) {
                 case ATTACHING_VOLUME:
                 case CREATING_TEMP_VOLUME:
                 case WAITING_TEMP_VOLUME:
@@ -168,7 +170,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
                 }
             }
         }
-        switch (taskEntry.getProgress()) {
+        switch (taskEntry.progress()) {
             case NONE:
             case STARTED:
                 setProgress(taskEntry, TaskProgress.STARTED);
@@ -194,7 +196,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
         }
         if (!tempVolume.getAvailabilityZone().equals(taskEntry.getAvailabilityZone())) {
             //move to target availability zone
-            switch (taskEntry.getProgress()) {
+            switch (taskEntry.progress()) {
                 case DETACHING_TEMP_VOLUME:
                 case CREATING_SNAPSHOT: {
                     notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Creating snapshot", 70);
@@ -283,7 +285,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
 
     private void completeTask(TaskEntry taskEntry) {
         notificationService.notifyAboutRunningTaskProgress(taskEntry.getId(), "Restore complete", 100);
-        taskEntry.setProgress(TaskProgress.DONE);
+        taskEntry.setProgress(TaskProgress.DONE.name());
         taskService.complete(taskEntry);
         LOG.info("{} task {} was completed", taskEntry.getType(), taskEntry.getId());
         mailService.notifyAboutSuccess(taskEntry);
@@ -350,7 +352,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
     }
 
     private void interruptedCleaningStep(TaskEntry taskEntry) {
-        setProgress(taskEntry, TaskProgress.INTERRUPTED_CLEANING);
+        setProgress(taskEntry, INTERRUPTED_CLEANING);
         cleaningStep(taskEntry);
         LOG.info("Restore task was canceled");
         taskRepository.delete(taskEntry);
@@ -358,7 +360,7 @@ public class AWSRestoreVolumeStrategyTaskExecutor extends AbstractAWSVolumeTaskE
     }
 
     private void failCleaningStep(TaskEntry taskEntry, Exception e) {
-        setProgress(taskEntry, TaskProgress.FAIL_CLEANING);
+        setProgress(taskEntry, FAIL_CLEANING);
         cleaningStep(taskEntry);
         LOG.error("Failed to execute {} task {}. Changing task status to '{}'", taskEntry.getType(), taskEntry.getId(), TaskEntry.TaskEntryStatus.ERROR);
         LOG.error(e);

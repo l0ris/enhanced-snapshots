@@ -45,6 +45,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final String EXPAND_VOLUME_CMD = "--expandvolume";
     private static final String CLOUD_SYNC_CMD = "--cloudsync";
     private static final String SHOW_VOLUME_ID_CMD = "--showvolumes";
+    private static final String SYNC_CLUSTER_VOLUMES = "--syncvolumes";
 
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
@@ -133,6 +134,17 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                     break;
                 default:
                     throw new ConfigurationException("Failed to start SDFS");
+            }
+            if (configurationMediator.isClusterMode()) {
+
+                p = executeScript(new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), SYNC_CLUSTER_VOLUMES, configurationMediator.getSdfsCliPsw()});
+                switch (p.exitValue()) {
+                    case 0:
+                        LOG.info("SDFS is synchronized");
+                        break;
+                    default:
+                        throw new ConfigurationException("Failed to synchronize SDFS");
+                }
             }
         } catch (Exception e) {
             LOG.error(e);

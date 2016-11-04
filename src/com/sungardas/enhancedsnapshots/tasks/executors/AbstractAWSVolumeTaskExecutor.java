@@ -10,7 +10,6 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterrupte
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +75,7 @@ public abstract class AbstractAWSVolumeTaskExecutor implements TaskExecutor {
     }
 
     protected void setProgress(TaskEntry taskEntry, TaskProgress progress) {
-        taskEntry.setProgress(progress);
+        taskEntry.setProgress(progress.name());
         taskRepository.save(taskEntry);
     }
 }
