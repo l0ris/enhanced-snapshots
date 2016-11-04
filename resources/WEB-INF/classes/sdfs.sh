@@ -161,6 +161,19 @@ case "$commandName" in
     echo "Pattern: $pattern"
     /sbin/sdfscli --list-cloud-volumes --password=$cliPass | awk 'NR > 3 && $12~/'"$pattern"'/ {print $4}' | grep -v '^$'
     ;;
+        
+############################# Syncing remote volumes ####################################
+--syncvolumes) echo "Syncing volumes"
+    cliPass="${2:-apassword}"
+    pattern="false"
+    echo 'CLI pass: '$2
+    echo "Pattern: $pattern"
+    for volume in `/sbin/sdfscli --list-cloud-volumes --password=$cliPass | awk 'NR > 3 && $12~/'"$pattern"'/ {print $4}' | grep -v '^$'`;
+    do
+        echo "Syncing volume ${volume}"
+        /sbin/sdfscli --sync-remote-cloud-volume=${volume} --password=${cliPass}
+    done
+    ;;
 
 ############################# expand volume ####################################
 --expandvolume) echo "Expanding volume"
