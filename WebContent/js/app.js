@@ -163,10 +163,11 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
                 Storage.save("ssoMode", {"ssoMode": results.ssoMode});
             }
 
-            //response for Users.refreshCurrent
-            // if (results[1].data && results[1].data.email) {
-            //     $state.go('app.volume.list');
-            // }
+            Users.refreshCurrent().then(function (data) {
+                if (data.data && data.data.email) {
+                    $state.go('app.volume.list');
+                }
+            });
             $rootScope.isLoading = false;
         }, function (err) {
             console.log(err);
