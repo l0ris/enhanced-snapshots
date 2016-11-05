@@ -159,7 +159,7 @@ angular.module('web')
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
                 cluster: getClusterNodes(),
-                sangardasSSO: !!$scope.sangardasSSO,
+                sungardasSSO: !!$scope.sungardasSSO,
                 ssoMode: $scope.isSSO,
                 domain: $scope.settings.domain,
                 spEntityId: $scope.entityId || null,
