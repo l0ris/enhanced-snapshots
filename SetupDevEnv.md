@@ -32,7 +32,7 @@ $ cp ~/enhanced-snapshots-repo/target/enhancedsnapshots-0.0.2.war $CATALINA_HOME
 ```sh
 $ CD %HOMEPATH%\enhanced-snapshots-repo
 $ mnv clean package
-$ copy target\enhancedsnapshots-0.0.2.war %CATALINA_HOME%\webapp
+$ copy target\enhancedsnapshots-0.0.3.war %CATALINA_HOME%\webapp
 ```
 4) Add enhancedsnapshots.properties files to Tomcat conf directory with next content:  
 >*amazon.aws.accesskey= `Access Key ID encrypted with PBEWithMD5AndDES algorithm`*  
