@@ -119,7 +119,7 @@ install:
 before_deploy:
   - mkdir build_artifacts
   - cp target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_latest.war
-  - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.2_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
+  - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.3_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
 ```
 6. Deploy is configured `only for master` branch.
 ```

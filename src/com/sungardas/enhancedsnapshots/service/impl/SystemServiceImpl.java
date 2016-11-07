@@ -56,7 +56,7 @@ import java.util.zip.ZipOutputStream;
 public class SystemServiceImpl implements SystemService {
     private static final Logger LOG = LogManager.getLogger(SystemServiceImpl.class);
 
-    private static final String CURRENT_VERSION = "0.0.2";
+    private static final String CURRENT_VERSION = "0.0.3";
     private static final String LATEST_VERSION = "latest-version";
     private static final String INFO_URL = "http://com.sungardas.releases.s3.amazonaws.com/info";
 
