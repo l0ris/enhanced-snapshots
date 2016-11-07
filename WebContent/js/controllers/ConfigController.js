@@ -139,11 +139,29 @@ angular.module('web')
                     return $scope.settings.mailConfiguration
                 }
             };
+
+            var getClusterNodes = function () {
+
+                if ($scope.settings.clusterMode) {
+                    var clusterNodes;
+
+                    clusterNodes = {
+                        minNodeNumber: $scope.settings.cluster.minNodeNumber,
+                        maxNodeNumber: $scope.settings.cluster.maxNodeNumber
+                    };
+
+                    return clusterNodes
+                }
+                return null
+            };
+
             var settings = {
                 bucketName: $scope.selectedBucket.bucketName,
                 volumeSize: volumeSize,
-                domain: $scope.settings.domain,
+                cluster: getClusterNodes(),
+                sungardasSSO: !!$scope.sungardasSSO,
                 ssoMode: $scope.isSSO,
+                domain: $scope.settings.domain,
                 spEntityId: $scope.entityId || null,
                 mailConfiguration: getMailConfig()
             };
@@ -162,8 +180,8 @@ angular.module('web')
 
                 userModalInstance.result.then(function () {
                     settings.user = $scope.userToEdit;
-
                     delete settings.user.isNew;
+
                     $scope.progressState = 'running';
                     Configuration.send('current', settings, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
@@ -175,12 +193,14 @@ angular.module('web')
 
                 });
             } else {
+                $scope.progressState = 'running';
 
                 if (settings.ssoMode) {
                     settings.user = {email: $scope.adminEmail}
                 }
 
                 $scope.progressState = 'running';
+
 
                 Configuration.send('current', settings, null, $scope.settings.sso).then(function () {
                     $scope.progressState = 'success';

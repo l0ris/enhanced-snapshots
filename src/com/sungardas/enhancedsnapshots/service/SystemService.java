@@ -23,6 +23,7 @@ public interface SystemService {
 
     /**
      * set new system configuration
+     *
      * @param systemConfiguration new system configuration {@link SystemConfiguration}
      */
     void setSystemConfiguration(SystemConfiguration systemConfiguration);
@@ -36,4 +37,9 @@ public interface SystemService {
     void systemUninstall(boolean removeS3Bucket);
 
     String VOLUME_SIZE_UNIT = "GB";
+
+    /**
+     * synchronize system settings with DB
+     */
+    void refreshSystemConfiguration();
 }

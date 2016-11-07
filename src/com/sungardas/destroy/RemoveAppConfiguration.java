@@ -1,23 +1,25 @@
 package com.sungardas.destroy;
 
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
+import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+
+import javax.annotation.PostConstruct;
+import java.util.stream.StreamSupport;
 
 public class RemoveAppConfiguration {
 
@@ -42,15 +44,31 @@ public class RemoveAppConfiguration {
     @Autowired
     private AWSCommunicationService awsCommunicationService;
 
+    @Autowired
+    private ClusterConfigurationService clusterConfigurationService;
+
+    @Autowired
+    private NodeRepository nodeRepository;
+
     private DynamoDB dynamoDB;
 
     private String configurationId;
 
     @PostConstruct
     private void init() {
-        configurationId = EC2MetadataUtils.getInstanceId();
+        configurationId = SystemUtils.getSystemId();
         dynamoDB = new DynamoDB(db);
-        dropConfiguration(removeS3Bucket);
+        switch (SystemUtils.getSystemMode()) {
+            case CLUSTER:
+                dropConfiguration(removeS3Bucket);
+                clusterConfigurationService.removeClusterInfrastructure();
+                break;
+            case STANDALONE:
+                dropConfiguration(removeS3Bucket);
+                LOG.info("Terminating instance");
+                terminateInstance();
+                break;
+        }
     }
 
     private void dropConfiguration(boolean withS3Bucket) {
@@ -60,14 +78,16 @@ public class RemoveAppConfiguration {
         }
         LOG.info("Dropping DB data");
         dropDbData();
-        LOG.info("Terminating instance");
-        terminateInstance();
     }
 
 
 
     private void terminateInstance() {
-        ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(configurationId));
+        terminateInstance(SystemUtils.getInstanceId());
+    }
+
+    private void terminateInstance(String... instanceIds) {
+        ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(instanceIds));
     }
 
     private void dropDbData() {
@@ -87,6 +107,6 @@ public class RemoveAppConfiguration {
     }
 
     private Configuration getConfiguration(){
-        return configurationRepository.findOne(configurationId);
+        return StreamSupport.stream(configurationRepository.findAll().spliterator(), false).findFirst().get();
     }
 }

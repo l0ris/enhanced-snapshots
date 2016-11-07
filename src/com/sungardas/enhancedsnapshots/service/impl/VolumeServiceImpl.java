@@ -1,7 +1,13 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 
@@ -19,7 +25,6 @@ import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.VolumeService;
 
 import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.collections.comparators.ReverseComparator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +70,11 @@ public class VolumeServiceImpl implements VolumeService {
         return getVolumes(amazonEC2);
     }
 
+    @Override
+    public Set<VolumeDto> getExistingVolumes() {
+        return VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes());
+    }
+
     private Set<VolumeDto> getVolumes(AmazonEC2 amazonEC2) {
         if (cache != null) {
             return cache;
@@ -99,7 +109,7 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public boolean volumeExists(String volumeId) {
-        for (VolumeDto dto : getVolumes()) {
+        for (VolumeDto dto : getExistingVolumes()) {
             if (dto.getVolumeId().equals(volumeId)) {
                 return true;
             }

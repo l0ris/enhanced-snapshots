@@ -5,6 +5,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.util.json.Jackson;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 
 
 @DynamoDBTable(tableName = "Tasks")
@@ -54,6 +55,9 @@ public class TaskEntry {
     private long completeTime;
 
     @DynamoDBAttribute
+    private long startTime;
+
+    @DynamoDBAttribute
     private String tempVolumeType;
 
     @DynamoDBAttribute
@@ -64,6 +68,15 @@ public class TaskEntry {
 
     @DynamoDBAttribute
     private int restoreVolumeIopsPerGb;
+
+    @DynamoDBAttribute
+    private String progress = TaskProgress.NONE.name();
+
+    @DynamoDBAttribute
+    private String tempVolumeId;
+
+    @DynamoDBAttribute
+    private String tempSnapshotId;
 
     public String getId() {
         return id;
@@ -239,6 +252,43 @@ public class TaskEntry {
         this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
+    public void setProgress(String progress) {
+        this.progress = progress;
+    }
+
+    public String getProgress() {
+        return progress;
+    }
+
+    public String getTempVolumeId() {
+        return tempVolumeId;
+    }
+
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(final long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setTempVolumeId(final String tempVolumeId) {
+        this.tempVolumeId = tempVolumeId;
+    }
+
+    public String getTempSnapshotId() {
+        return tempSnapshotId;
+    }
+
+    public void setTempSnapshotId(final String tempSnapshotId) {
+        this.tempSnapshotId = tempSnapshotId;
+    }
+
+    public TaskProgress progress() {
+        return TaskProgress.valueOf(progress);
+    }
+
     public enum TaskEntryType {
         BACKUP("backup"),
         RESTORE("restore"),
@@ -272,6 +322,7 @@ public class TaskEntry {
         QUEUED("queued"),
         COMPLETE("complete"),
         CANCELED("canceled"),
+        PARTIALLY_FINISHED("partially_finished"),
         ERROR("error");
 
         private String status;

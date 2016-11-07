@@ -21,4 +21,6 @@ public interface SchedulerService {
     void removeTask(String id);
 
     Set<String> getVolumeIdsWithSchedule();
+
+    boolean exists(String taskId);
 }

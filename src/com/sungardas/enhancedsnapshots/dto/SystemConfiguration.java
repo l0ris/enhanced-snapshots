@@ -5,6 +5,7 @@ public class SystemConfiguration {
     private S3 s3;
     private SDFS sdfs;
     private Long lastBackup;
+    private String systemId;
     private EC2Instance ec2Instance;
     private SystemProperties systemProperties;
     private String currentVersion;
@@ -12,7 +13,18 @@ public class SystemConfiguration {
     private boolean ssoMode;
     private String domain;
     private MailConfigurationDto mailConfiguration;
+    private Cluster cluster;
+    private boolean clusterMode;
+    private String UUID;
 
+
+    public Cluster getCluster() {
+        return cluster;
+    }
+
+    public void setCluster(Cluster cluster) {
+        this.cluster = cluster;
+    }
 
     public String getCurrentVersion() {
         return currentVersion;
@@ -62,6 +74,13 @@ public class SystemConfiguration {
         this.s3 = s3;
     }
 
+    public String getSystemId() {
+        return systemId;
+    }
+
+    public void setSystemId(String systemId) {
+        this.systemId = systemId;
+    }
 
     public Long getLastBackup() {
         return lastBackup;
@@ -87,8 +106,24 @@ public class SystemConfiguration {
         this.domain = domain;
     }
 
+    public boolean isClusterMode() {
+        return clusterMode;
+    }
+
+    public void setClusterMode(boolean clusterMode) {
+        this.clusterMode = clusterMode;
+    }
+
     public MailConfigurationDto getMailConfiguration() {
         return mailConfiguration;
+    }
+
+    public String getUUID() {
+        return UUID;
+    }
+
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
     }
 
     public void setMailConfiguration(MailConfigurationDto mailConfiguration) {
@@ -187,14 +222,14 @@ public class SystemConfiguration {
     }
 
     public static class EC2Instance {
-        private String instanceID;
+        private String[] instanceIDs;
 
-        public String getInstanceID() {
-            return instanceID;
+        public String[] getInstanceIDs() {
+            return instanceIDs;
         }
 
-        public void setInstanceID(String instanceID) {
-            this.instanceID = instanceID;
+        public void setInstanceIDs(String[] instanceID) {
+            this.instanceIDs = instanceID;
         }
     }
 

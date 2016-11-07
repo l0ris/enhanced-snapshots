@@ -1,5 +1,7 @@
 package com.sungardas.init;
 
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.security.SAMLAuthenticationProviderImpl;
 import com.sungardas.enhancedsnapshots.security.SamlUserDetails;
 import com.sungardas.enhancedsnapshots.service.UserService;
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.PropertySource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
@@ -54,6 +57,7 @@ public class ContextManager {
 
             // set userService property to userDetails bean, so we could manage users roles within ssoLogin mode
             applicationContext.getBean(SamlUserDetails.class).setUserService(applicationContext.getBean(UserService.class));
+            applicationContext.getBean(SAMLAuthenticationProviderImpl.class).setConfigurationMediator(applicationContext.getBean(ConfigurationMediator.class));
         }
         // for local authentication
         else {
@@ -68,6 +72,7 @@ public class ContextManager {
         }
 
         LOG.info("Context refreshed successfully.");
+        SecurityContextHolder.clearContext();
         CONTEXT_REFRESH_IN_PROCESS = false;
     }
 

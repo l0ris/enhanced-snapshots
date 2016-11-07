@@ -45,6 +45,8 @@ class InitController {
         if (initConfigurationService.systemIsConfigured()) {
             LOG.info("System is already configured.");
             initConfigurationService.configureSystem(null);
+        } else {
+            LOG.info("System is not configured");
         }
     }
 
@@ -134,6 +136,12 @@ class InitController {
     @RequestMapping(value = "/configuration/bucket/{name:.+}/metadata", method = RequestMethod.GET)
     public ResponseEntity<BucketNameValidationDTO> containsMetadata(@PathVariable("name") String bucketName) {
         return new ResponseEntity(initConfigurationService.containsMetadata(bucketName), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/user/currentUser", method = RequestMethod.GET)
+    public ResponseEntity getCurrentUser() {
+        return new ResponseEntity<>("{ \"role\":\"configurator"
+                + "\", \"email\":\"admin@enhancedsnapshots\" }", HttpStatus.OK);
     }
 
     private InitConfigurationDto getInitConfigurationDTO() {

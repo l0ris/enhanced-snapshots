@@ -3,19 +3,15 @@ package com.sungardas.enhancedsnapshots.components.logwatcher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.commons.io.input.Tailer;
-
 import org.apache.commons.io.input.TailerListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
@@ -24,17 +20,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.util.Collections.*;
+import static java.util.Collections.reverse;
 
 
 @Service
-@DependsOn("SystemService")
-public class LogsWatcherService implements TailerListener, ApplicationListener<SessionUnsubscribeEvent> {
+@DependsOn({"ConfigurationMediator", "MasterService"})
+public class LogsWatcherService implements TailerListener {
 
     private static final Logger LOG = LogManager.getLogger(LogsWatcherService.class);
     private static final String LOGS_DESTINATION = "/logs";
     private File logFile;
-
     private Tailer tailer;
 
     @Autowired
@@ -55,13 +50,12 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
             LOG.info("Logs watcher stopped.");
         }
     }
-    @PostConstruct
+
     public void start() {
-        if (tailer != null) {
-            tailer.stop();
+        if (tailer == null) {
+            tailer = Tailer.create(getLogsFile(), this, 500L, true);
+            LOG.info("Logs watcher started. File {} will be tracked for changes.", configurationMediator.getLogFileName());
         }
-        tailer = Tailer.create(getLogsFile(), this, 500L, true);
-        LOG.info("Logs watcher started. File {} will be tracked for changes.", configurationMediator.getLogFileName());
     }
 
     private File getLogsFile() {
@@ -106,10 +100,5 @@ public class LogsWatcherService implements TailerListener, ApplicationListener<S
             reverse(list);
             template.convertAndSend(LOGS_DESTINATION, list);
         }
-    }
-
-    @Override
-    public void onApplicationEvent(SessionUnsubscribeEvent event) {
-        stop();
     }
 }

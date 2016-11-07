@@ -5,6 +5,7 @@ import com.sungardas.enhancedsnapshots.service.CryptoService;
 import org.jasypt.util.text.BasicTextEncryptor;
 import org.springframework.stereotype.Service;
 
+
 @Service
 public class CryptoServiceImpl implements CryptoService {
 

@@ -63,4 +63,6 @@ public interface AWSCommunicationService {
     //TODO: need to clarify whether we still need restart it
     //TODO: in case we need, it should be triggered by SystemService while restarting sdfs, not by SDFSStateService
     void restartAWSLogService();
+
+    String getDNSName(String instanceId);
 }

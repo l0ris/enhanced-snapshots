@@ -20,7 +20,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 @Service
-@DependsOn("SystemService")
+@DependsOn("ConfigurationMediator")
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOG = LogManager.getLogger(UserServiceImpl.class);

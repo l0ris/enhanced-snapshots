@@ -67,4 +67,21 @@ public interface ConfigurationMediator {
     String getDomain();
 
     MailConfigurationDocument getMailConfiguration();
+
+    int getMinNodeNumberInCluster();
+
+    int getMaxNodeNumberInCluster();
+
+    boolean isClusterMode();
+
+    String getChunkStoreEncryptionKey();
+
+    String getChunkStoreIV();
+
+    String getSdfsCliPsw();
+
+
+    String getUUID();
+
+    boolean isSungardasSSO();
 }

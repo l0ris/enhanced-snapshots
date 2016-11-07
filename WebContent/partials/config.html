@@ -6,9 +6,7 @@
                     <h2 class="panel-title">Settings</h2>
                 </div>
                 <div class="panel-body">
-
                     <div class="form-horizontal" ng-show="settings && isValidInstance">
-
                         <form name="configs">
                             <div class="flex-container card">
                                 <div class="flex-2 flex-center">
@@ -17,7 +15,6 @@
 
                                 <div class="flex-5 card-content bucket">
                                     <h3>S3 Bucket</h3>
-
                                     <p>{{ selectedBucket.isCreated ? STRINGS.s3.existing : STRINGS.s3.new}}</p>
                                     <p><span class="label label-success">{{settings.s3.bucketName}}</span></p>
                                     <div class="btn-group" dropdown keyboard-nav ng-hide="isCustomBucketName">
@@ -31,19 +28,34 @@
                                         <ul class="dropdown-menu" role="menu"
                                             aria-labelledby="simple-btn-keyboard-nav">
                                             <li role="menuitem" ng-repeat="bucket in settings.s3">
-                                                <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}&nbsp; &nbsp;
-                                                    <span class="label label-success" ng-hide="bucket.isCreated">new</span>
+                                                <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}&nbsp;
+                                                    &nbsp;
+                                                    <span class="label label-success"
+                                                          ng-hide="bucket.isCreated">new</span>
                                                 </a>
                                             </li>
                                         </ul>
                                     </div>
-                                    <input type="text" ng-model="selectedBucket.bucketName" class="form-control" ng-class="{'ng-invalid': isNameWrong}" ng-show="isCustomBucketName" name="bucketName" required ng-change="validateName()" ng-trim maxlength="63"/>
-                                    <a href ng-click="isCustomBucketName = !isCustomBucketName" title="Rename" ng-hide="selectedBucket.isCreated"><span class="glyphicon glyphicon-{{ isCustomBucketName ? 'ok' : 'pencil'}} text-primary"></span></a>
-                                    <div class="text-danger small" ng-show="configs.bucketName.$error.required">{{STRINGS.s3.empty}}</div>
-                                    <div class="text-danger small" ng-show="isNameWrong && !selectedBucket.isCreated">{{wrongNameMessage}}</div>
+                                    <input type="text" ng-model="selectedBucket.bucketName" class="form-control"
+                                           ng-class="{'ng-invalid': isNameWrong}" ng-show="isCustomBucketName"
+                                           name="bucketName" required ng-change="validateName()" ng-trim
+                                           maxlength="63"/>
+                                    <a href ng-click="isCustomBucketName = !isCustomBucketName" title="Rename"
+                                       ng-hide="selectedBucket.isCreated"><span
+                                            class="glyphicon glyphicon-{{ isCustomBucketName ? 'ok' : 'pencil'}} text-primary"></span></a>
+                                    <div class="text-danger small" ng-show="configs.bucketName.$error.required">
+                                        {{STRINGS.s3.empty}}
+                                    </div>
+                                    <div class="text-danger small" ng-show="isNameWrong && !selectedBucket.isCreated">
+                                        {{wrongNameMessage}}
+                                    </div>
                                 </div>
+
                                 <div class="flex-1 flex-center">
-                                    <a class="link-white" href="http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html" target="_blank" title="What is S3 Bucket"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
+                                    <a class="link-white"
+                                       href="http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html"
+                                       target="_blank" title="What is S3 Bucket"><span
+                                            class="glyphicon glyphicon-question-sign text-primary"></span></a>
                                 </div>
                             </div>
 
@@ -55,7 +67,8 @@
                                 <div class="flex-5 card-content">
                                     <h3>SDFS Settings</h3>
 
-                                    <p>{{ settings.sdfs.isCreated ? STRINGS.sdfs.name.existing : STRINGS.sdfs.name.new}}</p>
+                                    <p>{{ settings.sdfs.isCreated ? STRINGS.sdfs.name.existing :
+                                        STRINGS.sdfs.name.new}}</p>
                                     <p>
                                         <span class="label label-success">{{settings.sdfs.volumeName}} ({{settings.sdfs.volumeSize}})</span>
                                     </p>
@@ -65,40 +78,55 @@
 
                                     <div>
                                         <label>
-                                            <input class="chb" ng-class="{'checked': isNewVolumeSize }" type="checkbox" ng-model="isNewVolumeSize" ng-disabled="selectedBucket.isCreated">
+                                            <input class="chb" ng-class="{'checked': isNewVolumeSize }" type="checkbox"
+                                                   ng-model="isNewVolumeSize" ng-disabled="selectedBucket.isCreated">
                                             <span class="chb-text" ng-class="{'text-muted': selectedBucket.isCreated}">
                                                 {{STRINGS.sdfs.size}}
                                             </span>
                                         </label>
                                     </div>
                                     <div ng-show="isNewVolumeSize" class="sdfsVolume">
-                                        <input type="number" ng-model="sdfsNewSize" name="newVolumeSize" class="form-control" min="{{settings.sdfs.minVolumeSize}}" max="{{settings.sdfs.maxVolumeSize}}" ng-required="isNewVolumeSize"> GB
-                                        <p class="text-muted text">Should be within the range of {{settings.sdfs.minVolumeSize}} - {{settings.sdfs.maxVolumeSize}}</p>
+                                        <input type="number" ng-model="sdfsNewSize" name="newVolumeSize"
+                                               class="form-control" min="{{settings.sdfs.minVolumeSize}}"
+                                               max="{{settings.sdfs.maxVolumeSize}}" ng-required="isNewVolumeSize"> GB
+                                        <p class="text-muted text">Should be within the range of
+                                            {{settings.sdfs.minVolumeSize}} - {{settings.sdfs.maxVolumeSize}}</p>
                                     </div>
                                 </div>
 
                                 <div class="flex-1 flex-center">
-                                    <a class="link-white" href="https://github.com/SungardAS/snapdirector/blob/java/README.md" target="_blank" title="What is SDFS"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
+                                    <a class="link-white"
+                                       href="https://github.com/SungardAS/snapdirector/blob/java/README.md"
+                                       target="_blank" title="What is SDFS"><span
+                                            class="glyphicon glyphicon-question-sign text-primary"></span></a>
                                 </div>
                             </div>
 
-                            <div class="flex-container card">
+                            <div class="flex-container card" ng-show="settings.clusterMode">
                                 <div class="flex-2 flex-center">
-                                    <span class="icon glyphicon glyphicon-{{iconClass[settings.db.isValid]}} text-{{statusColorClass[settings.db.isValid]}}"></span>
+                                    <span class="icon glyphicon glyphicon-ok text-success"></span>
                                 </div>
 
                                 <div class="flex-5 card-content">
-                                    <h3>DynamoDB</h3>
+                                    <h3>Clusterization Settings</h3>
 
-                                    <p>{{ settings.db.isValid ? STRINGS.db.isValid.true : STRINGS.db.isValid.false}}</p>
-                                    <strong><p ng-show="!settings.db.hasAdmin">
-                                        <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}
-                                    </p></strong>
+                                    <div class="cluster">
+                                        <input type="number" ng-model="settings.cluster.minNodeNumber"
+                                               name="minNodeNumber" class="form-control" min="1"
+                                               ng-required="settings.clusterMode"> Minimum node number
+                                    </div>
 
+                                    <div class="cluster">
+                                        <input type="number" ng-model="settings.cluster.maxNodeNumber"
+                                               name="maxNodeNumber" class="form-control"
+                                               min="{{settings.cluster.minNodeNumber}}"
+                                               ng-required="settings.clusterMode"> Maximum node number
+                                    </div>
                                 </div>
 
                                 <div class="flex-1 flex-center">
-                                    <a class="link-white" href="https://aws.amazon.com/dynamodb" target="_blank" title="What is DynamoDB"><span class="glyphicon glyphicon-question-sign text-primary"></span></a>
+                                <span title="Cluster sizes"><span
+                                        class="glyphicon glyphicon-question-sign text-primary"></span></span>
                                 </div>
                             </div>
 
@@ -108,65 +136,85 @@
                                 </div>
 
                                 <div class="flex-5 card-content">
-                                <h3>Sign-on options</h3>
+                                    <h3>Sign-on options</h3>
 
-                                <div>
-                                    <p>Current sign-on mode: <strong>{{isSSO ? "SSO" : "Local"}}</strong></p>
-                                </div>
-
-                                <div>
-                                    <label>
-                                        <input id="squaredFour" class="chb" ng-class="{'checked': isSSO }" type="checkbox" ng-model="isSSO">
-                                        <span class="chb-text">Enable Sinle Sign On</span>
-                                    </label>
-                                </div>
-
-                                <div ng-if="isSSO" class="SSO">
-                                    <form name="sso">
-                                        <p><strong>SAML2 Web SSO Configuration:</strong></p>
-
-                                        <p class="text-muted">1. Upload identity provider metadata</p>
-                                        <input type="file" uploaded-file="settings.sso.idMetadata" name="idMetadata" accept=".xml" ng-required="isSSO">
-
-                                        <p class="text-muted">2. Upload X.509 certificate with private key in PEM fromat</p>
-                                        <input type="file" uploaded-file="settings.sso.x509certificate" name="file" accept=".pem" ng-required="isSSO">
-
-                                        <p class="text-muted">3. Entity ID</p>
-                                        <input type="text" class="form-control" ng-model="$parent.entityId" name="entityId" ng-required="isSSO">
-
-                                        <p class="text-muted">4. Administrator E-mail</p>
-                                        <input type="email" class="form-control" ng-model="$parent.adminEmail" name="adminEmail" ng-required="isSSO">
-                                    </form>
-                                </div>
-
-                            </div>
-
-                                <div class="flex-1 flex-center">
-                                    <span title="SSO is Single sign-on"><span class="glyphicon glyphicon-question-sign text-primary"></span></span>
-                                </div>
-                            </div>
-
-                            <div class="flex-container card">
-                                <div class="flex-2 flex-center">
-                                    <span class="icon glyphicon glyphicon-envelope text-success"></span>
-                                </div>
-
-                                <div class="flex-5 card-content">
+                                    <div>
+                                        <p>Current sign-on mode: <strong>{{isSSO ? "SSO" : "Local"}}</strong></p>
+                                    </div>
 
                                     <div>
                                         <label>
-                                            <button type="button" class="btn btn-success" ng-click="emailNotifications()">
-                                            Edit Email notification </button>
+                                            <input id="squaredFour" class="chb" ng-class="{'checked': isSSO }"
+                                                   type="checkbox" ng-model="isSSO">
+                                            <span class="chb-text">Enable Sinle Sign On</span>
                                         </label>
                                     </div>
 
-                                    <small class="text-muted">(Email notifications may be configured at any time in Settings tab)</small>
+
+                                    <div ng-if="isSSO" class="SSO">
+                                        <form name="sso">
+                                            <p><strong>SAML2 Web SSO Configuration:</strong></p>
+
+                                            <p class="text-muted">1. Upload identity provider metadata</p>
+                                            <input type="file" uploaded-file="settings.sso.idMetadata" name="idMetadata"
+                                                   accept=".xml" ng-required="isSSO">
+
+                                            <p class="text-muted">2. Upload X.509 certificate with private key in PEM
+                                                format</p>
+                                            <input type="file" uploaded-file="settings.sso.x509certificate" name="file"
+                                                   accept=".pem" ng-required="isSSO">
+
+                                            <p class="text-muted">3. Entity ID</p>
+                                            <input type="text" class="form-control" ng-model="$parent.entityId"
+                                                   name="entityId" ng-required="isSSO">
+
+                                            <p class="text-muted">4. Administrator E-mail
+                                            <input type="email" class="form-control" ng-model="$parent.adminEmail"
+                                                   name="adminEmail" ng-required="isSSO">
+
+                                            <span class="text-muted"> 5.
+                                                <input type="checkbox" class="chb" ng-model="$parent.sungardasSSO"
+                                                   name="sungardasSSO"> Enable SungardAS SSO
+                                            </span>
+                                            <div class="pull-left">
+                                                <span ng-show="$parent.sungardasSSO" class="label label-success pull-right">UUID: {{settings.uuid}}</span>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
 
                                 <div class="flex-1 flex-center">
-                                    <span title="Email notifications for events"><span class="glyphicon glyphicon-question-sign text-primary"></span></span>
+                                    <span title="SSO is Single sign-on"><span
+                                            class="glyphicon glyphicon-question-sign text-primary"></span></span>
                                 </div>
+                            </div>
 
+                            <div>
+                                <div class="flex-container card">
+                                    <div class="flex-2 flex-center">
+                                        <span class="icon glyphicon glyphicon-envelope text-success"></span>
+                                    </div>
+
+                                    <div class="flex-5 card-content">
+                                        <div>
+                                            <label>
+                                                <button type="button" class="btn btn-success"
+                                                        ng-click="emailNotifications()">
+                                                    Edit Email notification
+                                                </button>
+                                            </label>
+                                        </div>
+
+                                        <small class="text-muted">(Email notifications may be configured at any time in
+                                            Settings tab)
+                                        </small>
+                                    </div>
+
+                                    <div class="flex-1 flex-center">
+                                        <span title="Email notifications for events"><span
+                                                class="glyphicon glyphicon-question-sign text-primary"></span></span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="pull-right">

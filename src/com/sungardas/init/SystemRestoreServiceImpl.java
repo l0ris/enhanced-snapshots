@@ -12,18 +12,26 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
-import com.sungardas.enhancedsnapshots.service.upgrade.UpgradeSystemTo002;
+import com.sungardas.enhancedsnapshots.service.upgrade.UpgradeSystemTo003;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
-
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -71,7 +79,7 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
         if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
             amazonS3.setRegion(current);
         }
-        systemUpgrade = new UpgradeSystemTo002();
+        systemUpgrade = new UpgradeSystemTo003();
     }
 
     public DynamoDBMapperConfig dynamoDBMapperConfig() {
@@ -100,7 +108,7 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
                 LOG.info("Restoring saml certificate and ipd metadata", 90);
                 restoreSSOFiles(tempDirectory);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("System restore failed");
             LOG.error(e);
             throw new EnhancedSnapshotsException(e);
@@ -140,11 +148,26 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
         restoreTable(RetentionEntry.class, tempDirectory);
         restoreTable(SnapshotEntry.class, tempDirectory);
         restoreTable(User.class, tempDirectory);
-        currentConfiguration = dynamoDBMapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
+        currentConfiguration = dynamoDBMapper.load(Configuration.class, SystemUtils.getSystemId());
     }
 
-    private void restoreSDFS(final Path tempDirectory) throws IOException {
+    private void restoreSDFS(final Path tempDirectory) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
         restoreFile(tempDirectory, Paths.get(currentConfiguration.getSdfsConfigPath()));
+        if (currentConfiguration.isClusterMode() && (currentConfiguration.getChunkStoreIV() == null || currentConfiguration.getChunkStoreEncryptionKey() == null)) {
+            DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            File sdfsConfig = new File(currentConfiguration.getSdfsConfigPath());
+            Document document = documentBuilder.parse(sdfsConfig);
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath ivXPath = xPathFactory.newXPath();
+            XPath keyXPath = xPathFactory.newXPath();
+            XPathExpression ivExpression = ivXPath.compile("/subsystem-config/local-chunkstore/@encryption-iv");
+            XPathExpression keyExpression = keyXPath.compile("/subsystem-config/local-chunkstore/@encryption-key");
+            currentConfiguration.setChunkStoreIV(ivExpression.evaluate(document));
+            currentConfiguration.setChunkStoreEncryptionKey(keyExpression.evaluate(document));
+            currentConfiguration.setSdfsCliPsw(SystemUtils.getSystemId());
+            dynamoDBMapper.save(currentConfiguration);
+            sdfsConfig.delete();
+        }
     }
 
 
@@ -224,7 +247,7 @@ public class SystemRestoreServiceImpl implements SystemRestoreService {
                     objectMapper.getTypeFactory().constructCollectionType(List.class, Configuration.class));
             if (!data.isEmpty()) {
                 Configuration configuration = data.get(0);
-                configuration.setConfigurationId(EC2MetadataUtils.getInstanceId());
+                configuration.setConfigurationId(SystemUtils.getSystemId());
             }
             dynamoDBMapper.batchSave(data);
         } catch (IOException e) {

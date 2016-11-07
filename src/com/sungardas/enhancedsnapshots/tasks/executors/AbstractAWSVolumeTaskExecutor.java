@@ -2,7 +2,9 @@ package com.sungardas.enhancedsnapshots.tasks.executors;
 
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.TaskProgressDto;
+import com.sungardas.enhancedsnapshots.enumeration.TaskProgress;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsTaskInterruptedException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
@@ -21,6 +23,9 @@ public abstract class AbstractAWSVolumeTaskExecutor implements TaskExecutor {
 
     @Autowired
     private AWSCommunicationService awsCommunication;
+
+    @Autowired
+    private TaskRepository taskRepository;
 
     @Autowired
     private TaskService taskService;
@@ -67,5 +72,10 @@ public abstract class AbstractAWSVolumeTaskExecutor implements TaskExecutor {
             LOG.info("Task {} was canceled.", taskEntry.getId());
             throw new EnhancedSnapshotsTaskInterruptedException("Task canceled");
         }
+    }
+
+    protected void setProgress(TaskEntry taskEntry, TaskProgress progress) {
+        taskEntry.setProgress(progress.name());
+        taskRepository.save(taskEntry);
     }
 }

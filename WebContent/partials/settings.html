@@ -17,7 +17,6 @@
 </div>
 <div class="table-header-placeholder"></div>
 
-
 <div class="container app" ng-show="progressState !== 'loading'">
 
     <div class="card">
@@ -38,18 +37,22 @@
         <div class="flex-container">
             <div class="flex-5 card-content flex-center">
 
-                <div class="full-width">
-                    <h3>EC2 Instance</h3>
-                    <div class="col-sm-12 form-group">
-                        <div class="col-sm-5 text-right">Instance ID:</div>
-                        <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceID || 'unknown'}}</div>
+                <div class="full-width form-group">
+                    <div class="col-sm-12">
+                        <div class="col-sm-5 text-right">System ID</div>
+                        <div class="col-sm-7 text-left">{{settings.systemId || 'unknown'}}</div>
                     </div>
                 </div>
 
                 <div class="full-width">
-                    <h3>S3</h3>
+                    <h3>AWS Resources</h3>
+                    <div class="col-sm-12" ng-show="settings.ec2Instance.instanceIDs">
+                        <div class="col-sm-5 text-right">EC2 Instance IDs:</div>
+                        <div class="col-sm-7 text-left">{{settings.ec2Instance.instanceIDs || 'unknown'}}</div>
+                    </div>
+
                     <div class="col-sm-12 form-group">
-                        <div class="col-sm-5 text-right">Bucket:</div>
+                        <div class="col-sm-5 text-right">S3 Bucket:</div>
                         <div class="col-sm-7 text-left">{{settings.s3.bucketName || 'unknown'}}</div>
                     </div>
                 </div>
@@ -209,6 +212,10 @@
                                        name="storeSnapshots">
                             </div>
                         </div>
+                        <div class="col-sm-12 form-group" ng-show="settings.sungardasSSO" >
+                            <div class="col-sm-5 text-right">SungardAS SSO UUID:</div>
+                            <div class="col-sm-7 text-left">{{settings.uuid}}</div>
+                        </div>
 
                         <div class="col-sm-12 form-group">
                             <div class="settings field-label col-sm-5 text-right">Tasks History Time Limit:</div>
@@ -237,6 +244,32 @@
                             <div class="settings field-label col-sm-5 text-left">logs</div>
                         </div>
 
+                        <div class="col-sm-12 form-group" ng-if="settings.clusterMode">
+                            <div class="settings field-label col-sm-5 text-right">Minimum node number:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       min="1"
+                                       max="{{settings.cluster.maxNodeNumber}}"
+                                       ng-model="settings.cluster.minNodeNumber"
+                                       name="minNodeNumber"
+                                       ng-required="settings.clusterMode">
+                            </div>
+                            <div class="col-sm-12 text-danger small" ng-show="otherSettings.minNodeNumber.$error.min"> Should be greater than 0 </div>
+                        </div>
+
+                        <div class="col-sm-12 form-group" ng-if="settings.clusterMode">
+                            <div class="settings field-label col-sm-5 text-right">Maximum node number:</div>
+                            <div class="col-sm-2 text-left">
+                                <input class="settings form-control"
+                                       type="number"
+                                       min="{{settings.cluster.minNodeNumber}}"
+                                       ng-model="settings.cluster.maxNodeNumber"
+                                       name="maxNodeNumber"
+                                       ng-required="settings.clusterMode">
+                            </div>
+                        </div>
+
                         <div class="col-sm-12 form-group">
                             <div class="settings field-label col-sm-5 text-right">Email notifications:</div>
                             <div class="col-sm-2 text-left">
@@ -247,9 +280,9 @@
                         </div>
 
                         <div class="col-sm-12 text-danger small"
-                             ng-show="otherSettings.maxQueueSize.$error.required ||
-                             otherSettings.amazonRetryCount.$error.required ||
-                             otherSettings.amazonRetrySleep.$error.required">
+                             ng-show="otherSettings.$error.required ||
+                             sdfs.$error.required ||
+                             volumeTypes.$error.required">
                             {{STRINGS.otherSettings.empty}}
                         </div>
                     </form>
@@ -260,10 +293,8 @@
                         <button ng-show="isNewValues()"
                                 class="settings btn btn-info" title="Update Settings"
                                 ng-click="updateSettings()"
-                                ng-disabled="sdfs.volumeSize.$invalid ||
-                                sdfs.sdfsLocalCacheSize.$invalid || volumeTypes.tVolumeSize.$invalid ||
-                                volumeTypes.rVolumeSize.$invalid || otherSettings.maxQueueSize.$invalid ||
-                                otherSettings.amazonRetryCount.$invalid || otherSettings.amazonRetrySleep.$invalid">
+                                ng-disabled="otherSettings.$invalid ||
+                                sdfs.$invalid || volumeTypes.$invalid">
                             Update Settings
                         </button>
                     </div>

@@ -3,9 +3,12 @@ package com.sungardas.enhancedsnapshots.service;
 import com.sun.management.OperatingSystemMXBean;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.UUID;
 
 public interface SDFSStateService {
 
@@ -15,12 +18,13 @@ public interface SDFSStateService {
 
     /**
      * Returns max sdfs volume size for current system in GB
-     * @param systemReservedRam in bytes
+     *
+     * @param systemReservedRam    in bytes
      * @param volumeSizePerGbOfRam in GB
-     * @param sdfsReservedRam in bytes
+     * @param sdfsReservedRam      in bytes
      * @return
      */
-    static int getMaxVolumeSize(int systemReservedRam, int volumeSizePerGbOfRam,  int sdfsReservedRam) {
+    static int getMaxVolumeSize(int systemReservedRam, int volumeSizePerGbOfRam, int sdfsReservedRam) {
         OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         //Total RAM - RAM available for Tomcat - reserved
         long totalRAM = osBean.getTotalPhysicalMemorySize() - Runtime.getRuntime().maxMemory() - systemReservedRam - sdfsReservedRam;
@@ -31,6 +35,7 @@ public interface SDFSStateService {
 
     /**
      * Returns count of GB which can be used to increase sdfs local cache
+     *
      * @param systemReservedStorage reserved storage in bytes
      * @return
      */
@@ -79,7 +84,26 @@ public interface SDFSStateService {
 
     /**
      * Returns list of real existing backups from SDFS mount point
+     *
      * @return
      */
     List<BackupEntry> getBackupsFromSDFSMountPoint();
+
+    /**
+     * Returns sdfs volume id
+     *
+     * @return
+     */
+
+    long getSDFSVolumeId();
+
+    static String generateChunkStoreEncryptionKey(){
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 14);
+    }
+
+    static String generateChunkStoreIV(){
+        SecureRandom secureRandom = new SecureRandom();
+        return DatatypeConverter.printHexBinary(secureRandom.generateSeed(16));
+    }
+
 }

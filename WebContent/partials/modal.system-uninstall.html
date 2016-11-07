@@ -19,8 +19,8 @@
             </strong>
         </div>
         <hr/>
-        <h3>Please enter your instance ID:</h3>
-        <input type="text" ng-model="instanceId"/>
+        <h3>Please enter your system ID:</h3>
+        <input type="text" ng-model="systemId"/>
     </div>
 
     <div ng-show="state === 'done'">
@@ -33,7 +33,8 @@
 
     <div class="text-right">
         <button class="btn btn-success" ng-show="state === 'ask'" ng-click="delete()" ng-disabled="removeS3Bucket == undefined">Uninstall</button>
-        <button class="btn btn-default" ng-hide="state === 'ask'" ng-click="$close()"><span
+        <button class="btn btn-success" ng-show="state === 'failed'" ng-click="$close()">OK</button>
+        <button class="btn btn-default" ng-hide="state === 'ask' || state === 'failed'" ng-click="$close()"><span
                 class="glyphicon glyphicon-ok"></span>&nbsp; Done
         </button>
         <button class="btn btn-default" ng-show="state === 'ask'" ng-click="$dismiss()">Close</button>

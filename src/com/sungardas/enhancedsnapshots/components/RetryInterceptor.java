@@ -19,7 +19,7 @@ public class RetryInterceptor implements MethodInterceptor {
     private AmazonS3 amazonS3;
 
     @Autowired
-    private ConfigurationMediator configurationMediator;
+    private ConfigurationMediatorConfigurator configurationMediator;
 
     @Value("${amazon.s3.default.region}")
     private String defaultS3Region;

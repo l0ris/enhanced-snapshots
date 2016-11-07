@@ -3,28 +3,34 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
-import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.NodeRepository;
+import com.sungardas.enhancedsnapshots.cluster.ClusterConfigurationService;
+import com.sungardas.enhancedsnapshots.cluster.ClusterEventPublisher;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediatorConfigurator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
+import com.sungardas.enhancedsnapshots.dto.Cluster;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.PropertySource;
+import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.annotation.PostConstruct;
@@ -36,10 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -47,7 +50,9 @@ import java.util.zip.ZipOutputStream;
 /**
  * Implementation for {@link SystemService}
  */
-@DependsOn("CreateAppConfiguration")
+@Service("SystemService")
+@DependsOn({"CreateAppConfiguration", "ConfigurationMediator"})
+@Profile("prod")
 public class SystemServiceImpl implements SystemService {
     private static final Logger LOG = LogManager.getLogger(SystemServiceImpl.class);
 
@@ -76,6 +81,7 @@ public class SystemServiceImpl implements SystemService {
     private String samlIdpMetadata;
 
     @Autowired
+    @Qualifier("amazonDynamoDbMapper")
     private IDynamoDBMapper dynamoDBMapper;
 
     @Autowired
@@ -83,10 +89,11 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private ConfigurationRepository configurationRepository;
+    @Autowired
+    private NodeRepository nodeRepository;
 
     @Autowired
     private ConfigurationMediatorConfigurator configurationMediator;
-
 
     @Autowired
     private SDFSStateService sdfsStateService;
@@ -106,15 +113,16 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private MailService mailService;
+    @Autowired
+    private ClusterEventPublisher clusterEventPublisher;
 
     @Autowired
-    private AmazonEC2 ec2client;
+    private ClusterConfigurationService clusterConfigurationService;
 
 
     @PostConstruct
     private void init() {
-        currentConfiguration = dynamoDBMapper.load(Configuration.class, getInstanceId());
-        configurationMediator.setCurrentConfiguration(currentConfiguration);
+        currentConfiguration = configurationMediator.getCurrentConfiguration();
         mailService.reconnect();
     }
 
@@ -234,6 +242,7 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public SystemConfiguration getSystemConfiguration() {
         SystemConfiguration configuration = new SystemConfiguration();
+        configuration.setSystemId(configurationMediator.getConfigurationId());
 
         configuration.setS3(new SystemConfiguration.S3());
         configuration.getS3().setBucketName(configurationMediator.getS3Bucket());
@@ -251,7 +260,7 @@ public class SystemServiceImpl implements SystemService {
         configuration.getSdfs().setMinSdfsLocalCacheSize(configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
 
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
-        configuration.getEc2Instance().setInstanceID(getInstanceId());
+        configuration.getEc2Instance().setInstanceIDs(getInstanceIDs());
 
         configuration.setLastBackup(getBackupTime());
         configuration.setCurrentVersion(CURRENT_VERSION);
@@ -273,7 +282,19 @@ public class SystemServiceImpl implements SystemService {
         configuration.setSsoMode(configurationMediator.isSsoLoginMode());
         configuration.setDomain(configurationMediator.getDomain());
         configuration.setMailConfiguration(MailConfigurationDocumentConverter.toMailConfigurationDto(configurationMediator.getMailConfiguration()));
+        Cluster clusterDto = new Cluster();
+        clusterDto.setMaxNodeNumber(configurationMediator.getMaxNodeNumberInCluster());
+        clusterDto.setMinNodeNumber(configurationMediator.getMinNodeNumberInCluster());
+        configuration.setCluster(clusterDto);
+        configuration.setClusterMode(configurationMediator.isClusterMode());
+        configuration.setUUID(configurationMediator.getUUID());
         return configuration;
+    }
+
+    private String[] getInstanceIDs() {
+        List<String> ids = new ArrayList<>();
+        nodeRepository.findAll().stream().forEach(node -> ids.add(node.getNodeId()));
+        return ids.toArray(new String[ids.size()]);
     }
 
     @Override
@@ -281,6 +302,7 @@ public class SystemServiceImpl implements SystemService {
         LOG.info("Updating system properties.");
         // mail configuration
         boolean mailReconnect = false;
+        configuration.setUUID(currentConfiguration.getUUID());
         if (configuration.getMailConfiguration() == null) {
             currentConfiguration.setMailConfigurationDocument(null);
             mailService.disconnect();
@@ -311,10 +333,17 @@ public class SystemServiceImpl implements SystemService {
 
         // update bucket
         currentConfiguration.setS3Bucket(configuration.getS3().getBucketName());
+        if (configurationMediator.isClusterMode()) {
+            currentConfiguration.setMaxNodeNumber(configuration.getCluster().getMaxNodeNumber());
+            currentConfiguration.setMinNodeNumber(configuration.getCluster().getMinNodeNumber());
+            clusterConfigurationService.updateAutoScalingSettings(configuration.getCluster().getMinNodeNumber(),
+                    configuration.getCluster().getMaxNodeNumber());
+        }
 
         configurationRepository.save(currentConfiguration);
 
         configurationMediator.setCurrentConfiguration(currentConfiguration);
+        clusterEventPublisher.settingsUpdated();
         if (mailReconnect) {
             mailService.reconnect();
         }
@@ -334,6 +363,12 @@ public class SystemServiceImpl implements SystemService {
                 applicationContext.refresh();
             }
         }.start();
+    }
+
+    @Override
+    public void refreshSystemConfiguration() {
+        currentConfiguration = dynamoDBMapper.load(Configuration.class, getSystemId());
+        configurationMediator.setCurrentConfiguration(currentConfiguration);
     }
 
     /**
@@ -356,8 +391,8 @@ public class SystemServiceImpl implements SystemService {
     }
 
 
-    protected String getInstanceId() {
-        return EC2MetadataUtils.getInstanceId();
+    protected String getSystemId() {
+        return SystemUtils.getSystemId();
     }
 
     //TODO: this should be stored in DB

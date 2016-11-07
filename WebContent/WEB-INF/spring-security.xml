@@ -15,6 +15,7 @@
     <http name="initFilter" auto-config="false" use-expressions="true" >
         <intercept-url pattern="/**" access="hasAnyRole('ROLE_ADMIN', 'ROLE_CONFIGURATOR', 'ROLE_USER')"/>
         <intercept-url pattern="/login*" access="none"/>
+        <intercept-url pattern="/logout*" access="none"/>
 
         <form-login login-page="/"
                     username-parameter="email"
@@ -22,7 +23,8 @@
                     authentication-failure-handler-ref="initFailureHandler"
                     authentication-success-handler-ref="initSuccessHandler"/>
         <csrf disabled="true"/>
-        <logout logout-success-url="/"/>
+        <logout logout-success-url="/"
+                logout-url="/logout"/>
         <access-denied-handler ref="accessDeniedHandler" />
     </http>
 

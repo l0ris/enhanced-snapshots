@@ -6,6 +6,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -16,14 +17,13 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
 @Service
-@DependsOn("SystemService")
-public class SpringSchedulerService implements SchedulerService {
+@DependsOn("ConfigurationMediator")
+public class SpringSchedulerService implements SchedulerService, MasterInitialization {
 
     private static final Logger LOG = LogManager.getLogger(SpringSchedulerService.class);
 
@@ -45,19 +45,21 @@ public class SpringSchedulerService implements SchedulerService {
     @Autowired
     private TaskService taskService;
 
-    @PostConstruct
-    private void init() {
-        try {
-            List<TaskEntry> tasks = taskRepository.findByRegular(Boolean.TRUE.toString());
-            for (TaskEntry taskEntry : tasks) {
-                try {
-                    addTask(taskEntry);
-                } catch (EnhancedSnapshotsException e) {
-                    LOG.error(e);
+    @Override
+    public void init() {
+        if (!SystemUtils.clusterMode()) {
+            try {
+                List<TaskEntry> tasks = taskRepository.findByRegular(Boolean.TRUE.toString());
+                for (TaskEntry taskEntry : tasks) {
+                    try {
+                        addTask(taskEntry);
+                    } catch (EnhancedSnapshotsException e) {
+                        LOG.error(e);
+                    }
                 }
+            } catch (AmazonClientException e) {
+                LOG.error(e);
             }
-        } catch (AmazonClientException e) {
-            LOG.error(e);
         }
     }
 
@@ -99,6 +101,11 @@ public class SpringSchedulerService implements SchedulerService {
     public Set<String> getVolumeIdsWithSchedule() {
         Set<String> result = taskRepository.findByRegularAndEnabled(Boolean.TRUE.toString(), Boolean.TRUE.toString()).stream().map(TaskEntry::getVolume).collect(Collectors.toSet());
         return result;
+    }
+
+    @Override
+    public boolean exists(String taskId) {
+        return jobs.containsKey(taskId);
     }
 
     private class TaskImpl implements Task {

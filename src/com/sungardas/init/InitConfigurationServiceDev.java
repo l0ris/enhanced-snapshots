@@ -11,6 +11,8 @@ import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.dto.converter.MailConfigurationDocumentConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
+import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,7 +87,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     @PostConstruct
     protected void init() {
         DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
-                withTableNamePrefix(AmazonConfigProviderDEV.getDynamoDbPrefix("DEV"))).build();
+                withTableNamePrefix(AmazonConfigProviderDEV.getDynamoDbPrefix(SystemUtils.getSystemId()))).build();
         mapper = new DynamoDBMapper(amazonDynamoDB, config);
     }
 
@@ -117,6 +119,9 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         config.setDb(db);
         config.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
 
+        config.setClusterMode(SystemUtils.clusterMode());
+        config.setUUID(UUID);
+
         return config;
     }
 
@@ -126,7 +131,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
     }
 
     protected Configuration getConfiguration(){
-        return mapper.load(Configuration.class, "DEV");
+        return mapper.load(Configuration.class, SystemUtils.getSystemId());
     }
 
     @Override
@@ -165,10 +170,18 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
         Configuration configuration = getDevConf();
         configuration.setMailConfigurationDocument(MailConfigurationDocumentConverter.toMailConfigurationDocument(config.getMailConfiguration(), cryptoService, "DEV", ""));
         configuration.setDomain(config.getDomain());
+        if (SystemUtils.clusterMode()) {
+            configuration.setClusterMode(true);
+            configuration.setMaxNodeNumber(config.getCluster().getMaxNodeNumber());
+            configuration.setMinNodeNumber(config.getCluster().getMinNodeNumber());
+            configuration.setChunkStoreEncryptionKey(SDFSStateService.generateChunkStoreEncryptionKey());
+            configuration.setChunkStoreIV(SDFSStateService.generateChunkStoreIV());
+            configuration.setSdfsCliPsw(SystemUtils.getSystemId());
+        }
         mapper.save(configuration);
 
         User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev");
-        user.setId("DEV");
+        user.setId(SystemUtils.getInstanceId());
         mapper.save(user);
     }
 
@@ -178,7 +191,7 @@ class InitConfigurationServiceDev extends InitConfigurationServiceImpl {
 
     private Configuration getDevConf() {
         Configuration configuration = new Configuration();
-        configuration.setConfigurationId("DEV");
+        configuration.setConfigurationId(SystemUtils.getSystemId());
         configuration.setEc2Region(Regions.EU_WEST_1.getName());
         configuration.setSdfsMountPoint("");
         configuration.setSdfsVolumeName("");
