@@ -58,6 +58,7 @@ public class ContextManager {
             // set userService property to userDetails bean, so we could manage users roles within ssoLogin mode
             applicationContext.getBean(SamlUserDetails.class).setUserService(applicationContext.getBean(UserService.class));
             applicationContext.getBean(SAMLAuthenticationProviderImpl.class).setConfigurationMediator(applicationContext.getBean(ConfigurationMediator.class));
+            applicationContext.getBean(SAMLAuthenticationProviderImpl.class).setUserService(applicationContext.getBean(UserService.class));
         }
         // for local authentication
         else {
