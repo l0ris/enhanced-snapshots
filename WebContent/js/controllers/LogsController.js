@@ -1,7 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('LogsController', ['$location', '$anchorScroll','$stomp', '$scope', '$rootScope', '$state', '$timeout', '$q', 'System', function ($location, $anchorScroll, $stomp, $scope, $rootScope, $state, $timeout, $q, System) {
+    .controller('LogsController', ['$location', '$anchorScroll','$stomp', '$scope', '$rootScope', '$state', '$timeout', '$q', 'System',
+        function ($location, $anchorScroll, $stomp, $scope, $rootScope, $state, $timeout, $q, System) {
         $scope.followLogs = false;
         $scope.logs = [];
 
@@ -19,8 +20,12 @@ angular.module('web')
         var counterStarted = false;
 
         System.get().then(function (settings) {
-            maxLogs = settings.systemProperties.logsBuffer;
+            // hack for handling 302 status
+            if (typeof settings === 'string' && settings.indexOf('<html lang="en" ng-app="web"')>-1) {
+                $state.go('loader');
+            }
 
+            maxLogs = settings.systemProperties.logsBuffer;
             $stomp
                 .connect('/rest/ws')
                 .then(function (frame) {

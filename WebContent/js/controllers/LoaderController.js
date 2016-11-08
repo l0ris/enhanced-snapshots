@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoaderController', ['Users', '$state', '$q', 'System', 'Storage',
-        function (Users, $state, $q, System, Storage) {
+    .controller('LoaderController', ['Users', '$state', '$q', 'System', 'Storage', 'Auth',
+        function (Users, $state, $q, System, Storage, Auth) {
 
             var promises = [System.get(), Users.refreshCurrent()];
             $q.all(promises).then(function (results) {
@@ -14,7 +14,7 @@ angular.module('web')
                 if (typeof(results[1].data) != 'string' && results[1].status === 200) {
                     $state.go('app.volume.list');
                 } else {
-                    // Auth.logOut(); ?
+                    Auth.logOut();
                     $state.go('login');
                 }
             }, function (err) {

@@ -145,6 +145,10 @@ angular.module('web')
             $rootScope.isLoading = true;
             $scope.volumes = [];
             Volumes.get().then(function (data) {
+                // hack for handling 302 status
+                if (typeof data === 'string' && data.indexOf('<html lang="en" ng-app="web"')>-1) {
+                    $state.go('loader');
+                }
                 $scope.volumes = processVolumes(data);
                 $rootScope.isLoading = false;
             }, function () {

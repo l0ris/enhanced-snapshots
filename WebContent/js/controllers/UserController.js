@@ -1,7 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('UserController', ['$scope', '$rootScope', 'Users', 'ssoMode', 'Storage', 'toastr', '$modal', 'ITEMS_BY_PAGE', 'DISPLAY_PAGES', function ($scope, $rootScope, Users, ssoMode, Storage, toastr, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
+    .controller('UserController', ['$state', '$scope', '$rootScope', 'Users', 'ssoMode', 'Storage', 'toastr', '$modal', 'ITEMS_BY_PAGE', 'DISPLAY_PAGES',
+        function ($state, $scope, $rootScope, Users, ssoMode, Storage, toastr, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
         $scope.users = [];
@@ -85,6 +86,11 @@ angular.module('web')
         };
 
         Users.getAll().then(function (data) {
+            // hack for handling 302 status
+            if (typeof data === 'string' && data.indexOf('<html lang="en" ng-app="web"')>-1) {
+                $state.go('loader');
+            }
+
             $scope.users = data;
         });
 

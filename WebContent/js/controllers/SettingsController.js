@@ -1,7 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('SettingsController', ['$scope', 'System', 'Users', '$modal', 'Configuration', function ($scope, System, Users, $modal, Configuration) {
+    .controller('SettingsController', ['$state', '$scope', 'System', 'Users', '$modal', 'Configuration',
+        function ($state, $scope, System, Users, $modal, Configuration) {
         var currentUser = Users.getCurrent();
         $scope.isAdmin = currentUser.role === "admin";
 
@@ -36,6 +37,10 @@ angular.module('web')
         $scope.progressState = 'loading';
         var loader = progressLoader();
         System.get().then(function (data) {
+            // hack for handling 302 status
+            if (typeof data === 'string' && data.indexOf('<html lang="en" ng-app="web"')>-1) {
+                $state.go('loader');
+            }
             data.ec2Instance.instanceIDs = data.ec2Instance.instanceIDs.join(", ");
             $scope.settings = data;
             if (!$scope.settings.mailConfiguration) {

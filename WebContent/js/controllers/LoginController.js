@@ -14,13 +14,6 @@ angular.module('web')
         var currentUser = Storage.get("currentUser");
         var ssoMode = Storage.get("ssoMode");
 
-        // if (currentUser !== null && currentUser !== undefined) {
-        //     if (ssoMode && ssoMode.ssoMode) {
-        //         $window.location.href = "/saml/logout";
-        //     }
-        //     Auth.logOut();
-        // }
-
         if (currentUser && currentUser.length > 1) {
             if (ssoMode && ssoMode.ssoMode) {
                 $window.location.href = "/saml/logout";
@@ -34,11 +27,9 @@ angular.module('web')
                 $rootScope.isLoading = true;
                 window.location = "/saml/login";
             } else {
-                if (refreshUserResult === 200 && currentUser && ssoMode && ssoMode.ssoMode) {
+                if (refreshUserResult === 200 && currentUser && ssoMode && ssoMode.ssoMode != undefined) {
                     $rootScope.isLoading = true;
                     $state.go('loader');
-                } else if (refreshUserResult === 200 && currentUser && ssoMode && !ssoMode.ssoMode) {
-                    $rootScope.isLoading = false;
                 } else {
                     $rootScope.isLoading = !!(ssoMode && ssoMode.ssoMode);
                 }
