@@ -28,8 +28,7 @@ angular.module('web')
                 window.location = "/saml/login";
             } else {
                 if (refreshUserResult === 200 && currentUser && ssoMode && ssoMode.ssoMode != undefined) {
-                    $rootScope.isLoading = true;
-                    $state.go('loader');
+                    $state.go('app.volume.list');
                 } else {
                     $rootScope.isLoading = !!(ssoMode && ssoMode.ssoMode);
                 }
