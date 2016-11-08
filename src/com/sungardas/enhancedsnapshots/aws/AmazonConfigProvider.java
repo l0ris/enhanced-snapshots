@@ -1,8 +1,5 @@
 package com.sungardas.enhancedsnapshots.aws;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -22,13 +19,11 @@ import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
-
 import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.aop.framework.ProxyFactoryBean;
@@ -40,18 +35,19 @@ import org.springframework.context.annotation.Profile;
 @Profile("prod")
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository", dynamoDBMapperConfigRef = "dynamoDBMapperConfig")
 public class AmazonConfigProvider {
-    private AWSCredentials awsCredentials;
+    private InstanceProfileCredentialsProvider credentialsProvider;
 
     @Bean(name = "retryInterceptor")
     public RetryInterceptor retryInterceptor() {
         return new RetryInterceptor();
     }
 
-    public AWSCredentials awsCredentials() {
-        if (awsCredentials == null) {
-            awsCredentials = new InstanceProfileCredentialsProvider().getCredentials();
+    @Bean
+    public InstanceProfileCredentialsProvider amazonCredentialsProvider() {
+        if (credentialsProvider == null) {
+            credentialsProvider = new InstanceProfileCredentialsProvider(true);
         }
-        return awsCredentials;
+        return credentialsProvider;
     }
 
     @Bean(name = "amazonDynamoDB")
@@ -103,7 +99,7 @@ public class AmazonConfigProvider {
 
     @Bean(name = "dynamoDB")
     public AmazonDynamoDB amazonDynamoDB() {
-        AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(awsCredentials());
+        AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonCredentialsProvider());
         amazonDynamoDB.setRegion(getRegion());
         return amazonDynamoDB;
     }
@@ -111,21 +107,6 @@ public class AmazonConfigProvider {
     @Bean(name = "dbMapperWithoutProxy")
     public DynamoDBMapper dynamoDBMapper() {
         return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
-    }
-
-    private AmazonEC2 amazonEC2() {
-        AmazonEC2 amazonEC2 = new AmazonEC2Client(awsCredentials());
-        amazonEC2.setRegion(getRegion());
-        return amazonEC2;
-    }
-
-    private AmazonS3 amazonS3() {
-        AmazonS3 amazonS3 = new AmazonS3Client(awsCredentials());
-        Region current = getRegion();
-        if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
-            amazonS3.setRegion(current);
-        }
-        return amazonS3;
     }
 
     @Bean
@@ -176,37 +157,53 @@ public class AmazonConfigProvider {
         return proxyFactoryBean;
     }
 
-    private AmazonSNS amazonSNSClient() {
-        AmazonSNSClient snsClient = new AmazonSNSClient(awsCredentials());
+    protected AmazonEC2 amazonEC2() {
+        AmazonEC2 amazonEC2 = new AmazonEC2Client(amazonCredentialsProvider());
+        amazonEC2.setRegion(getRegion());
+        return amazonEC2;
+    }
+
+    protected AmazonS3 amazonS3() {
+        AmazonS3 amazonS3 = new AmazonS3Client(amazonCredentialsProvider());
+        Region current = getRegion();
+        if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
+            amazonS3.setRegion(current);
+        }
+        return amazonS3;
+    }
+
+    protected AmazonSNS amazonSNSClient() {
+        AmazonSNSClient snsClient = new AmazonSNSClient(amazonCredentialsProvider());
         snsClient.setRegion(getRegion());
         return snsClient;
     }
 
-    private AmazonSQS amazonSQSClient() {
-        AmazonSQSClient sqsClient = new AmazonSQSClient(awsCredentials());
+    protected AmazonSQS amazonSQSClient() {
+        AmazonSQSClient sqsClient = new AmazonSQSClient(amazonCredentialsProvider());
         sqsClient.setRegion(getRegion());
         return sqsClient;
     }
-    private AmazonAutoScaling autoScalingClient() {
-        AmazonAutoScalingClient autoScalingClient = new AmazonAutoScalingClient(awsCredentials());
+
+    protected AmazonAutoScaling autoScalingClient() {
+        AmazonAutoScalingClient autoScalingClient = new AmazonAutoScalingClient(amazonCredentialsProvider());
         autoScalingClient.setRegion(getRegion());
         return autoScalingClient;
     }
 
-    private AmazonElasticLoadBalancing elasticLoadBalancingClient() {
-        AmazonElasticLoadBalancingClient elasticLoadBalancingClient = new AmazonElasticLoadBalancingClient(awsCredentials());
+    protected AmazonElasticLoadBalancing elasticLoadBalancingClient() {
+        AmazonElasticLoadBalancingClient elasticLoadBalancingClient = new AmazonElasticLoadBalancingClient(amazonCredentialsProvider());
         elasticLoadBalancingClient.setRegion(getRegion());
         return elasticLoadBalancingClient;
     }
 
-    private AmazonCloudFormation amazonCloudFormationClient(){
-        AmazonCloudFormation amazonCloudFormation = new AmazonCloudFormationClient(awsCredentials());
+    protected AmazonCloudFormation amazonCloudFormationClient() {
+        AmazonCloudFormation amazonCloudFormation = new AmazonCloudFormationClient(amazonCredentialsProvider());
         amazonCloudFormation.setRegion(getRegion());
         return amazonCloudFormation;
     }
 
-    private AmazonCloudWatch cloudWatchClient() {
-        AmazonCloudWatchClient cloudWatchClient = new AmazonCloudWatchClient(awsCredentials());
+    protected AmazonCloudWatch cloudWatchClient() {
+        AmazonCloudWatchClient cloudWatchClient = new AmazonCloudWatchClient(amazonCredentialsProvider());
         cloudWatchClient.setRegion(getRegion());
         return cloudWatchClient;
     }
