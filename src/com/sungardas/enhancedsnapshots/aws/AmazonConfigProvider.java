@@ -109,21 +109,6 @@ public class AmazonConfigProvider {
         return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
     }
 
-    private AmazonEC2 amazonEC2() {
-        AmazonEC2 amazonEC2 = new AmazonEC2Client(amazonCredentialsProvider());
-        amazonEC2.setRegion(getRegion());
-        return amazonEC2;
-    }
-
-    private AmazonS3 amazonS3() {
-        AmazonS3 amazonS3 = new AmazonS3Client(amazonCredentialsProvider());
-        Region current = getRegion();
-        if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
-            amazonS3.setRegion(current);
-        }
-        return amazonS3;
-    }
-
     @Bean
     public ProxyFactoryBean amazonAutoScalingProxy() {
         ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
@@ -172,36 +157,52 @@ public class AmazonConfigProvider {
         return proxyFactoryBean;
     }
 
-    private AmazonSNS amazonSNSClient() {
+    protected AmazonEC2 amazonEC2() {
+        AmazonEC2 amazonEC2 = new AmazonEC2Client(amazonCredentialsProvider());
+        amazonEC2.setRegion(getRegion());
+        return amazonEC2;
+    }
+
+    protected AmazonS3 amazonS3() {
+        AmazonS3 amazonS3 = new AmazonS3Client(amazonCredentialsProvider());
+        Region current = getRegion();
+        if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
+            amazonS3.setRegion(current);
+        }
+        return amazonS3;
+    }
+
+    protected AmazonSNS amazonSNSClient() {
         AmazonSNSClient snsClient = new AmazonSNSClient(amazonCredentialsProvider());
         snsClient.setRegion(getRegion());
         return snsClient;
     }
 
-    private AmazonSQS amazonSQSClient() {
+    protected AmazonSQS amazonSQSClient() {
         AmazonSQSClient sqsClient = new AmazonSQSClient(amazonCredentialsProvider());
         sqsClient.setRegion(getRegion());
         return sqsClient;
     }
-    private AmazonAutoScaling autoScalingClient() {
+
+    protected AmazonAutoScaling autoScalingClient() {
         AmazonAutoScalingClient autoScalingClient = new AmazonAutoScalingClient(amazonCredentialsProvider());
         autoScalingClient.setRegion(getRegion());
         return autoScalingClient;
     }
 
-    private AmazonElasticLoadBalancing elasticLoadBalancingClient() {
+    protected AmazonElasticLoadBalancing elasticLoadBalancingClient() {
         AmazonElasticLoadBalancingClient elasticLoadBalancingClient = new AmazonElasticLoadBalancingClient(amazonCredentialsProvider());
         elasticLoadBalancingClient.setRegion(getRegion());
         return elasticLoadBalancingClient;
     }
 
-    private AmazonCloudFormation amazonCloudFormationClient(){
+    protected AmazonCloudFormation amazonCloudFormationClient() {
         AmazonCloudFormation amazonCloudFormation = new AmazonCloudFormationClient(amazonCredentialsProvider());
         amazonCloudFormation.setRegion(getRegion());
         return amazonCloudFormation;
     }
 
-    private AmazonCloudWatch cloudWatchClient() {
+    protected AmazonCloudWatch cloudWatchClient() {
         AmazonCloudWatchClient cloudWatchClient = new AmazonCloudWatchClient(amazonCredentialsProvider());
         cloudWatchClient.setRegion(getRegion());
         return cloudWatchClient;
