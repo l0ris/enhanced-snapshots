@@ -174,6 +174,14 @@ case "$commandName" in
         /sbin/sdfscli --sync-remote-cloud-volume=${volume} --password=${cliPass}
     done
     ;;
+############################# Syncing remote volumes ####################################
+--removevolume) echo "Deleting volume"
+    cliPass="${2:-apassword}"
+    vol="${3}"
+    echo "CLI pass: $cliPass"
+    echo "VolumeId: $vol"
+    /sbin/sdfscli --delete-remote-cloud-volume=$vol --password=$cliPass
+    ;;
 
 ############################# expand volume ####################################
 --expandvolume) echo "Expanding volume"
