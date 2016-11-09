@@ -10,6 +10,7 @@ import com.sungardas.enhancedsnapshots.util.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
@@ -128,11 +129,15 @@ public class SpringSchedulerService implements SchedulerService, MasterInitializ
             if (taskService.isQueueFull()) {
                 notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
             } else {
-                taskEntry.setId(UUID.randomUUID().toString());
-                taskEntry.setSchedulerManual(false);
-                taskEntry.setRegular(false);
-                taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
-                taskRepository.save(taskEntry);
+                TaskEntry newTask = new TaskEntry();
+
+                BeanUtils.copyProperties(taskEntry, newTask);
+                newTask.setId(UUID.randomUUID().toString());
+                newTask.setSchedulerManual(false);
+                newTask.setRegular(false);
+                newTask.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
+
+                taskRepository.save(newTask);
             }
         }
 
