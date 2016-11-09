@@ -6,6 +6,8 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.EventEntry;
+import com.sungardas.enhancedsnapshots.cluster.ClusterEventListener;
 import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
@@ -31,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Profile("prod")
-public class SDFSStateServiceImpl implements SDFSStateService {
+public class SDFSStateServiceImpl implements SDFSStateService, ClusterEventListener {
 
     private static final Logger LOG = LogManager.getLogger(SDFSStateServiceImpl.class);
 
@@ -46,6 +48,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final String CLOUD_SYNC_CMD = "--cloudsync";
     private static final String SHOW_VOLUME_ID_CMD = "--showvolumes";
     private static final String SYNC_CLUSTER_VOLUMES = "--syncvolumes";
+    private static final String DELETE_CLUSTER_VOLUME = "--deletevolume";
 
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
@@ -368,6 +371,20 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             backupEntry.setSize(String.valueOf(file.length()));
 
             return backupEntry;
+        }
+    }
+
+    @Override
+    public void launched(EventEntry eventEntry) {
+    }
+
+    @Override
+    public void terminated(EventEntry eventEntry) {
+        try {
+            String[] parameters = {getSdfsScriptFile(sdfsScript).getAbsolutePath(), DELETE_CLUSTER_VOLUME, configurationMediator.getSdfsCliPsw(), String.valueOf(eventEntry.getVolumeId())};
+            executeScript(parameters);
+        } catch (Exception e) {
+            LOG.error("Failed to remove sdfs volume", e);
         }
     }
 }
