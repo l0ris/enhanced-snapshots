@@ -34,10 +34,18 @@ angular.module('web')
             return deferred.promise;
         };
         
-        var _logout= function () {
+        var _logout = function () {
             Storage.remove("ssoMode");
             Storage.remove("currentUser");
-            return $http.get(logoutUrl)
+            var deferred = $q.defer();
+
+            $http.get(logoutUrl).then(function () {
+                deferred.resolve();
+            }, function (e) {
+                deferred.reject(e);
+            });
+
+            return deferred.promise;
         };
 
         return {

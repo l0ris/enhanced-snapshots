@@ -53,10 +53,10 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
                     deferred.resolve(false)
             }
         }, function (rejection) {
-                if (rejection[1].status === 401) {
-                    var isSso = rejection[1].data &&
-                        rejection[1].data.loginMode &&
-                        rejection[1].data.loginMode === "SSO";
+                if (rejection.status === 401) {
+                    var isSso = rejection.data &&
+                        rejection.data.loginMode &&
+                        rejection.data.loginMode === "SSO";
 
                     deferred.resolve(isSso);
                 }
@@ -187,7 +187,7 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         var isUserSaved = Storage.get("currentUser");
         var isSsoSaved = Storage.get("ssoMode");
 
-        if (isUserSaved && isSsoSaved) {
+        if (!isUserSaved || !isSsoSaved) {
             var promises = [System.get(), Users.refreshCurrent()];
             $q.all(promises).then(function (results) {
                 if (results[0].ssoMode != undefined) {
@@ -198,6 +198,8 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
                 //response for Users.refreshCurrent
                 if (results[1].data && results[1].data.email) {
                     $state.go('app.volume.list');
+                } else {
+                    $state.go('login');
                 }
 
                 $rootScope.isLoading = false;

@@ -1,7 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .controller('TasksController', ['$scope', '$rootScope', '$stateParams', '$stomp', 'Tasks', 'Storage', '$modal', '$timeout', function ($scope, $rootScope, $stateParams, $stomp, Tasks, Storage, $modal, $timeout) {
+    .controller('TasksController', ['$scope', '$rootScope', '$stateParams', '$stomp', 'Tasks', 'Storage', '$modal', '$timeout', '$state',
+        function ($scope, $rootScope, $stateParams, $stomp, Tasks, Storage, $modal, $timeout, $state) {
         $scope.typeColorClass = {
             backup: "primary",
             restore: "success",
@@ -42,6 +43,11 @@ angular.module('web')
         $scope.refresh = function () {
             $rootScope.isLoading = true;
             Tasks.get($scope.volumeId).then(function (data) {
+                // hack for handling 302 status
+                if (typeof data === 'string' && data.indexOf('<html lang="en" ng-app="web"')>-1) {
+                    $state.go('logout');
+                }
+
                 $scope.tasks = data;
                 applyTaskStatuses();
                 $rootScope.isLoading = false;
