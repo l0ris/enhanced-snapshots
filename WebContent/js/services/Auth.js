@@ -35,10 +35,10 @@ angular.module('web')
         };
         
         var _logout= function () {
-            Storage.remove("ssoMode")
+            Storage.remove("ssoMode");
             Storage.remove("currentUser");
             return $http.get(logoutUrl)
-            };
+        };
 
         return {
             logIn: function (email, pass) {

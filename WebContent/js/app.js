@@ -7,7 +7,7 @@ app.constant('ITEMS_BY_PAGE', 25);
 app.constant('DISPLAY_PAGES', 7);
 
 app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($stateProvider, $urlRouterProvider, $httpProvider) {
-    $urlRouterProvider.otherwise("/app/volumes");
+    $urlRouterProvider.otherwise("/loader");
 
     var authenticated = ['$rootScope', function ($rootScope) {
         if (angular.isUndefined($rootScope.getUserName())) throw "User not authorized!";
@@ -34,23 +34,34 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         return deferred.promise;
     }];
 
-    var doRefresh = ['Users', '$q', 'Storage', function (Users, $q, Storage) {
+    var doRefresh = ['Users', '$q', 'Storage', 'Auth', '$rootScope', 'System',
+        function (Users, $q, Storage, Auth, $rootScope, System) {
+        $rootScope.isLoading = true;
         var deferred = $q.defer();
 
-        Users.refreshCurrent().then(function (data) {
-            if (data.status === 302) {
-                Storage.save("ssoMode", {"ssoMode": false});
-            }
-            deferred.resolve(false)
-        }, function (rejection) {
-            if (rejection.status === 401) {
-                var isSso = rejection.data &&
-                    rejection.data.loginMode &&
-                    rejection.data.loginMode === "SSO";
+        var promises = [System.get(), Users.refreshCurrent()];
+        $q.all(promises).then(function (results) {
 
-                deferred.resolve(isSso);
+            if (results[0].ssoMode != undefined) {
+                //response for System.get
+                Storage.save("ssoMode", {"ssoMode": results[0].ssoMode});
             }
-            deferred.resolve(false)
+
+            if (results[1].status === 200) {
+                    deferred.resolve(results[1].status)
+            } else {
+                    deferred.resolve(false)
+            }
+        }, function (rejection) {
+                if (rejection[1].status === 401) {
+                    var isSso = rejection[1].data &&
+                        rejection[1].data.loginMode &&
+                        rejection[1].data.loginMode === "SSO";
+
+                    deferred.resolve(isSso);
+                }
+
+                deferred.resolve(false)
         });
 
         return deferred.promise;
@@ -144,6 +155,22 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
                 refreshUserResult: doRefresh
             }
         })
+        .state('loader', {
+            url: "/loader",
+            template: '<div class="loading">'+
+            '<div class="text-center spinner-container">' +
+            '<span class="glyphicon glyphicon-refresh text-muted spin"></span>'+
+            '</div> </div>',
+            controller: "LoaderController"
+        })
+        .state('logout', {
+            url: "/logout",
+            template: '<div class="loading">'+
+                        '<div class="text-center spinner-container">' +
+                        '<span class="glyphicon glyphicon-refresh text-muted spin"></span>'+
+                        '</div> </div>',
+            controller: "LogoutController"
+        })
         .state('registration', {
             url: "/registration",
             templateUrl: "partials/registration.html",
@@ -157,22 +184,28 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
         function ($rootScope, $state, $modal, $stomp, toastr, Storage, Users, System, $q) {
         $rootScope.isLoading = true;
 
-        System.get().then(function (results) {
-            //response for System.get
-            if (results.ssoMode != undefined) {
-                Storage.save("ssoMode", {"ssoMode": results.ssoMode});
-            }
+        var isUserSaved = Storage.get("currentUser");
+        var isSsoSaved = Storage.get("ssoMode");
 
-            Users.refreshCurrent().then(function (data) {
-                if (data.data && data.data.email) {
+        if (isUserSaved && isSsoSaved) {
+            var promises = [System.get(), Users.refreshCurrent()];
+            $q.all(promises).then(function (results) {
+                if (results[0].ssoMode != undefined) {
+                    //response for System.get
+                    Storage.save("ssoMode", {"ssoMode": results[0].ssoMode});
+                }
+
+                //response for Users.refreshCurrent
+                if (results[1].data && results[1].data.email) {
                     $state.go('app.volume.list');
                 }
+
+                $rootScope.isLoading = false;
+            }, function (err) {
+                console.log(err);
+                $rootScope.isLoading = false;
             });
-            $rootScope.isLoading = false;
-        }, function (err) {
-            console.log(err);
-            $rootScope.isLoading = false;
-        });
+        }
 
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
@@ -201,7 +234,6 @@ app.config(['$stateProvider', '$urlRouterProvider', '$httpProvider', function ($
                     console.log(e);
                 });
             };
-
 
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();

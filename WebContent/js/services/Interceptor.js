@@ -11,11 +11,12 @@ angular.module('web')
                     Exception.handle(rejection);
                 } else if (rejection.status === 401) {
                     var localLoginPage = "#/login?err=session";
+                    var ssoPage = "/saml/logout";
                     var isSso = rejection.data &&
                         rejection.data.loginMode &&
                         rejection.data.loginMode === "SSO";
 
-                    if (!isSso) window.location = localLoginPage;
+                    window.location = isSso ? ssoPage : localLoginPage;
                 }
                 return $q.reject(rejection);
             }
