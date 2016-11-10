@@ -37,15 +37,8 @@ angular.module('web')
         var _logout = function () {
             Storage.remove("ssoMode");
             Storage.remove("currentUser");
-            var deferred = $q.defer();
 
-            $http.get(logoutUrl).then(function () {
-                deferred.resolve();
-            }, function (e) {
-                deferred.reject(e);
-            });
-
-            return deferred.promise;
+            return $http.get(logoutUrl);
         };
 
         return {

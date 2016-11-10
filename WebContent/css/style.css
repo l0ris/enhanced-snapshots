@@ -662,14 +662,13 @@ div.tr.state-removed {
 
 .chb.checked {
     background-color: #009f65;
-    /*color: white;*/
+    color: white;
     border: none;
 }
 
 .chb.checked:hover {
     background-color: #007b4e;
 }
-
 
 /* end of Checkbox */
 

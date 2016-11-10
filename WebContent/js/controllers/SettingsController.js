@@ -1,8 +1,9 @@
 'use strict';
 
 angular.module('web')
-    .controller('SettingsController', ['$state', '$scope', 'System', 'Users', '$modal', 'Configuration',
-        function ($state, $scope, System, Users, $modal, Configuration) {
+    .controller('SettingsController', ['$rootScope', '$state', '$scope', 'System', 'Users', '$modal', 'Configuration',
+        function ($rootScope, $state, $scope, System, Users, $modal, Configuration) {
+        $rootScope.isLoading = false;
         var currentUser = Users.getCurrent();
         $scope.isAdmin = currentUser.role === "admin";
 
@@ -24,18 +25,7 @@ angular.module('web')
             }
         };
 
-        var progressLoader = function () {
-            var modalInstance = $modal.open({
-                animation: true,
-                templateUrl: './partials/modal.wizard-progress.html',
-                scope: $scope
-            });
-
-            return modalInstance
-        };
-
-        $scope.progressState = 'loading';
-        var loader = progressLoader();
+        $rootScope.isLoading = true;
         System.get().then(function (data) {
             // hack for handling 302 status
             if (typeof data === 'string' && data.indexOf('<html lang="en" ng-app="web"')>-1) {
@@ -57,12 +47,10 @@ angular.module('web')
             }
 
             $scope.initialSettings = angular.copy(data);
-            $scope.progressState = '';
-            loader.dismiss();
+            $rootScope.isLoading = false;
         }, function (e) {
             console.log(e);
-            $scope.progressState = 'failed';
-            loader.dismiss();
+            $rootScope.isLoading = false;
         });
 
         $scope.backup = function () {
